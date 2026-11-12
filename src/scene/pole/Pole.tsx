@@ -3,7 +3,7 @@
 import { useFrame } from '@react-three/fiber';
 import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { CylinderGeometry, type Group } from 'three';
-import { damp, poleYaw } from '@/experience/choreography';
+import { damp, poleYaw, reducedYaw } from '@/experience/choreography';
 import { POLE, SIGNS } from '@/experience/signs';
 import { experienceStore } from '@/experience/store';
 import { registerProbe } from '@/dev/sceneProbe';
@@ -53,7 +53,7 @@ export default function Pole({ children }: { children?: ReactNode }) {
     const g = group.current;
     if (!g) return;
     const { progress, reducedMotion } = experienceStore.getState();
-    g.rotation.y = damp(g.rotation.y, poleYaw(progress), reducedMotion ? Infinity : 2.5, dt);
+    g.rotation.y = reducedMotion ? reducedYaw(progress) : damp(g.rotation.y, poleYaw(progress), 2.5, dt);
   });
 
   const r = POLE.radius;

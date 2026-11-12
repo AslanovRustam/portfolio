@@ -3,7 +3,7 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import { Vector3 } from 'three';
-import { cameraPose, damp, fitDistance } from '@/experience/choreography';
+import { cameraPose, damp, fitDistance, reducedCameraPose } from '@/experience/choreography';
 import { experienceStore } from '@/experience/store';
 import { registerProbe } from '@/dev/sceneProbe';
 
@@ -29,7 +29,7 @@ export default function CameraRig() {
 
   useFrame((_, dt) => {
     const { progress, reducedMotion } = experienceStore.getState();
-    const pose = cameraPose(progress);
+    const pose = reducedMotion ? reducedCameraPose(progress) : cameraPose(progress);
     const fit = fitDistance(aspect);
     for (let i = 0; i < 3; i++) pose.position[i] = pose.target[i] + (pose.position[i] - pose.target[i]) * fit;
     const k = reducedMotion ? Infinity : LAMBDA;

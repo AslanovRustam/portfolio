@@ -52,4 +52,39 @@ export function slowDevice(frameTimesMs: number[]): boolean {
   return sorted[Math.floor(sorted.length / 2)] > 22;
 }
 
+export interface FrameSample {
+  /** seconds (clock time) */
+  now: number;
+  dtMs: number;
+  /** the scene is ready and fully rendered (the blueprint's discarded fragments are cheap and lie) */
+  settled: boolean;
+  hidden: boolean;
+}
+
+/**
+ * Collects `frames` frame times starting `wait` s after the scene settles, then returns its verdict
+ * once ('slow' | 'ok'); null otherwise. A hidden tab's throttled frames restart the count.
+ */
+export function createFrameSampler({ wait, frames }: { wait: number; frames: number }) {
+  let since: number | null = null;
+  const times: number[] = [];
+  let done = false;
+  return {
+    push(f: FrameSample): 'slow' | 'ok' | null {
+      if (done || !f.settled) return null;
+      if (f.hidden) {
+        since = null;
+        times.length = 0;
+        return null;
+      }
+      since ??= f.now;
+      if (f.now - since < wait) return null;
+      times.push(f.dtMs);
+      if (times.length < frames) return null;
+      done = true;
+      return slowDevice(times) ? 'slow' : 'ok';
+    },
+  };
+}
+
 export { forcedNoWebGL, supportsWebGL2 } from './webgl';

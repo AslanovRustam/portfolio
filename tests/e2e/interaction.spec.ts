@@ -42,3 +42,18 @@ test('context loss swaps to the fallback', async ({ page }) => {
   );
   await expect(page.locator('[data-fallback]')).toBeVisible({ timeout: 5000 });
 });
+
+// Final review #1: with WebGL2 the first paint must never say "needs WebGL2"
+test('server HTML carries the loader, never the fallback', async ({ request }) => {
+  const html = await (await request.get('/en')).text();
+  expect(html).toContain('data-loader');
+  expect(html).not.toContain('data-fallback');
+});
+
+// Final review #7: a failed asset load falls back, it never takes the page down
+test('a scene asset that fails to load swaps to the fallback, the page lives on', async ({ page }) => {
+  await page.route('**/hdri/**', (route) => route.abort());
+  await page.goto('/en');
+  await expect(page.locator('[data-fallback]')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('heading', { level: 1, name: 'Rustam Aslanov' })).toBeVisible();
+});

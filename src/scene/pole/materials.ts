@@ -2,8 +2,9 @@
 
 import { useTexture } from '@react-three/drei';
 import { useEffect, useMemo } from 'react';
-import { Color, MeshStandardMaterial, RepeatWrapping, SRGBColorSpace, type Texture, Vector2 } from 'three';
+import { Color, MeshStandardMaterial, SRGBColorSpace, Vector2 } from 'three';
 import { useNightEnv } from '../env';
+import { tiled } from './textures';
 
 const PAINT = [
   '/textures/rusty_painted_metal/diffuse.webp',
@@ -12,30 +13,19 @@ const PAINT = [
 ];
 const PLATE = ['/textures/metal_plate_02/nor_gl.webp', '/textures/metal_plate_02/rough.webp'];
 
-function tiled(t: Texture, x: number, y: number): Texture {
-  const c = t.clone();
-  c.wrapS = c.wrapT = RepeatWrapping;
-  c.repeat.set(x, y);
-  c.anisotropy = 8;
-  c.needsUpdate = true;
-  return c;
-}
-
 /**
  * Shared PBR materials for the signpost, all from CC0 scans: chipped red paint over rust for the pole,
  * worn sheet metal for sign edges and backs, and the same grunge (as roughness) on painted faces.
  */
 export function usePoleMaterials() {
-  const [paint, paintNormal, paintArm] = useTexture(PAINT, (ts) => {
-    ts[0].colorSpace = SRGBColorSpace;
-  });
+  const [paint, paintNormal, paintArm] = useTexture(PAINT);
   const [plateNormal, plateRough] = useTexture(PLATE);
   const env = useNightEnv();
 
   const materials = useMemo(() => {
     // the pole: u wraps its 0.38 m circumference, v runs 5.2 m → ~14 repeats keep the scan square
     const pole = new MeshStandardMaterial({
-      map: tiled(paint, 1, 14),
+      map: tiled(paint, 1, 14, SRGBColorSpace),
       normalMap: tiled(paintNormal, 1, 14),
       roughnessMap: tiled(paintArm, 1, 14),
       aoMap: tiled(paintArm, 1, 14),

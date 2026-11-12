@@ -15,3 +15,9 @@ for (const [loc, role] of [
     await expect(page.getByText(role)).toBeVisible();
   });
 }
+
+// Final review #4: the proxy runs on every page path, not only on /
+test('an unprefixed path is redirected into the default locale', async ({ page }) => {
+  await page.goto('/some-page');
+  await expect(page).toHaveURL(/\/en\/some-page$/);
+});

@@ -7,6 +7,8 @@ import {
   lightState,
   partReveal,
   poleYaw,
+  reducedCameraPose,
+  reducedYaw,
   revealProgress,
   sectionCenter,
 } from '@/experience/choreography';
@@ -94,4 +96,19 @@ it('narrow screens pull the camera back so a 1.5 m sign still fits', () => {
   // visible width at the WORK pose (d ≈ 4.7 m, fov 35°) covers the sign plus margin on a phone
   const d = 4.7 * fitDistance(0.49);
   expect(2 * d * Math.tan((35 * Math.PI) / 360) * 0.49).toBeGreaterThan(2.1);
+});
+
+it('reduced motion: the pole jumps from sign to sign, never turns with scroll', () => {
+  close(reducedYaw(0), 0);
+  close(reducedYaw(0.05), 0);
+  close(reducedYaw(0.36), 0);
+  close(reducedYaw(0.37), -Math.PI / 2);
+  close(reducedYaw(0.9), -1.5 * Math.PI);
+});
+
+it('reduced motion: the camera holds one pose per section', () => {
+  expect(reducedCameraPose(0.05)).toEqual(cameraPose(0));
+  expect(reducedCameraPose(0.3)).toEqual(cameraPose(0.26));
+  expect(reducedCameraPose(0.36)).toEqual(cameraPose(0.26));
+  expect(reducedCameraPose(0.95)).toEqual(cameraPose(0.9));
 });

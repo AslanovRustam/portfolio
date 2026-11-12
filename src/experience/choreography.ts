@@ -68,6 +68,11 @@ export function poleYaw(p: number): number {
   return yawFacing(SECTIONS[SECTIONS.length - 1].id);
 }
 
+/** Reduced motion: no rotation tied to scroll — the pole simply shows the active section's sign. */
+export function reducedYaw(p: number): number {
+  return yawFacing(activeSection(p) ?? 'work');
+}
+
 type Vec3 = [number, number, number];
 const CAMERA_KEYS: readonly { p: number; position: Vec3; target: Vec3 }[] = [
   { p: 0, position: [0, 2.6, 9.5], target: [0, 2.6, 0] },
@@ -96,6 +101,12 @@ export function cameraPose(p: number): { position: Vec3; target: Vec3 } {
   const t = smoothstep((q - a.p) / (b.p - a.p));
   if (t === 0) return { position: [...a.position], target: [...a.target] };
   return { position: lerp3(a.position, b.position, t), target: lerp3(a.target, b.target, t) };
+}
+
+/** Reduced motion: one still camera pose per section (the intro keeps the opening shot), no dolly. */
+export function reducedCameraPose(p: number): { position: Vec3; target: Vec3 } {
+  const s = activeSection(p);
+  return cameraPose(s ? sectionCenter(s) : 0);
 }
 
 /**

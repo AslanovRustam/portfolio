@@ -1,4 +1,30 @@
-import * as icons from 'simple-icons';
+// Named imports only: `import * as` pulled all ~3,500 simple-icons (≈2 MB gzip) into the scene chunk.
+import {
+  siBitbucket,
+  siClaude,
+  siContentful,
+  siCss,
+  siGit,
+  siGithub,
+  siGitlab,
+  siGreensock,
+  siHtml5,
+  siJavascript,
+  siMobx,
+  siN8n,
+  siNestjs,
+  siNextdotjs,
+  siNodedotjs,
+  siPayloadcms,
+  siPrismic,
+  siReact,
+  siRedux,
+  siSanity,
+  siSass,
+  siTailwindcss,
+  siThreedotjs,
+  siTypescript,
+} from 'simple-icons';
 
 interface SimpleIcon {
   title: string;
@@ -8,9 +34,32 @@ interface SimpleIcon {
 }
 
 const bySlug = new Map<string, SimpleIcon>(
-  Object.values(icons as Record<string, unknown>)
-    .filter((v): v is SimpleIcon => typeof v === 'object' && v !== null && 'slug' in v && 'path' in v)
-    .map((v) => [v.slug, v]),
+  [
+    siHtml5,
+    siCss,
+    siSass,
+    siTailwindcss,
+    siJavascript,
+    siTypescript,
+    siReact,
+    siNextdotjs,
+    siRedux,
+    siMobx,
+    siNodedotjs,
+    siNestjs,
+    siPrismic,
+    siContentful,
+    siSanity,
+    siPayloadcms,
+    siThreedotjs,
+    siGreensock,
+    siGit,
+    siGithub,
+    siGitlab,
+    siBitbucket,
+    siN8n,
+    siClaude,
+  ].map((i) => [i.slug, i]),
 );
 
 /** A brand logo from simple-icons (CC0 data; brand marks belong to their owners). */

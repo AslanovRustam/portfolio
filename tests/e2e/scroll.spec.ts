@@ -38,3 +38,13 @@ test('reduced motion: no glide', async ({ page }) => {
   await gotoScene(page);
   await expect.poll(() => page.evaluate(() => window.__portfolio.state().reducedMotion)).toBe(true);
 });
+
+// Final review #5: a shorter window clamps scrollY before ScrollTrigger re-measures
+test('halving the window height near the end keeps progress and section', async ({ page }) => {
+  await gotoScene(page);
+  await scrollTo(page, 0.9);
+  await page.setViewportSize({ width: 1440, height: 400 });
+  await page.waitForTimeout(1000);
+  expect(Math.abs((await progress(page)) - 0.9)).toBeLessThan(0.02);
+  expect(await page.evaluate(() => window.__portfolio.section())).toBe('contact');
+});

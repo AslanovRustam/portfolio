@@ -52,27 +52,53 @@ export default function SmoothScroll() {
     followMotion();
     motion.addEventListener('change', followMotion);
 
+    let holding = false;
     const st = ScrollTrigger.create({
       trigger: '#journey',
       start: 'top top',
       end: 'bottom bottom',
-      onUpdate: (self) => experienceStore.getState().setProgress(self.progress),
+      onUpdate: (self) => {
+        if (!holding) experienceStore.getState().setProgress(self.progress);
+      },
     });
     trigger = st;
 
-    // a resize re-measures the journey: keep the visitor at the same progress, not the same pixel
+    // A resize re-measures the journey: keep the visitor at the same progress, not the same pixel.
+    // The snapshot is taken on the resize itself (resize steps run before scroll steps): by the time
+    // ScrollTrigger refreshes ~200 ms later, a shorter page may already have clamped scrollY and pushed
+    // a wrong progress through onUpdate, so until that refresh lands onUpdate is ignored.
     let saved = 0;
+    let lastWidth = innerWidth;
+    let release: ReturnType<typeof setTimeout> | undefined;
+    const coarse = matchMedia('(pointer: coarse)');
+    const onResize = () => {
+      const widthChanged = innerWidth !== lastWidth;
+      lastWidth = innerWidth;
+      // a phone's address bar only changes the height, and ignoreMobileResize skips that refresh
+      if (!widthChanged && coarse.matches) return;
+      if (!holding) saved = experienceStore.getState().progress;
+      holding = true;
+      clearTimeout(release);
+      release = setTimeout(() => {
+        holding = false;
+      }, 1000);
+    };
     const onRefreshInit = () => {
-      saved = experienceStore.getState().progress;
+      if (!holding) saved = experienceStore.getState().progress;
     };
     const onRefresh = () => {
       scrollToProgress(saved, true);
       experienceStore.getState().setProgress(saved);
+      holding = false;
+      clearTimeout(release);
     };
+    window.addEventListener('resize', onResize);
     ScrollTrigger.addEventListener('refreshInit', onRefreshInit);
     ScrollTrigger.addEventListener('refresh', onRefresh);
 
     return () => {
+      window.removeEventListener('resize', onResize);
+      clearTimeout(release);
       ScrollTrigger.removeEventListener('refreshInit', onRefreshInit);
       ScrollTrigger.removeEventListener('refresh', onRefresh);
       motion.removeEventListener('change', followMotion);

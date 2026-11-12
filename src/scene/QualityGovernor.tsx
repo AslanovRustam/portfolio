@@ -2,11 +2,12 @@
 
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useLayoutEffect, useRef } from 'react';
-import { type DeviceProbe, pickTier, qualityOverride, slowDevice, stepDown, TIER } from '@/experience/quality';
+import { createFrameSampler, type DeviceProbe, pickTier, qualityOverride, stepDown, TIER } from '@/experience/quality';
 import { experienceStore, type Tier, useExperience } from '@/experience/store';
 import { registerProbe } from '@/dev/sceneProbe';
+import { globalReveal } from './reveal/registry';
 
-/** The one runtime step down: `wait` s after the scene is ready, over `frames` frame times. */
+/** The one runtime step down: `wait` s after the scene is rendered, over `frames` frame times. */
 const SAMPLE = { wait: 3, frames: 120 };
 
 function probe(gl: WebGLRenderingContext | WebGL2RenderingContext): DeviceProbe {
@@ -31,11 +32,12 @@ export default function QualityGovernor() {
   const setDpr = useThree((s) => s.setDpr);
   const tier = useExperience((s) => s.tier);
   const chosen = useRef<Tier | null>(null);
-  const watch = useRef<{ since: number | null; times: number[]; done: boolean }>({ since: null, times: [], done: false });
+  const sampler = useRef(createFrameSampler(SAMPLE));
+  const off = useRef(false);
 
   useLayoutEffect(() => {
     chosen.current = qualityOverride(location.search);
-    if (navigator.webdriver) watch.current.done = true;
+    if (navigator.webdriver) off.current = true;
     experienceStore.getState().setTier(pickTier(probe(gl.getContext()), chosen.current));
   }, [gl]);
 
@@ -43,20 +45,15 @@ export default function QualityGovernor() {
   useEffect(() => registerProbe('dpr', () => gl.getPixelRatio()), [gl]);
 
   useFrame((state, delta) => {
-    const w = watch.current;
-    if (w.done || chosen.current || !experienceStore.getState().ready) return;
-    // a hidden tab's frames are throttled, not slow: start the count again when it comes back
-    if (document.hidden) {
-      w.since = null;
-      w.times.length = 0;
-      return;
-    }
-    w.since ??= state.clock.elapsedTime;
-    if (state.clock.elapsedTime - w.since < SAMPLE.wait) return;
-    w.times.push(delta * 1000);
-    if (w.times.length < SAMPLE.frames) return;
-    w.done = true;
-    if (slowDevice(w.times)) {
+    if (off.current || chosen.current) return;
+    const verdict = sampler.current.push({
+      now: state.clock.elapsedTime,
+      dtMs: delta * 1000,
+      // judge the rendered street, not the cheap blueprint the visitor may still be looking at
+      settled: experienceStore.getState().ready && globalReveal() >= 1,
+      hidden: document.hidden,
+    });
+    if (verdict === 'slow') {
       const s = experienceStore.getState();
       s.setTier(stepDown(s.tier));
     }

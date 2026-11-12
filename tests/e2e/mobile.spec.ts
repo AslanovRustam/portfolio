@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoScene, progress } from './helpers';
+import { gotoScene, progress, scrollTo } from './helpers';
 
 // Review Focus 4
 test('touch swipe advances progress on a phone, low tier, no errors', async ({ page }) => {
@@ -19,4 +19,15 @@ test('touch swipe advances progress on a phone, low tier, no errors', async ({ p
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await expect.poll(() => progress(page)).toBeGreaterThan(before + 0.01);
   expect(errors).toEqual([]);
+});
+
+// Final review #5: turning the phone sideways keeps the visitor where they were
+test('portrait → landscape keeps progress and section', async ({ page }) => {
+  await gotoScene(page);
+  await scrollTo(page, 0.6);
+  const before = await progress(page);
+  await page.setViewportSize({ width: 915, height: 412 });
+  await page.waitForTimeout(1200);
+  expect(Math.abs((await progress(page)) - before)).toBeLessThan(0.02);
+  expect(await page.evaluate(() => window.__portfolio.section())).toBe('stack');
 });
