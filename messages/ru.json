@@ -1,0 +1,18 @@
+{
+  "meta": {
+    "title": "Рустам Асланов — Front-end разработчик",
+    "description": "Портфолио Рустама Асланова, front-end разработчика: React, Next.js, three.js."
+  },
+  "hero": {
+    "name": "Rustam Aslanov",
+    "role": "Front-end разработчик",
+    "cue": "Скролль, чтобы отрендерить"
+  },
+  "loader": {
+    "label": "Рендеринг"
+  },
+  "fallback": {
+    "title": "Этой улице нужен WebGL2",
+    "body": "Откройте сайт в свежем Chrome, Edge, Firefox или Safari, чтобы увидеть 3D-сцену."
+  }
+}
