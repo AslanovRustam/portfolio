@@ -15,3 +15,8 @@ export async function scrollTo(page: Page, p: number): Promise<void> {
 export async function progress(page: Page): Promise<number> {
   return page.evaluate(() => window.__portfolio.state().progress);
 }
+
+/** Waits until the 3D scene has loaded and drawn its first frames. */
+export async function waitReady(page: Page): Promise<void> {
+  await page.waitForFunction(() => window.__portfolio.state().ready, undefined, { timeout: 30_000 });
+}
