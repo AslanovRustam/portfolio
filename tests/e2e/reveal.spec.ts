@@ -6,8 +6,9 @@ test('scene starts as blueprint and is fully rendered after the intro', async ({
   await waitReady(page);
   expect(await page.evaluate(() => window.__portfolio.probe('reveal'))).toBeLessThan(0.01);
   await scrollTo(page, 0.2);
-  await page.waitForTimeout(1500);
-  expect(await page.evaluate(() => window.__portfolio.probe('reveal'))).toBeCloseTo(1, 2);
+  await expect
+    .poll(() => page.evaluate(() => window.__portfolio.probe('reveal') as number), { timeout: 10_000 })
+    .toBeCloseTo(1, 2);
 });
 
 test('reduced motion shows the rendered scene at once', async ({ page }) => {

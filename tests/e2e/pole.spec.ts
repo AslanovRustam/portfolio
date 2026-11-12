@@ -10,10 +10,15 @@ test('pole faces each section and the light changes', async ({ page }) => {
     [0.9, -1.5 * Math.PI, 'green'],
   ] as const) {
     await scrollTo(page, p);
-    await page.waitForTimeout(2000);
-    expect(await page.evaluate(() => window.__portfolio.probe('poleYaw') as number)).toBeCloseTo(yaw, 1);
-    const l = (await page.evaluate(() => window.__portfolio.probe('light'))) as Record<string, number>;
-    expect(l[lit]).toBeGreaterThan(3);
+    // polled, not a fixed wait: on a shared integrated GPU the damped turn can take several seconds
+    await expect
+      .poll(() => page.evaluate(() => window.__portfolio.probe('poleYaw') as number), { timeout: 10_000 })
+      .toBeCloseTo(yaw, 1);
+    await expect
+      .poll(() => page.evaluate((k) => (window.__portfolio.probe('light') as Record<string, number>)[k], lit), {
+        timeout: 10_000,
+      })
+      .toBeGreaterThan(3);
   }
 });
 
