@@ -55,8 +55,8 @@ it('parts reveal in order', () => {
   expect(partReveal(0.5, 0, 4)).toBeGreaterThan(partReveal(0.5, 3, 4));
 });
 
-it('pole yaw: half turn in the intro, holds facing each section, monotonic', () => {
-  close(poleYaw(0), Math.PI);
+it('pole yaw: a three-quarter turn in the intro (no sign edge-on on the blueprint), then holds each section', () => {
+  close(poleYaw(0), 0.75 * Math.PI);
   close(poleYaw(0.15), 0);
   close(poleYaw(0.26), 0);
   close(poleYaw(0.37), -Math.PI / 4);
@@ -68,7 +68,8 @@ it('pole yaw: half turn in the intro, holds facing each section, monotonic', () 
 });
 
 it('camera pose hits its end keys and is continuous', () => {
-  expect(cameraPose(0)).toEqual({ position: [0, 2.6, 9.5], target: [0, 2.6, 0] });
+  // the blueprint is seen from a raised three-quarter angle, like an axonometric drawing
+  expect(cameraPose(0)).toEqual({ position: [2.2, 3.6, 9.2], target: [0, 2.7, 0] });
   expect(cameraPose(1)).toEqual({ position: [0, 4.6, 3.4], target: [0, 4.7, 0] });
   for (let p = 0; p < 1; p += 0.001) {
     const a = cameraPose(p).position;

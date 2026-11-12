@@ -3,6 +3,11 @@ import type { LightState } from './store';
 
 /** End of the blueprint → render intro (spec §5). */
 export const INTRO_END = 0.15;
+/**
+ * Where the intro turn starts: a three-quarter view, so on the blueprint every sign is seen at an angle
+ * with its thickness showing (from π the side signs were edge-on and read as flat slivers).
+ */
+export const INTRO_YAW = 0.75 * Math.PI;
 /** Width of the turn window around each section boundary. */
 export const TURN = 0.05;
 
@@ -50,11 +55,11 @@ export function partReveal(reveal: number, index: number, count: number, overlap
 const yawFacing = (id: SectionId) => -signById(id).facing;
 
 /**
- * Pole rotation for scroll progress p. Intro: half a turn from π to WORK facing the camera.
+ * Pole rotation for scroll progress p. Intro: a three-quarter turn from INTRO_YAW to WORK facing the camera.
  * Then each section holds its sign towards the camera; around every boundary it turns to the next one.
  */
 export function poleYaw(p: number): number {
-  if (p <= INTRO_END) return Math.PI * (1 - easeInOutCubic(clamp01(p / INTRO_END)));
+  if (p <= INTRO_END) return INTRO_YAW * (1 - easeInOutCubic(clamp01(p / INTRO_END)));
   for (let i = 1; i < SECTIONS.length; i++) {
     const b = SECTIONS[i].start;
     if (p < b - TURN / 2) return yawFacing(SECTIONS[i - 1].id);
@@ -75,7 +80,8 @@ export function reducedYaw(p: number): number {
 
 type Vec3 = [number, number, number];
 const CAMERA_KEYS: readonly { p: number; position: Vec3; target: Vec3 }[] = [
-  { p: 0, position: [0, 2.6, 9.5], target: [0, 2.6, 0] },
+  // the blueprint: raised three-quarter angle, like an axonometric drawing
+  { p: 0, position: [2.2, 3.6, 9.2], target: [0, 2.7, 0] },
   { p: 0.15, position: [1.4, 3.0, 6.2], target: [0, 3.0, 0] },
   { p: 0.26, position: [1.0, 3.4, 4.6], target: [0, 3.4, 0] },
   { p: 0.48, position: [1.0, 2.9, 4.6], target: [0, 2.9, 0] },
