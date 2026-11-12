@@ -6,17 +6,26 @@ import {
   AdditiveBlending,
   CanvasTexture,
   Color,
+  CylinderGeometry,
   type InstancedMesh,
-  type MeshBasicMaterial,
+  MeshBasicMaterial,
+  MeshStandardMaterial,
   Object3D,
+  PlaneGeometry,
+  QuadraticBezierCurve3,
   SRGBColorSpace,
+  TubeGeometry,
+  Vector3,
 } from 'three';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { useNightEnv } from '../env';
-import { globalReveal } from '../reveal/registry';
-import { LAMP_COLOR, LAMP_HEIGHT, streetLayout } from './layout';
+import { globalReveal, revealUniforms } from '../reveal/registry';
+import { applyReveal } from '../reveal/revealMaterial';
+import { ARM_REACH, LAMP_COLOR, LAMP_HEAD_Y, LAMP_HEIGHT, lampIntensity, streetLayout } from './layout';
 
-const LAMP_GLOW = new Color(LAMP_COLOR).multiplyScalar(6);
-const CONE = { w: 2.6, h: LAMP_HEIGHT - 0.1 };
+const PANEL_GLOW = new Color(LAMP_COLOR).multiplyScalar(7);
+const CONE = { w: 1.9, h: LAMP_HEAD_Y - 0.05 };
+const HEAD_X = -ARM_REACH - 0.05;
 
 /** A soft cone of lamp light falling through the rain: bright under the head, gone at the ground. */
 function coneTexture(): CanvasTexture {
@@ -27,7 +36,7 @@ function coneTexture(): CanvasTexture {
   for (let y = 0; y < 256; y++) {
     const t = y / 255;
     const half = 6 + t * 58;
-    const a = 0.55 * (1 - t) ** 1.6;
+    const a = 0.3 * (1 - t) ** 1.8;
     const g = ctx.createLinearGradient(64 - half, 0, 64 + half, 0);
     g.addColorStop(0, 'rgba(255,190,120,0)');
     g.addColorStop(0.5, `rgba(255,190,120,${a})`);
@@ -40,82 +49,113 @@ function coneTexture(): CanvasTexture {
   return t;
 }
 
+/** One lamp's parts in its own frame (right-sidewalk lamp: arm reaching toward −x). */
+function lampGeometries() {
+  const base = new CylinderGeometry(0.11, 0.14, 0.7, 16).translate(0, 0.35, 0);
+  const shaft = new CylinderGeometry(0.045, 0.075, LAMP_HEIGHT - 0.7, 16).translate(0, 0.7 + (LAMP_HEIGHT - 0.7) / 2, 0);
+  const arm = new TubeGeometry(
+    new QuadraticBezierCurve3(
+      new Vector3(0, LAMP_HEIGHT - 0.3, 0),
+      new Vector3(0, LAMP_HEIGHT + 0.25, 0),
+      new Vector3(HEAD_X + 0.2, LAMP_HEIGHT + 0.2, 0),
+    ),
+    28,
+    0.03,
+    8,
+  );
+  const head = new RoundedBoxGeometry(0.85, 0.11, 0.32, 2, 0.04).translate(HEAD_X, LAMP_HEAD_Y + 0.07, 0);
+  const panel = new PlaneGeometry(0.7, 0.24).rotateX(Math.PI / 2).translate(HEAD_X, LAMP_HEAD_Y + 0.011, 0);
+  return { base, shaft, arm, head, panel };
+}
+
 /**
- * Street lamps on both kerbs with cones of light in the rain, and neon signs on the facades behind
- * the pole. Pure emissive geometry (no real lights, no per-pixel light cost): bloom makes it glow and
- * the wet street stretches its reflections into long coloured streaks. It all switches on with the render.
+ * Street lamps along both sidewalks: a cast base, a tapered pole, a curved arm and a flat LED
+ * luminaire over the road, with a cone of light in the rain. A few are failing and stutter now and
+ * then — their cones and their streaks on the wet road flicker with them. Emissive only (no real
+ * lights): bloom makes them glow, the streaks make them shine on the asphalt.
  */
 export default function StreetLights() {
-  const { lamps, neons } = useMemo(() => streetLayout(5), []);
+  const { lamps } = useMemo(() => streetLayout(5), []);
   const env = useNightEnv();
+  const u = revealUniforms('street');
   const cone = useMemo(() => coneTexture(), []);
-  const poles = useRef<InstancedMesh>(null);
-  const heads = useRef<InstancedMesh>(null);
+  const geo = useMemo(() => lampGeometries(), []);
+  const mats = useMemo(
+    () => ({
+      metal: applyReveal(
+        new MeshStandardMaterial({ color: '#2a2c31', metalness: 0.7, roughness: 0.42, envMap: env, envMapIntensity: 0.6 }),
+        u,
+      ),
+      panel: applyReveal(new MeshBasicMaterial({ toneMapped: false }), u),
+      cone: new MeshBasicMaterial({
+        map: cone,
+        transparent: true,
+        depthWrite: false,
+        blending: AdditiveBlending,
+        toneMapped: false,
+      }),
+    }),
+    [env, u, cone],
+  );
+  const baseRef = useRef<InstancedMesh>(null);
+  const shaftRef = useRef<InstancedMesh>(null);
+  const armRef = useRef<InstancedMesh>(null);
+  const headRef = useRef<InstancedMesh>(null);
+  const panelRef = useRef<InstancedMesh>(null);
   const cones = useRef<InstancedMesh>(null);
-  const signs = useRef<InstancedMesh>(null);
-  const lit = useRef<(MeshBasicMaterial | null)[]>([]);
+  const tint = useRef(new Color());
 
-  useEffect(() => () => cone.dispose(), [cone]);
+  useEffect(
+    () => () => {
+      cone.dispose();
+      for (const g of Object.values(geo)) g.dispose();
+      for (const m of Object.values(mats)) m.dispose();
+    },
+    [cone, geo, mats],
+  );
 
   useLayoutEffect(() => {
     const o = new Object3D();
     lamps.forEach((l, i) => {
-      o.rotation.set(0, 0, 0);
+      o.position.set(l.x, 0, l.z);
+      // left-sidewalk lamps are the mirror image: arm reaching toward +x
+      o.rotation.set(0, l.side > 0 ? 0 : Math.PI, 0);
       o.scale.set(1, 1, 1);
-      o.position.set(l.x, LAMP_HEIGHT / 2, l.z);
       o.updateMatrix();
-      poles.current!.setMatrixAt(i, o.matrix);
-      const hx = l.x - l.side * 0.9;
-      o.position.set(hx, LAMP_HEIGHT + 0.05, l.z);
-      o.updateMatrix();
-      heads.current!.setMatrixAt(i, o.matrix);
-      o.position.set(hx, LAMP_HEIGHT - CONE.h / 2, l.z + 0.05);
+      for (const p of [baseRef, shaftRef, armRef, headRef, panelRef]) p.current!.setMatrixAt(i, o.matrix);
+      o.position.set(l.x - l.side * ARM_REACH, CONE.h / 2, l.z + 0.05);
+      o.rotation.set(0, 0, 0);
       o.scale.set(CONE.w, CONE.h, 1);
       o.updateMatrix();
       cones.current!.setMatrixAt(i, o.matrix);
     });
-    const c = new Color();
-    neons.forEach((n, i) => {
-      o.position.set(n.x, n.y, n.z);
-      o.rotation.set(0, n.facing, 0);
-      o.scale.set(n.w, n.h, 1);
-      o.updateMatrix();
-      signs.current!.setMatrixAt(i, o.matrix);
-      signs.current!.setColorAt(i, c.set(n.color).multiplyScalar(n.power));
-    });
-    for (const m of [poles, heads, cones, signs]) m.current!.instanceMatrix.needsUpdate = true;
-    if (signs.current!.instanceColor) signs.current!.instanceColor.needsUpdate = true;
-  }, [lamps, neons]);
+    for (const p of [baseRef, shaftRef, armRef, headRef, panelRef, cones]) p.current!.instanceMatrix.needsUpdate = true;
+  }, [lamps]);
 
-  useFrame(() => {
+  // failing lamps stutter: their LED panel and cone of light follow lampIntensity
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
     const r = globalReveal();
-    for (const m of lit.current) m?.color.setScalar(r);
+    const c = tint.current;
+    lamps.forEach((l, i) => {
+      const k = lampIntensity(l, t) * r;
+      panelRef.current?.setColorAt(i, c.copy(PANEL_GLOW).multiplyScalar(k));
+      cones.current?.setColorAt(i, c.setScalar(k));
+    });
+    if (panelRef.current?.instanceColor) panelRef.current.instanceColor.needsUpdate = true;
+    if (cones.current?.instanceColor) cones.current.instanceColor.needsUpdate = true;
   });
 
+  const n = lamps.length;
   return (
     <group name="street-lights">
-      <instancedMesh ref={poles} args={[undefined, undefined, lamps.length]}>
-        <cylinderGeometry args={[0.05, 0.07, LAMP_HEIGHT, 10]} />
-        <meshStandardMaterial color="#1b1c20" metalness={0.8} roughness={0.5} envMap={env} envMapIntensity={0.4} />
-      </instancedMesh>
-      <instancedMesh ref={heads} args={[undefined, undefined, lamps.length]}>
-        <boxGeometry args={[0.7, 0.08, 0.22]} />
-        <meshBasicMaterial ref={(m) => void (lit.current[0] = m)} color={LAMP_GLOW} toneMapped={false} />
-      </instancedMesh>
-      <instancedMesh ref={cones} args={[undefined, undefined, lamps.length]} renderOrder={2}>
+      <instancedMesh ref={baseRef} args={[geo.base, mats.metal, n]} frustumCulled={false} />
+      <instancedMesh ref={shaftRef} args={[geo.shaft, mats.metal, n]} frustumCulled={false} />
+      <instancedMesh ref={armRef} args={[geo.arm, mats.metal, n]} frustumCulled={false} />
+      <instancedMesh ref={headRef} args={[geo.head, mats.metal, n]} frustumCulled={false} />
+      <instancedMesh ref={panelRef} args={[geo.panel, mats.panel, n]} frustumCulled={false} />
+      <instancedMesh ref={cones} args={[undefined, mats.cone, n]} renderOrder={2} frustumCulled={false}>
         <planeGeometry />
-        <meshBasicMaterial
-          ref={(m) => void (lit.current[1] = m)}
-          map={cone}
-          transparent
-          depthWrite={false}
-          blending={AdditiveBlending}
-          toneMapped={false}
-        />
-      </instancedMesh>
-      <instancedMesh ref={signs} args={[undefined, undefined, neons.length]}>
-        <planeGeometry />
-        <meshBasicMaterial ref={(m) => void (lit.current[2] = m)} toneMapped={false} side={2} />
       </instancedMesh>
     </group>
   );

@@ -12,7 +12,7 @@ import {
   SRGBColorSpace,
 } from 'three';
 import { globalReveal } from '../reveal/registry';
-import { reflectionStreaks, streakPlacement, streetLayout } from './layout';
+import { lampIntensity, reflectionStreaks, streakPlacement, streetLayout } from './layout';
 import { mulberry32 } from './random';
 
 /**
@@ -64,17 +64,20 @@ export default function Streaks() {
 
   useEffect(() => () => texture.dispose(), [texture]);
 
+  const tint = useRef(new Color());
   useLayoutEffect(() => {
-    const c = new Color();
-    streaks.forEach((s, i) => mesh.current!.setColorAt(i, c.set(s.color).multiplyScalar(s.power)));
+    streaks.forEach((s, i) => mesh.current!.setColorAt(i, tint.current.set(s.color).multiplyScalar(s.power)));
     if (mesh.current!.instanceColor) mesh.current!.instanceColor.needsUpdate = true;
   }, [streaks]);
 
   // each frame: lay every streak on the line from its light to the camera, where the mirror image lands
-  useFrame(() => {
+  useFrame((state) => {
     const m = mesh.current;
     if (!m) return;
+    const t = state.clock.elapsedTime;
     streaks.forEach((s, i) => {
+      // a failing lamp's streak stutters with it
+      m.setColorAt(i, tint.current.set(s.color).multiplyScalar(s.power * lampIntensity(s.source, t)));
       const p = streakPlacement({ x: s.x, h: s.h, z: s.zFar }, camera.position, s.length);
       o.position.set(p.x, s.y, p.z);
       // lay flat (plane +y → −z), then turn about y so the bright end points back at the light
@@ -84,6 +87,7 @@ export default function Streaks() {
       m.setMatrixAt(i, o.matrix);
     });
     m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
     material.current?.color.setScalar(globalReveal());
   });
 

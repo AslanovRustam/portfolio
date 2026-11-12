@@ -57,7 +57,8 @@ export function revealCompile(u: RevealUniforms, invert = false) {
       .replace('#include <common>', '#include <common>\nvarying vec3 vRevealWorld;')
       .replace(
         '#include <project_vertex>',
-        '#include <project_vertex>\nvRevealWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;',
+        // instanced meshes (street lamps) carry their placement in instanceMatrix
+        '#include <project_vertex>\n#ifdef USE_INSTANCING\nvRevealWorld = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz;\n#else\nvRevealWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;\n#endif',
       );
     const discard = invert
       ? 'if (revealT >= revealThreshold) discard;'

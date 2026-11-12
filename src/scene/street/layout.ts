@@ -1,74 +1,61 @@
 import { mulberry32 } from './random';
 
+/** The road behind the pole: carriageway ±half, sidewalks beyond, running away from the camera. */
+export const ROAD = { half: 4, sidewalk: 2.6, zNear: -3, zFar: -80, kerb: 0.15 } as const;
+export const LAMP_HEIGHT = 6;
+/** how far the arm carries the luminaire out over the road */
+export const ARM_REACH = 1.5;
+/** light-emitting panel under the luminaire */
+export const LAMP_HEAD_Y = LAMP_HEIGHT + 0.12;
+export const LAMP_COLOR = '#ffbf7a';
+
 export interface Lamp {
   x: number;
   z: number;
-  /** 1 on the right kerb (head leans left), −1 on the left */
+  /** 1 on the right sidewalk (arm reaches −x), −1 on the left */
   side: 1 | -1;
+  /** a failing lamp that flickers now and then */
+  flicker: boolean;
+  seed: number;
 }
-
-export interface Neon {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
-  h: number;
-  /** rotation about y: 0 = faces down the street toward the viewer (a blade sign), ±π/2 = across it */
-  facing: number;
-  color: string;
-  /** brightness multiplier (HDR, feeds bloom and the wet-street reflections) */
-  power: number;
-}
-
-const NEON = ['#ff3d6e', '#35e0ff', '#ff7a1a', '#c56bff', '#ff5a1f', '#ffd23f'];
 
 /**
- * The street behind the pole: lamps on both kerbs and neon signs on the facades — mostly tall blade
- * signs sticking out toward the viewer, some long ones flat on the walls. They are what the wet asphalt
- * reflects: near the horizon, so their reflections stretch into the frame as long coloured streaks.
+ * Street lamps on both sidewalks of the road behind the pole, staggered (each side every ~11 m); a few of them
+ * failing. They are what the wet asphalt reflects near the horizon.
  */
-export function streetLayout(seed: number): { lamps: Lamp[]; neons: Neon[] } {
+export function streetLayout(seed: number): { lamps: Lamp[] } {
   const rand = mulberry32(seed);
   const lamps: Lamp[] = [];
-  for (let z = -4; z > -46; z -= 7) {
-    lamps.push({ x: 5.4, z: z - rand() * 0.8, side: 1 });
-    lamps.push({ x: -5.4, z: z - 3.5 - rand() * 0.8, side: -1 });
+  const x = ROAD.half + 0.7;
+  let i = 0;
+  for (let z = ROAD.zNear - 2; z > ROAD.zFar + 10; z -= 5.5) {
+    const side = (i % 2 === 0 ? 1 : -1) as 1 | -1;
+    lamps.push({ x: side * x, z: z - rand() * 0.6, side, flicker: false, seed: Math.floor(rand() * 1e6) });
+    i++;
   }
-  const neons: Neon[] = [];
-  for (const side of [1, -1] as const) {
-    for (let z = -8; z > -44; z -= 3.5 + rand() * 3) {
-      const color = NEON[Math.floor(rand() * NEON.length)];
-      if (rand() < 0.65) {
-        const h = 1.6 + rand() * 1.8;
-        neons.push({
-          x: side * (7.4 + rand() * 1.2),
-          y: 2.4 + h / 2 + rand() * 1.2,
-          z,
-          w: 0.32 + rand() * 0.2,
-          h,
-          facing: 0,
-          color,
-          power: 3 + rand() * 2.5,
-        });
-      } else {
-        neons.push({
-          x: side * 8.6,
-          y: 3.2 + rand() * 1.2,
-          z,
-          w: 1.8 + rand() * 1.6,
-          h: 0.38 + rand() * 0.2,
-          facing: side > 0 ? -Math.PI / 2 : Math.PI / 2,
-          color,
-          power: 3 + rand() * 2,
-        });
-      }
-    }
-  }
-  return { lamps, neons };
+  // three failing lamps, spread along the street (not the nearest one: it would dominate the frame)
+  for (const k of [2, 5, 7]) if (lamps[k]) lamps[k].flicker = true;
+  return { lamps };
 }
 
-export const LAMP_HEIGHT = 5.4;
-export const LAMP_COLOR = '#ffbf7a';
+const hash = (n: number) => {
+  const s = Math.sin(n * 12.9898 + 78.233) * 43758.5453;
+  return s - Math.floor(s);
+};
+
+/**
+ * Brightness 0..1 of a lamp at time t (s). Steady lamps: 1. Failing ones: on, with a faint buzz, and
+ * every few seconds a short burst where the tube stutters off and on — a sodium lamp about to go.
+ */
+export function lampIntensity(lamp: Lamp, t: number): number {
+  if (!lamp.flicker) return 1;
+  const period = 4 + hash(lamp.seed) * 5;
+  const phase = (t + hash(lamp.seed + 1) * period) % period;
+  const burst = 0.6 + hash(lamp.seed + 2) * 0.7;
+  if (phase > burst) return 0.92 + 0.08 * hash(Math.floor(t * 24) + lamp.seed);
+  const step = Math.floor(t * 16);
+  return hash(step + lamp.seed * 3) < 0.55 ? 0.05 + 0.1 * hash(step + 7) : 0.75 + 0.25 * hash(step + 11);
+}
 
 export interface Streak {
   x: number;
@@ -83,38 +70,26 @@ export interface Streak {
   width: number;
   color: string;
   power: number;
-  source: Neon | Lamp;
+  source: Lamp;
 }
 
 /**
- * The reflection each light throws on the wet road: a streak lying on the asphalt from under the light
- * toward the viewer — taller lights throw longer ones. Drawn as additive geometry, it stays bright and
- * crisp where a blurred mirror would smear a small far-away neon into nothing.
+ * The reflection each lamp throws on the wet road: a streak lying on the asphalt from under the
+ * luminaire toward the viewer. Drawn as additive geometry, it stays bright and crisp where a blurred
+ * mirror would smear a small far-away light into nothing.
  */
-export function reflectionStreaks({ lamps, neons }: { lamps: Lamp[]; neons: Neon[] }): Streak[] {
-  const fromNeons = neons.map<Streak>((n) => ({
-    x: n.facing === 0 ? n.x : n.x - Math.sign(n.x) * 0.25,
-    y: 0.015,
-    zFar: n.z,
-    length: 3.5 + n.y * 2.2,
-    width: n.facing === 0 ? Math.max(n.w, 0.3) * 1.2 : 0.5,
-    color: n.color,
-    power: n.power * 0.4,
-    h: n.y,
-    source: n,
-  }));
-  const fromLamps = lamps.map<Streak>((l) => ({
-    x: l.x - l.side * 0.9,
+export function reflectionStreaks({ lamps }: { lamps: Lamp[] }): Streak[] {
+  return lamps.map((l) => ({
+    x: l.x - l.side * ARM_REACH,
     y: 0.015,
     zFar: l.z,
-    length: 3.5 + LAMP_HEIGHT * 2,
-    width: 0.55,
+    length: 3.5 + LAMP_HEAD_Y * 2,
+    h: LAMP_HEAD_Y,
+    width: 0.6,
     color: LAMP_COLOR,
-    power: 1.8,
-    h: LAMP_HEIGHT,
+    power: 2,
     source: l,
   }));
-  return [...fromNeons, ...fromLamps];
 }
 
 /**
