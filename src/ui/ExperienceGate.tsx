@@ -1,9 +1,11 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { experienceStore } from '@/experience/store';
 import { forcedNoWebGL, supportsWebGL2 } from '@/experience/webgl';
+import Fallback from './Fallback';
+import Loader from './Loader';
 
 const Experience = dynamic(() => import('@/scene/Experience'), { ssr: false });
 
@@ -12,13 +14,31 @@ let decision: boolean | null = null;
 const canRender = () => (decision ??= supportsWebGL2() && !forcedNoWebGL(location.search));
 const noop = () => () => {};
 
-/** Mounts the 3D scene only where WebGL2 is available (the fallback UI arrives with the content). */
-export default function ExperienceGate() {
+/**
+ * Mounts the 3D scene where WebGL2 is available, with the blueprint loader over it; otherwise, or when
+ * the GPU drops the context, the static fallback.
+ */
+export default function ExperienceGate({
+  loaderLabel,
+  fallbackTitle,
+  fallbackBody,
+}: {
+  loaderLabel: string;
+  fallbackTitle: string;
+  fallbackBody: string;
+}) {
   const webgl = useSyncExternalStore(noop, canRender, () => false);
+  const [lost, setLost] = useState(false);
 
   useEffect(() => {
-    experienceStore.getState().setWebgl(canRender());
-  }, []);
+    experienceStore.getState().setWebgl(canRender() && !lost);
+  }, [lost]);
 
-  return webgl ? <Experience /> : null;
+  if (!webgl || lost) return <Fallback title={fallbackTitle} body={fallbackBody} />;
+  return (
+    <>
+      <Experience onContextLost={() => setLost(true)} />
+      <Loader label={loaderLabel} />
+    </>
+  );
 }

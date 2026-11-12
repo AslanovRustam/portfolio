@@ -98,6 +98,14 @@ export function cameraPose(p: number): { position: Vec3; target: Vec3 } {
   return { position: lerp3(a.position, b.position, t), target: lerp3(a.target, b.target, t) };
 }
 
+/**
+ * How far to pull the camera back along its view line on narrow (portrait) screens, so the
+ * horizontal field still holds a full sign: 1 from aspect 0.75 up, growing as the screen narrows.
+ */
+export function fitDistance(aspect: number): number {
+  return Math.max(1, 0.75 / aspect);
+}
+
 /** Frame-rate independent exponential approach; dt is clamped so a returning hidden tab does not jump. */
 export function damp(current: number, target: number, lambda: number, dt: number): number {
   return current + (target - current) * (1 - Math.exp(-lambda * Math.min(dt, 0.1)));

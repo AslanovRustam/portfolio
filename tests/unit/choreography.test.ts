@@ -3,6 +3,7 @@ import {
   activeSection,
   cameraPose,
   damp,
+  fitDistance,
   lightState,
   partReveal,
   poleYaw,
@@ -84,4 +85,13 @@ it('store clamps progress', () => {
   expect(experienceStore.getState().progress).toBe(1);
   experienceStore.getState().setProgress(-1);
   expect(experienceStore.getState().progress).toBe(0);
+});
+
+it('narrow screens pull the camera back so a 1.5 m sign still fits', () => {
+  expect(fitDistance(1.8)).toBe(1);
+  expect(fitDistance(0.75)).toBe(1);
+  expect(fitDistance(0.49)).toBeCloseTo(0.75 / 0.49, 6);
+  // visible width at the WORK pose (d ≈ 4.7 m, fov 35°) covers the sign plus margin on a phone
+  const d = 4.7 * fitDistance(0.49);
+  expect(2 * d * Math.tan((35 * Math.PI) / 360) * 0.49).toBeGreaterThan(2.1);
 });

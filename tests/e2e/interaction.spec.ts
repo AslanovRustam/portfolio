@@ -1,0 +1,44 @@
+import { expect, test } from '@playwright/test';
+import { gotoScene, progress, scrollTo, waitReady } from './helpers';
+
+test('hovering a sign shows a pointer, clicking it scrolls to its section', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.2);
+  await page.waitForTimeout(2000);
+  const { x, y } = (await page.evaluate(() => window.__portfolio.probe('signScreen:work'))) as { x: number; y: number };
+  await page.mouse.move(x, y);
+  await expect.poll(() => page.evaluate(() => document.body.style.cursor)).toBe('pointer');
+  await page.mouse.click(x, y);
+  await expect.poll(() => progress(page), { timeout: 4000 }).toBeCloseTo(0.26, 2);
+});
+
+test('hero is visible at the top and gone after the intro starts', async ({ page }) => {
+  await gotoScene(page);
+  await expect(page.getByRole('heading', { level: 1, name: 'Rustam Aslanov' })).toBeVisible();
+  await scrollTo(page, 0.1);
+  await expect(page.locator('[data-hero]')).toHaveCSS('opacity', '0');
+});
+
+test('loader goes away when the scene is ready', async ({ page }) => {
+  await page.goto('/en');
+  // present while the scene loads (an absent element would pass toBeHidden trivially)
+  await expect(page.locator('[data-loader]')).toHaveCount(1);
+  await expect(page.locator('[data-loader]')).toBeHidden({ timeout: 30_000 });
+});
+
+test('?webgl=0 shows the fallback and no canvas', async ({ page }) => {
+  await page.goto('/en?webgl=0');
+  await expect(page.locator('[data-fallback]')).toBeVisible();
+  await expect(page.locator('canvas')).toHaveCount(0);
+});
+
+// Review Focus 5
+test('context loss swaps to the fallback', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() =>
+    document.querySelector('canvas')!.getContext('webgl2')!.getExtension('WEBGL_lose_context')!.loseContext(),
+  );
+  await expect(page.locator('[data-fallback]')).toBeVisible({ timeout: 5000 });
+});

@@ -1,18 +1,23 @@
 'use client';
 
 import { Text } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import {
   CatmullRomCurve3,
   Color,
   MeshBasicMaterial,
   MeshStandardMaterial,
+  type Group,
   type PointLight,
   TubeGeometry,
   Vector3,
 } from 'three';
+import { damp } from '@/experience/choreography';
 import { POLE, type SignDef } from '@/experience/signs';
+import { experienceStore } from '@/experience/store';
+import { registerProbe } from '@/dev/sceneProbe';
+import { scrollToSection } from '@/scroll/SmoothScroll';
 import EdgesOverlay from '../reveal/EdgesOverlay';
 import { revealUniforms } from '../reveal/registry';
 import { applyReveal } from '../reveal/revealMaterial';
@@ -35,6 +40,7 @@ const FRONT = PLATE.depth / 2 + PLATE.bevel;
 /** Plate centre sits this far in front of the pole axis, on its facing direction. */
 export const MOUNT = POLE.radius + 0.035 + FRONT;
 const NEON_LIGHT = 1.4;
+const HOVER_GLOW = 2.6;
 
 function labelSize(def: SignDef) {
   if (def.shape === 'octagon') return 0.25;
@@ -94,6 +100,11 @@ export default function Sign({ def, mats }: { def: SignDef; mats: Mats }) {
     live.current = own;
   }, [own]);
   const light = useRef<PointLight>(null);
+  const plateGroup = useRef<Group>(null);
+  const glow = useRef(1);
+  const faceGlow = useMemo(() => own.face.emissiveIntensity, [own]);
+  const camera = useThree((s) => s.camera);
+  const size = useThree((s) => s.size);
   const neonBase = useMemo(() => (neon ? new Color(neon).multiplyScalar(3) : null), [neon]);
 
   useEffect(
@@ -103,11 +114,26 @@ export default function Sign({ def, mats }: { def: SignDef; mats: Mats }) {
     [plate, proxy, border, tube, own],
   );
 
-  useFrame((state) => {
+  // where the sign's centre lands on screen (CSS px): lets tests aim the pointer at it
+  useEffect(
+    () =>
+      registerProbe(`signScreen:${def.id}`, () => {
+        const v = new Vector3();
+        plateGroup.current?.getWorldPosition(v);
+        v.project(camera);
+        return { x: ((v.x + 1) / 2) * size.width, y: ((1 - v.y) / 2) * size.height };
+      }),
+    [def.id, camera, size],
+  );
+
+  useFrame((state, dt) => {
+    const hovered = experienceStore.getState().hoveredSign === def.id;
+    glow.current = damp(glow.current, hovered ? HOVER_GLOW : 1, 10, dt);
+    live.current.face.emissiveIntensity = faceGlow * glow.current;
     const on = neonFlicker(u.uReveal.value, state.clock.elapsedTime);
     const m = live.current.neon;
     if (m && neonBase) {
-      m.color.copy(neonBase).multiplyScalar(on);
+      m.color.copy(neonBase).multiplyScalar(on * (0.6 + 0.4 * glow.current));
       m.visible = on > 0;
     }
     if (light.current) light.current.intensity = NEON_LIGHT * on;
@@ -130,8 +156,24 @@ export default function Sign({ def, mats }: { def: SignDef; mats: Mats }) {
           </mesh>
         </group>
       ))}
-      <group position-z={MOUNT} rotation-z={def.tilt}>
-        <mesh geometry={plate} material={[own.face, own.edge, own.edge]} />
+      <group ref={plateGroup} position-z={MOUNT} rotation-z={def.tilt}>
+        <mesh
+          geometry={plate}
+          material={[own.face, own.edge, own.edge]}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            experienceStore.getState().setHoveredSign(def.id);
+            document.body.style.cursor = 'pointer';
+          }}
+          onPointerOut={() => {
+            if (experienceStore.getState().hoveredSign === def.id) experienceStore.getState().setHoveredSign(null);
+            document.body.style.cursor = '';
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            scrollToSection(def.id === 'cv' ? 'contact' : def.id);
+          }}
+        />
         <EdgesOverlay geometry={proxy} part={def.id} threshold={30} />
         {border && own.border && <mesh geometry={border} material={own.border} position-z={FRONT + 0.0015} />}
         <Text
