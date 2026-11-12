@@ -99,6 +99,13 @@ export function signGeometry(def: SignDef): ExtrudeGeometry {
   return g;
 }
 
+/** The same plate without bevels: its hard edges are the sign's blueprint drawing. */
+export function signProxyGeometry(def: SignDef): ExtrudeGeometry {
+  const g = new ExtrudeGeometry(signShape(def), { depth: PLATE.depth + 2 * PLATE.bevel, bevelEnabled: false, curveSegments: 10 });
+  g.center();
+  return g;
+}
+
 /** The painted border ring a road sign carries just inside its edge. */
 export function borderGeometry(def: SignDef): ShapeGeometry {
   const ring = outline(def, 0.025) as Shape;

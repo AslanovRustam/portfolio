@@ -2,7 +2,17 @@
 
 import { useFrame } from '@react-three/fiber';
 import { useLayoutEffect, useMemo, useRef } from 'react';
-import { AdditiveBlending, BufferAttribute, BufferGeometry, Color, type InstancedMesh, Object3D, ShaderMaterial } from 'three';
+import {
+  AdditiveBlending,
+  BufferAttribute,
+  BufferGeometry,
+  Color,
+  type InstancedMesh,
+  type MeshStandardMaterial,
+  Object3D,
+  ShaderMaterial,
+} from 'three';
+import { globalReveal } from '../reveal/registry';
 import { mulberry32 } from './random';
 
 const PALETTE = ['#ffcf8a', '#ffb36b', '#9fd8ff', '#ff3d6e', '#35e0ff', '#ff7a1a', '#fff1d6'].map((c) => new Color(c));
@@ -36,6 +46,7 @@ function layout(seed: number) {
 const bokehVertex = /* glsl */ `
   uniform float uTime;
   uniform float uPixelRatio;
+  uniform float uFade;
   attribute vec3 aColor;
   attribute float aSize;
   attribute float aPhase;
@@ -48,7 +59,7 @@ const bokehVertex = /* glsl */ `
     gl_PointSize = uPixelRatio * aSize * 900.0 / dist;
     vColor = aColor;
     // far lights fade into the night; a slow shimmer keeps the city alive
-    vAlpha = (0.55 + 0.45 * sin(uTime * 0.7 + aPhase)) * smoothstep(70.0, 22.0, dist);
+    vAlpha = (0.55 + 0.45 * sin(uTime * 0.7 + aPhase)) * smoothstep(70.0, 22.0, dist) * uFade;
   }
 `;
 
@@ -68,6 +79,7 @@ const bokehFragment = /* glsl */ `
 export default function Skyline() {
   const { blocks, bokeh } = useMemo(() => layout(7), []);
   const mesh = useRef<InstancedMesh>(null);
+  const blockMat = useRef<MeshStandardMaterial>(null);
 
   const geometry = useMemo(() => {
     const g = new BufferGeometry();
@@ -82,7 +94,7 @@ export default function Skyline() {
       new ShaderMaterial({
         vertexShader: bokehVertex,
         fragmentShader: bokehFragment,
-        uniforms: { uTime: { value: 0 }, uPixelRatio: { value: 1 } },
+        uniforms: { uTime: { value: 0 }, uPixelRatio: { value: 1 }, uFade: { value: 0 } },
         transparent: true,
         depthWrite: false,
         blending: AdditiveBlending,
@@ -105,13 +117,15 @@ export default function Skyline() {
   useFrame((state) => {
     live.current.uniforms.uTime.value = state.clock.elapsedTime;
     live.current.uniforms.uPixelRatio.value = state.gl.getPixelRatio();
+    live.current.uniforms.uFade.value = globalReveal();
+    if (blockMat.current) blockMat.current.opacity = globalReveal();
   });
 
   return (
     <group name="Skyline">
       <instancedMesh ref={mesh} args={[undefined, undefined, blocks.length]}>
         <boxGeometry />
-        <meshStandardMaterial color="#07080c" roughness={0.95} metalness={0} />
+        <meshStandardMaterial ref={blockMat} color="#07080c" roughness={0.95} metalness={0} transparent opacity={0} />
       </instancedMesh>
       <points geometry={geometry} material={material} frustumCulled={false} />
     </group>

@@ -5,6 +5,7 @@ import { useMemo, useRef } from 'react';
 import { AdditiveBlending, BufferAttribute, BufferGeometry, ShaderMaterial } from 'three';
 import { TIER } from '@/experience/quality';
 import { useExperience } from '@/experience/store';
+import { globalReveal } from '../reveal/registry';
 import { mulberry32 } from './random';
 
 const BOX = { x: 14, y: 9, z: 10 };
@@ -26,10 +27,11 @@ const vertex = /* glsl */ `
 `;
 
 const fragment = /* glsl */ `
+  uniform float uFade;
   varying float vFade;
   void main() {
     float d = length(gl_PointCoord - 0.5);
-    float a = smoothstep(0.5, 0.0, d) * 0.35 * vFade;
+    float a = smoothstep(0.5, 0.0, d) * 0.35 * vFade * uFade;
     gl_FragColor = vec4(0.82, 0.86, 1.0, a);
   }
 `;
@@ -55,7 +57,7 @@ export default function Particles() {
       new ShaderMaterial({
         vertexShader: vertex,
         fragmentShader: fragment,
-        uniforms: { uTime: { value: 0 }, uPixelRatio: { value: 1 } },
+        uniforms: { uTime: { value: 0 }, uPixelRatio: { value: 1 }, uFade: { value: 0 } },
         transparent: true,
         depthWrite: false,
         blending: AdditiveBlending,
@@ -67,6 +69,7 @@ export default function Particles() {
   useFrame((state) => {
     ref.current.uniforms.uTime.value = state.clock.elapsedTime;
     ref.current.uniforms.uPixelRatio.value = state.gl.getPixelRatio();
+    ref.current.uniforms.uFade.value = globalReveal();
   });
 
   return <points geometry={geometry} material={material} frustumCulled={false} />;

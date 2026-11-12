@@ -4,15 +4,24 @@ import { Canvas } from '@react-three/fiber';
 import { Suspense } from 'react';
 import { NeutralToneMapping } from 'three';
 import { cameraPose } from '@/experience/choreography';
+import { useExperience } from '@/experience/store';
 import CameraRig from './CameraRig';
 import Lighting from './Lighting';
 import Street from './street/Street';
 import Pole from './pole/Pole';
 import QualityGovernor from './QualityGovernor';
 import Ready from './Ready';
+import Blueprint from './reveal/Blueprint';
+import RevealDriver from './reveal/RevealDriver';
 import PoleStickers from './stickers/PoleStickers';
 
 const start = cameraPose(0);
+
+/** The drawing only exists for the animated intro; reduced motion starts on the finished street. */
+function BlueprintUnlessReduced() {
+  const reduced = useExperience((s) => s.reducedMotion);
+  return reduced ? null : <Blueprint />;
+}
 
 /**
  * The fixed, full-screen 3D layer. It never takes pointer events itself: R3F listens on the
@@ -35,9 +44,11 @@ export default function Experience() {
         <color attach="background" args={['#050507']} />
         <QualityGovernor />
         <CameraRig />
+        <RevealDriver />
         <Suspense fallback={null}>
           <Lighting />
           <Street />
+          <BlueprintUnlessReduced />
           <Pole>
             <PoleStickers />
           </Pole>

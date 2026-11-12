@@ -4,6 +4,8 @@ import { use, useEffect, useMemo, useState } from 'react';
 import { CanvasTexture, CylinderGeometry, SRGBColorSpace } from 'three';
 import { POLE } from '@/experience/signs';
 import { useNightEnv } from '../env';
+import { revealUniforms } from '../reveal/registry';
+import { revealCompile } from '../reveal/revealMaterial';
 import { type AtlasRect, layoutAtlas } from './atlas';
 import { getIcon } from './icons';
 import { type StickerDef, STICKERS } from './stickers';
@@ -118,6 +120,8 @@ export default function PoleStickers() {
   const atlas = useMemo(() => drawAtlas(STICKERS, rects), [rects]);
   const geometries = useMemo(() => STICKERS.map((s, i) => stickerGeometry(s, rects[i])), [rects]);
   const [hovered, setHovered] = useState<string | null>(null);
+  // stickers are part of the pole: they render with it
+  const compile = useMemo(() => revealCompile(revealUniforms('pole')), []);
 
   useEffect(
     () => () => {
@@ -153,6 +157,8 @@ export default function PoleStickers() {
             emissiveIntensity={hovered === s.key ? 1.4 : 0.06}
             polygonOffset
             polygonOffsetFactor={-2}
+            onBeforeCompile={compile}
+            customProgramCacheKey={() => 'reveal'}
           />
         </mesh>
       ))}
