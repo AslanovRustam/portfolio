@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { installTestHooks } from './testHooks';
 
-export default function TestHooks() {
+export default function HooksMount() {
   useEffect(installTestHooks, []);
   return null;
 }

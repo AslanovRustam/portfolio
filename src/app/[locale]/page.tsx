@@ -1,5 +1,5 @@
 import { useTranslations } from 'next-intl';
-import TestHooks from '@/dev/TestHooks';
+import HooksMount from '@/dev/HooksMount';
 import SmoothScroll from '@/scroll/SmoothScroll';
 
 export default function HomePage() {
@@ -7,7 +7,7 @@ export default function HomePage() {
   return (
     <main>
       <SmoothScroll />
-      <TestHooks />
+      <HooksMount />
       <h1>{t('name')}</h1>
       <p>{t('role')}</p>
       {/* the scroll track the whole journey is measured against */}
