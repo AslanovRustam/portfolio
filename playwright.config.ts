@@ -27,30 +27,36 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      testIgnore: /(perf|mobile|shots|prod)\.spec\.ts/,
+      testIgnore: [/(^|[\/])(perf|mobile|shots|prod)\.spec\.ts$/, /_scratch/],
       use: desktop,
     },
     {
       // a phone: touch, a 412 px screen, the low tier, on the real GPU like the desktop runs
       name: 'mobile',
-      testMatch: /mobile\.spec\.ts/,
+      testMatch: /(^|[\/])mobile\.spec\.ts$/,
       use: { ...devices['Pixel 7'], channel: 'chromium', launchOptions: { args: gpuArgs } },
     },
     {
       // frame-rate probe on the integrated GPU, the spec's reference "mid laptop"
       name: 'perf',
-      testMatch: /perf\.spec\.ts/,
+      testMatch: /(^|[\/])perf\.spec\.ts$/,
       use: { ...desktop, launchOptions: { args: [...gpuArgs, '--force_low_power_gpu'] } },
     },
     {
       name: 'shots',
-      testMatch: /shots\.spec\.ts/,
+      testMatch: /(^|[\/])shots\.spec\.ts$/,
+      use: desktop,
+    },
+    {
+      // local look-dev captures (tests/e2e/_scratch, git-ignored)
+      name: 'scratch',
+      testMatch: /_scratch[\/].*\.spec\.ts$/,
       use: desktop,
     },
     {
       // the production build on its own server (test hooks off): run with `npm run prod`
       name: 'prod',
-      testMatch: /prod\.spec\.ts/,
+      testMatch: /(^|[\/])prod\.spec\.ts$/,
       use: { ...desktop, baseURL: 'http://localhost:3300' },
     },
   ],
