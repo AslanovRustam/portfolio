@@ -85,7 +85,7 @@ const CAMERA_KEYS: readonly { p: number; position: Vec3; target: Vec3 }[] = [
   { p: 0.15, position: [1.4, 3.0, 6.2], target: [0, 3.0, 0] },
   { p: 0.26, position: [1.0, 3.4, 4.6], target: [0, 3.4, 0] },
   { p: 0.48, position: [1.0, 2.9, 4.6], target: [0, 2.9, 0] },
-  { p: 0.695, position: [1.0, 3.8, 4.8], target: [0, 3.8, 0] },
+  { p: 0.695, position: [1.0, 3.68, 4.8], target: [0, 3.68, 0] },
   { p: 0.85, position: [0.6, 2.6, 4.8], target: [0, 2.6, 0] },
   { p: 1, position: [0, 4.6, 3.4], target: [0, 4.7, 0] },
 ];

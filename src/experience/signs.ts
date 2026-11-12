@@ -24,14 +24,15 @@ export const POLE = { height: 5.2, radius: 0.06 } as const;
 
 const PI = Math.PI;
 
-/** Initial values from the plan; tuned at the M1 gate. Labels are always English (spec §14.7). CV is a white
- * information plate, not green: green is reserved for the finale's traffic light (spec §3). */
+/** Initial values from the plan; tuned at the M1 gate. Labels are always English (spec §14.7). CV is the
+ * green road-sign square (Rustam's call at the gate). STACK sits low enough that its tilted corner clears
+ * the traffic light's backboard. */
 export const SIGNS: readonly SignDef[] = [
-  { id: 'stack', label: 'STACK', shape: 'octagon', width: 0.9, height: 0.9, y: 3.8, facing: PI, tilt: 0.14, color: '#d8262b', textColor: '#ffffff', border: '#ffffff' },
+  { id: 'stack', label: 'STACK', shape: 'octagon', width: 0.9, height: 0.9, y: 3.68, facing: PI, tilt: 0.14, color: '#d8262b', textColor: '#ffffff', border: '#ffffff' },
   { id: 'work', label: 'WORK', shape: 'arrow', width: 1.5, height: 0.42, y: 3.4, facing: 0, tilt: -0.08, color: '#ff7a1a', textColor: '#111111' },
   { id: 'about', label: 'ABOUT', shape: 'rect', width: 1.4, height: 0.46, y: 2.9, facing: PI / 2, tilt: 0.1, color: '#111111', textColor: '#f4f4f4', border: '#f4f4f4' },
   { id: 'contact', label: 'CONTACT', shape: 'rect', width: 1.5, height: 0.4, y: 2.4, facing: (3 * PI) / 2, tilt: -0.06, color: '#d8262b', textColor: '#ffffff' },
-  { id: 'cv', label: 'CV', shape: 'square', width: 0.5, height: 0.5, y: 1.9, facing: (3 * PI) / 2 + PI / 6, tilt: 0.05, color: '#f2f2ee', textColor: '#111214', border: '#111214' },
+  { id: 'cv', label: 'CV', shape: 'square', width: 0.5, height: 0.5, y: 1.9, facing: (3 * PI) / 2 + PI / 6, tilt: 0.05, color: '#1c7a3c', textColor: '#ffffff', border: '#ffffff' },
 ];
 
 export function signById(id: SignId): SignDef {

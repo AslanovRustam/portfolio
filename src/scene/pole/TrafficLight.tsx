@@ -27,7 +27,7 @@ import { revealUniforms } from '../reveal/registry';
 import { applyReveal } from '../reveal/revealMaterial';
 import { lensIntensity, roundedRectShape } from './geometry';
 import { ledLayout } from './led';
-import { HOUSING, LIGHT_FACING, LIGHT_Y } from './lightMount';
+import { BOARD, HOUSING, LIGHT_FACING, LIGHT_Y } from './lightMount';
 import type { usePoleMaterials } from './materials';
 
 type Mats = ReturnType<typeof usePoleMaterials>;
@@ -40,7 +40,6 @@ const LENSES: readonly { id: Lens; y: number; color: string }[] = [
   { id: 'yellow', y: 0, color: '#ffb31a' },
   { id: 'green', y: -PITCH, color: '#12d65a' },
 ];
-const BOARD = { w: 0.58, h: 1.12, t: 0.012, r: 0.05, rim: 0.032 } as const;
 /** local z, from the pole axis out: bracket → backboard → signal modules → lenses */
 const BOARD_Z = POLE.radius + 0.05 + BOARD.t / 2;
 const MODULE_Z = BOARD_Z + BOARD.t / 2 + 0.002 + MODULE.d / 2;

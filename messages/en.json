@@ -6,7 +6,7 @@
   "hero": {
     "name": "Rustam Aslanov",
     "role": "Front-end engineer",
-    "cue": "Scroll to render"
+    "cue": "Scroll"
   },
   "loader": {
     "label": "Rendering"

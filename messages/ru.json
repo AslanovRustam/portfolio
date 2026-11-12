@@ -6,7 +6,7 @@
   "hero": {
     "name": "Rustam Aslanov",
     "role": "Front-end разработчик",
-    "cue": "Скролль, чтобы отрендерить"
+    "cue": "Скролль"
   },
   "loader": {
     "label": "Рендеринг"
