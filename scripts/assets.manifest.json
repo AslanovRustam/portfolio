@@ -1,0 +1,17 @@
+{
+  "source": "Poly Haven (polyhaven.com), all assets CC0",
+  "hdris": [{ "id": "cobblestone_street_night", "res": "1k", "use": "environment lighting and reflections" }],
+  "textures": [
+    { "id": "asphalt_03", "res": "1k", "maps": ["Diffuse", "nor_gl", "Rough"], "use": "wet street" },
+    { "id": "rusty_painted_metal", "res": "1k", "maps": ["Diffuse", "nor_gl", "arm"], "use": "pole and sign edges, chipped paint" },
+    { "id": "metal_plate_02", "res": "1k", "maps": ["nor_gl", "Rough"], "use": "sign backs, traffic-light housing" }
+  ],
+  "fonts": [
+    { "from": "node_modules/@fontsource/anton/files/anton-latin-400-normal.woff", "to": "Anton-Regular.woff", "license": "OFL" },
+    {
+      "from": "node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff",
+      "to": "JetBrainsMono-Regular.woff",
+      "license": "OFL"
+    }
+  ]
+}
