@@ -24,3 +24,6 @@ playwright-report/
 coverage/
 .DS_Store
 npm-debug.log*
+
+# local look-dev screenshots
+tests/e2e/_scratch/

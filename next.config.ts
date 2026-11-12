@@ -2,6 +2,8 @@ import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const nextConfig: NextConfig = {
+  // the dev badge would sit on top of the 3D scene in every look-dev screenshot
+  devIndicators: false,
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
