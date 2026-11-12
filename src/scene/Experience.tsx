@@ -10,6 +10,8 @@ import Lighting from './Lighting';
 import Street from './street/Street';
 import Pole from './pole/Pole';
 import QualityGovernor from './QualityGovernor';
+import { PerfPanel, PerfProbe } from './DebugPerf';
+import Effects from './Effects';
 import Ready from './Ready';
 import Blueprint from './reveal/Blueprint';
 import RevealDriver from './reveal/RevealDriver';
@@ -37,7 +39,8 @@ export default function Experience() {
         gl={{ antialias: false, powerPreference: 'high-performance' }}
         dpr={1}
         onCreated={({ gl }) => {
-          // Khronos PBR Neutral keeps the neon saturated (AgX washed reds/oranges into pastel)
+          // Khronos PBR Neutral keeps the neon saturated (AgX washed reds/oranges into pastel); while the
+          // EffectComposer runs it takes tone mapping over (Effects.tsx uses the same Neutral curve)
           gl.toneMapping = NeutralToneMapping;
         }}
       >
@@ -45,6 +48,7 @@ export default function Experience() {
         <QualityGovernor />
         <CameraRig />
         <RevealDriver />
+        <PerfProbe />
         <Suspense fallback={null}>
           <Lighting />
           <Street />
@@ -53,8 +57,10 @@ export default function Experience() {
             <PoleStickers />
           </Pole>
           <Ready />
+          <Effects />
         </Suspense>
       </Canvas>
+      <PerfPanel />
     </div>
   );
 }

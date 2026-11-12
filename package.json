@@ -45,7 +45,6 @@
     "@types/three": "0.187.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
-    "r3f-perf": "7.2.3",
     "sharp": "0.35.5",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",

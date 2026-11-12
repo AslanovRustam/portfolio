@@ -41,6 +41,10 @@ it('steps down and detects slow devices', () => {
   expect(slowDevice(Array(120).fill(30))).toBe(true);
 });
 
+it('no tier uses N8AO half-res (its multi-target shim crashes on three 0.187 every frame)', () => {
+  for (const t of Object.values(TIER)) expect(t.aoHalfRes).toBe(false);
+});
+
 it('never exceeds DPR 1.75', () => {
   for (const t of Object.values(TIER)) expect(t.dpr).toBeLessThanOrEqual(1.75);
 });

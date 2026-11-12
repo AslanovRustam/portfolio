@@ -10,11 +10,11 @@ export interface TierSettings {
   particles: number;
 }
 
-/** DPR never above 1.75 (spec §11). */
+/** DPR never above 1.75 (spec §11). N8AO half-res stays off: its multi-target shim throws every frame on three 0.187. */
 export const TIER: Record<Tier, TierSettings> = {
   high: { dpr: 1.75, reflectorResolution: 1024, ao: true, aoHalfRes: false, bloom: true, noise: true, particles: 600 },
-  medium: { dpr: 1.25, reflectorResolution: 512, ao: true, aoHalfRes: true, bloom: true, noise: false, particles: 300 },
-  low: { dpr: 1, reflectorResolution: 256, ao: false, aoHalfRes: true, bloom: true, noise: false, particles: 120 },
+  medium: { dpr: 1.25, reflectorResolution: 512, ao: false, aoHalfRes: false, bloom: true, noise: false, particles: 300 },
+  low: { dpr: 1, reflectorResolution: 256, ao: false, aoHalfRes: false, bloom: true, noise: false, particles: 120 },
 };
 
 export interface DeviceProbe {
