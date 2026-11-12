@@ -17,3 +17,10 @@ examples/
 # test output
 test-results/
 playwright-report/
+
+# misc
+.vercel
+*.pem
+coverage/
+.DS_Store
+npm-debug.log*
