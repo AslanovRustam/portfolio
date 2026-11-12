@@ -9,6 +9,7 @@ import { POLE } from '@/experience/signs';
 import { experienceStore } from '@/experience/store';
 import { registerProbe } from '@/dev/sceneProbe';
 import { lensIntensity } from './geometry';
+import { HOUSING, LIGHT_FACING, LIGHT_Y } from './lightMount';
 import type { usePoleMaterials } from './materials';
 
 type Mats = ReturnType<typeof usePoleMaterials>;
@@ -19,10 +20,6 @@ const LENSES: readonly { id: Lens; y: number; color: string }[] = [
   { id: 'yellow', y: 0, color: '#ffc21a' },
   { id: 'green', y: -0.29, color: '#12d65a' },
 ];
-const HOUSING = { w: 0.36, h: 0.95, d: 0.3 } as const;
-/** Faces the same way as CONTACT, so it looks straight at the camera on the finale. */
-export const LIGHT_FACING = (3 * Math.PI) / 2;
-export const LIGHT_Y = POLE.height - HOUSING.h / 2 - 0.0;
 const Z = POLE.radius + HOUSING.d / 2 + 0.02;
 
 /** A yellow pedestrian-style signal on top of the pole: progress shown as red → yellow → green. */

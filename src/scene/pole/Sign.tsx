@@ -4,7 +4,7 @@ import { Text } from '@react-three/drei';
 import { useEffect, useMemo } from 'react';
 import { CatmullRomCurve3, Color, MeshBasicMaterial, MeshStandardMaterial, TubeGeometry, Vector3 } from 'three';
 import { POLE, type SignDef } from '@/experience/signs';
-import { borderGeometry, neonOutline, PLATE, signGeometry } from './geometry';
+import { bandOffset, borderGeometry, neonOutline, PLATE, signGeometry } from './geometry';
 import type { usePoleMaterials } from './materials';
 
 type Mats = ReturnType<typeof usePoleMaterials>;
@@ -64,7 +64,7 @@ export default function Sign({ def, mats }: { def: SignDef; mats: Mats }) {
     [plate, border, tube, faceMat, borderMat, textMat, neonMat],
   );
 
-  const bandY = Math.max(def.height / 2 - 0.08, 0.06);
+  const bandY = bandOffset(def);
   const labelX = def.shape === 'arrow' ? -def.height * 0.3 : 0;
 
   return (

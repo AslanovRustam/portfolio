@@ -10,6 +10,7 @@ import Street from './street/Street';
 import Pole from './pole/Pole';
 import QualityGovernor from './QualityGovernor';
 import Ready from './Ready';
+import PoleStickers from './stickers/PoleStickers';
 
 const start = cameraPose(0);
 
@@ -37,7 +38,9 @@ export default function Experience() {
         <Suspense fallback={null}>
           <Lighting />
           <Street />
-          <Pole />
+          <Pole>
+            <PoleStickers />
+          </Pole>
           <Ready />
         </Suspense>
       </Canvas>

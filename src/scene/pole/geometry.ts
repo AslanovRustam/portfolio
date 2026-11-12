@@ -123,6 +123,11 @@ export function neonOutline(def: SignDef, inset = 0.012, step = 0.02): Pt[] {
   return out;
 }
 
+/** Clamp bands sit this far above and below a sign's centre. */
+export function bandOffset(def: SignDef): number {
+  return Math.max(def.height / 2 - 0.08, 0.06);
+}
+
 const ON = 6;
 const OFF = 0.05;
 

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoScene, scrollTo } from './helpers';
+import { gotoScene, scrollTo, waitReady } from './helpers';
 
 test('canvas renders, is hidden from AT, becomes ready without console errors', async ({ page }) => {
   const errors: string[] = [];
@@ -17,6 +17,7 @@ test('canvas renders, is hidden from AT, becomes ready without console errors', 
 
 test('camera follows the choreography', async ({ page }) => {
   await gotoScene(page);
+  await waitReady(page);
   await scrollTo(page, 1);
   await page.waitForTimeout(2500);
   const cam = (await page.evaluate(() => window.__portfolio.probe('camera'))) as { position: number[] };
