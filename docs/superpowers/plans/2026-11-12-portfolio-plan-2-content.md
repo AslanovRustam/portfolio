@@ -22,7 +22,7 @@
 - Case overlay URL: `/[locale]/work/[slug]`. Closing it returns to `/[locale]` at the same scroll position.
 - Form secrets (`GMAIL_USER`, `GMAIL_APP_PASSWORD`) live only in `.env.local` and the host env, never in the repo or chat. Tests use `MAIL_TRANSPORT=json`.
 - CV: one English PDF, served in every locale at `/cv/rustam-aslanov-cv.pdf`.
-- Contacts: Telegram `@AslanovRustam` (https://t.me/AslanovRustam), email `aslanovrg@gmail.com`, LinkedIn `https://www.linkedin.com/in/aslanovrustam` (the résumé gives only the handle, so confirm the URL at the M2 gate), GitHub `https://github.com/AslanovRustam`.
+- Contacts (confirmed by Rustam 2026-11-12): Telegram `@AslanovRustam` (https://t.me/AslanovRustam), email `aslanovrg@gmail.com`, LinkedIn https://www.linkedin.com/in/aslanovrustam/, GitHub https://github.com/AslanovRustam.
 - Résumé facts used in copy: sales Mar 2007 – Apr 2021 (Henkel Ukraine, Colgate-Palmolive, Shabo; consultant → Senior Key Account Manager) · GoIT Full Stack Apr 2020 – Apr 2021 · Clickable Agency front-end Jun 2021 – Sep 2023 · GoIT React mentor Oct 2022 – now · Team Lead Sep 2023 – now · Gipper Full Stack Oct 2025 – Aug 2026 · languages UK native, RU fluent, EN B2.
 - Performance guards stay green: prod JS ≤ 1,600,000 bytes (prod.spec), LCP ≤ 2.5 s, 3D asset budget ≤ 6 MB. Panels animate only `opacity`/`transform` from store subscriptions, never per-frame React re-renders.
 - `prefers-reduced-motion`: panels switch without slides (opacity only). The Work track snaps per card instead of gliding.
@@ -286,11 +286,11 @@ The data, exact. Order and featured flags follow spec §6.2. Links:
 | gipper | ✓ | 2025–2026 | site https://www.gipper.com/ | /projects/gipper.webp | commercial |
 | aslanair | ✓ | 2026 | live https://aslanair.vercel.app · repo https://github.com/AslanovRustam/aslanair | /projects/aslanair.webp | — |
 | gengo | ✓ | 2026 | live https://gen-go.ai/ · repo https://github.com/AslanovRustam/Dream-Weaver | /projects/gengo.webp | commercial |
-| moto | ✓ | 2026 | — (private) | null | commercial |
+| moto | ✓ | 2026 | live https://motoagregtor-motoaggregator-tlvw65-032779-2-24-123-177.sslip.io/ (preview deploy; the repo is private) | /projects/moto.webp | commercial |
 | altus | — | 2026 | live https://altus-liard.vercel.app · repo https://github.com/AslanovRustam/altus | /projects/altus.webp | — |
 | aslan-can | — | 2025 | live https://aslan-can.vercel.app | /projects/aslan-can.webp | — |
 | kolir | — | 2026 | live https://www.kolir.agency · repo https://github.com/AslanovRustam/kolir-next | /projects/kolir.webp | commercial |
-| tuti | — | 2026 | — | null | commercial |
+| tuti | — | 2026 | live https://tuti-tau.vercel.app/ | /projects/tuti.webp | commercial |
 | devdigest | — | 2026 | repo https://github.com/AslanovRustam/dev-digest | null | course |
 
 Each project's `stack` is taken from spec §6.2. STACK groups follow spec §6.4. Chips are `label (sticker)`, and the sticker keys come from `src/scene/stickers/stickers.ts`:
@@ -663,7 +663,7 @@ test('contacts and CV are there, also without WebGL', async ({ page }) => { // R
 - [ ] **Step 2: Self-review shots** of each section on desktop 1440×800 and Pixel 7 (scratch look spec), against the anti-goals: text readable over the scene, panels never covering the active sign, no layout jumps, a consistent type scale, the copy free of AI tells.
 - [ ] **Step 3: Gate session.**
   - Show Rustam the dev server (`:3200`, LAN URL for the phone).
-  - Ask for: copy corrections in all three languages, layout, the LinkedIn URL, a TUTI deploy link if one exists (spec §6.2 "уточнить"), and whether the form should go live.
+  - Ask for: copy corrections in all three languages, layout, and whether the form should go live. (Links for Moto, TUTI, LinkedIn, GitHub and Telegram were confirmed on 2026-11-12.)
   - For the live form: Rustam creates a Google App Password himself and puts `GMAIL_USER`, `GMAIL_APP_PASSWORD` into `.env.local`, never in chat. Restart the server and send one real message.
 - [ ] **Step 4: Log each round** in the gate file, apply changes with tests, commit. At most 3 rounds.
 - [ ] **Step 5: On his "yes":** mark the gate passed, update the memory, and write Plan 3 (assets: /brag videos, Gipper recording, photo poster) with superpowers:writing-plans.
