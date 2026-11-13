@@ -24,8 +24,8 @@ export function sectionPresence(p: number, id: SectionId): number {
   return Math.min(fadeIn, fadeOut);
 }
 
-const TRACK_FROM = 0.15 + 0.03;
-const TRACK_TO = 0.37 - 0.05;
+export const TRACK_FROM = 0.15 + 0.03;
+export const TRACK_TO = 0.37 - 0.05;
 
 /** Where the Work card track is (0 = first card, 1 = the last tile) at progress p. */
 export function trackProgress(p: number): number {
