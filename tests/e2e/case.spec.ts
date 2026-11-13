@@ -8,7 +8,7 @@ test('a case opens over the scene, locks scrolling, and closes back to the same 
   const before = await progress(page);
   await page.getByRole('link', { name: /Gipper/ }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('heading', { level: 2 })).toHaveText(/Gipper/);
+  await expect(dialog.getByRole('heading', { level: 2 })).toHaveText(/Gipper/, { timeout: 15_000 }); // dev compiles the case on first use
   await page.mouse.wheel(0, 1500);
   await page.waitForTimeout(600);
   expect(Math.abs((await progress(page)) - before)).toBeLessThan(0.01);

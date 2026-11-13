@@ -37,7 +37,10 @@ async function Case({ params }: Pick<PageProps<'/[locale]/work/[slug]'>, 'params
  */
 export default function CasePage({ params }: PageProps<'/[locale]/work/[slug]'>) {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      // the street dims at once; the case content follows (prerendered, so in production it is instant)
+      fallback={<div data-ui aria-hidden="true" className="fixed inset-0 z-[25] bg-[#050507]/70 backdrop-blur-sm" />}
+    >
       <Case params={params} />
     </Suspense>
   );
