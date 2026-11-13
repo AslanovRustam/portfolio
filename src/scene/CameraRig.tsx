@@ -7,6 +7,7 @@ import { activeSection, cameraPose, damp, fitDistance, reducedCameraPose } from 
 import { frameShift, sectionPresence } from '@/experience/panels';
 import { experienceStore } from '@/experience/store';
 import { registerProbe } from '@/dev/sceneProbe';
+import { onWall } from './tvwall/camera';
 
 const LAMBDA = 3;
 /** how quickly the frame slides aside for a section panel */
@@ -14,7 +15,8 @@ const SHIFT_LAMBDA = 4;
 
 /**
  * Damps the camera toward the choreography's pose for the current scroll progress; on portrait screens
- * it backs off along the same view line (fitDistance) so a whole sign stays in frame. While a section
+ * it backs off along the same view line (fitDistance) so a whole sign stays in frame. Through Work it
+ * travels along the TV wall instead, at a distance that suits the screen's aspect. While a section
  * panel is up, a view offset slides the rendered frame aside so the panel never covers the active sign.
  */
 export default function CameraRig() {
@@ -36,9 +38,10 @@ export default function CameraRig() {
 
   useFrame((_, dt) => {
     const { progress, reducedMotion } = experienceStore.getState();
-    const pose = reducedMotion ? reducedCameraPose(progress) : cameraPose(progress);
+    const base = reducedMotion ? reducedCameraPose(progress) : cameraPose(progress);
     const fit = fitDistance(aspect);
-    for (let i = 0; i < 3; i++) pose.position[i] = pose.target[i] + (pose.position[i] - pose.target[i]) * fit;
+    for (let i = 0; i < 3; i++) base.position[i] = base.target[i] + (base.position[i] - base.target[i]) * fit;
+    const pose = onWall(progress, base, aspect, reducedMotion);
     const k = reducedMotion ? Infinity : LAMBDA;
     const p = camera.position;
     p.set(damp(p.x, pose.position[0], k, dt), damp(p.y, pose.position[1], k, dt), damp(p.z, pose.position[2], k, dt));

@@ -24,7 +24,7 @@ export const TV_MODELS: Record<TvModel, TvModelDef> = {
   tv2: {
     url: '/models/tv/television_02/television_02_1k.gltf',
     size: [0.4, 0.411, 0.35],
-    screen: { center: [-0.005, 0.258], size: [0.33, 0.235], z: 0.1, bulge: 0.022 },
+    screen: { center: [-0.005, 0.255], size: [0.315, 0.22], z: 0.1, bulge: 0.022 },
   },
 };
 

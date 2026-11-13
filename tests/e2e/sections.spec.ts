@@ -49,8 +49,9 @@ test('each section panel shows only inside its window, and the scene steps aside
 test('HTML over a sign swallows the pointer: no sign hover, no sign click', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
-  await scrollTo(page, 0.26);
-  const { x, y } = (await page.evaluate(() => window.__portfolio.probe('signScreen:work'))) as { x: number; y: number };
+  // in Work the camera faces the TV wall; the ABOUT sign faces it in About
+  await scrollTo(page, 0.48);
+  const { x, y } = (await page.evaluate(() => window.__portfolio.probe('signScreen:about'))) as { x: number; y: number };
   await page.evaluate(
     ([px, py]) => {
       const d = document.createElement('div');

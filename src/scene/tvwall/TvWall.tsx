@@ -14,6 +14,7 @@ import {
   Matrix4,
   type Mesh,
   MeshBasicMaterial,
+  type PointLight,
   Object3D,
   PlaneGeometry,
   SRGBColorSpace,
@@ -24,7 +25,8 @@ import { PROJECTS } from '@/content/projects';
 import { registerProbe } from '@/dev/sceneProbe';
 import { activeSection } from '@/experience/choreography';
 import { experienceStore, useExperience } from '@/experience/store';
-import { stopAt } from '@/experience/workStops';
+import { stopAt, wallPosition } from '@/experience/workStops';
+import { WALL_LIGHT } from '../Lighting';
 import { globalReveal } from '../reveal/registry';
 import { overUi } from '../uiPointer';
 import { createCrtMaterial } from './crtMaterial';
@@ -74,7 +76,9 @@ function screenGeometry(model: TvModel): PlaneGeometry {
   for (let i = 0; i < p.count; i++) {
     const nx = p.getX(i) / (size[0] / 2);
     const ny = p.getY(i) / (size[1] / 2);
-    p.setXYZ(i, p.getX(i) + center[0], p.getY(i) + center[1], z + 0.002 + bulge * (1 - nx * nx) * (1 - ny * ny));
+    // a flat-topped bulge, a little proud of the measured glass, so the tube never shows through the picture
+    const dome = (1 - nx ** 4) * (1 - ny ** 4);
+    p.setXYZ(i, p.getX(i) + center[0], p.getY(i) + center[1], z + 0.004 + (bulge + 0.004) * dome);
   }
   g.computeVertexNormals();
   return g;
@@ -92,6 +96,20 @@ function shrink(tex: Texture, max: number, anisotropy: number): CanvasTexture {
   t.colorSpace = SRGBColorSpace;
   t.anisotropy = anisotropy;
   return t;
+}
+
+/** The average colour of a picture: what its screen throws on the sets around it and on the road. */
+function averageColor(tex: Texture): Color {
+  const c = document.createElement('canvas');
+  c.width = c.height = 1;
+  const ctx = c.getContext('2d', { willReadFrequently: true })!;
+  ctx.drawImage(tex.image as CanvasImageSource, 0, 0, 1, 1);
+  const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+  // a little more saturated and never too dark: a screen's spill reads as its hue
+  const color = new Color().setRGB(r / 255, g / 255, b / 255, SRGBColorSpace);
+  const hsl = { h: 0, s: 0, l: 0 };
+  color.getHSL(hsl);
+  return color.setHSL(hsl.h, Math.min(1, hsl.s * 1.3), Math.max(0.45, hsl.l));
 }
 
 /** The last stop's picture: the NDA work, which has no screenshots. */
@@ -160,6 +178,7 @@ export default function TvWall() {
     const aniso = Math.min(4, gl.capabilities.getMaxAnisotropy());
     return [...posters.map((t) => shrink(t, tier === 'high' ? 1024 : 512, aniso)), ndaTexture()];
   }, [posters, tier, gl]);
+  const glow = useMemo(() => [...pictures.slice(0, -1).map(averageColor), new Color('#5a7ac0')], [pictures]);
   const stopMats = useMemo(
     () =>
       STOPS.map((s, i) => {
@@ -227,10 +246,18 @@ export default function TvWall() {
   const onAt = useRef<number | null>(null);
   const levels = useRef<number[]>(STOPS.map(() => 0));
   // what the frame loop writes to each frame (uniforms, instance attributes), kept current with the memos
-  const live = useRef({ stopMats, fillerMats, fillerGeo });
+  const live = useRef({ stopMats, fillerMats, fillerGeo, glow });
   useEffect(() => {
-    live.current = { stopMats, fillerMats, fillerGeo };
-  }, [stopMats, fillerMats, fillerGeo]);
+    live.current = { stopMats, fillerMats, fillerGeo, glow };
+  }, [stopMats, fillerMats, fillerGeo, glow]);
+  // the screen light belongs to the main scene, which may still be loading when the wall arrives
+  const light = useRef<PointLight | null>(null);
+  useEffect(
+    () => () => {
+      if (light.current) light.current.intensity = 0;
+    },
+    [],
+  );
 
   useEffect(() => {
     const v = new Vector3();
@@ -256,7 +283,7 @@ export default function TvWall() {
     if (!inWork) onAt.current = null;
     const sinceOn = onAt.current === null ? null : t - onAt.current;
     const current = stopAt(progress);
-    const { stopMats, fillerMats, fillerGeo } = live.current;
+    const { stopMats, fillerMats, fillerGeo, glow } = live.current;
 
     STOPS.forEach((s, i) => {
       const st = { order: s.order, sinceOn, active: i === current, hovered: hoveredScreen === i, reduced: reducedMotion };
@@ -279,6 +306,20 @@ export default function TvWall() {
       age.needsUpdate = true;
       const lamps = ledRefs.current[m];
       if (lamps) lamps.visible = sinceOn === null;
+    }
+
+    // the current screen lights the sets around it: the light rides along the wall with the camera
+    light.current ??= (state.scene.getObjectByName(WALL_LIGHT) as PointLight | undefined) ?? null;
+    const lamp = light.current;
+    if (lamp) {
+      const s = Math.min(wallPosition(progress), STOPS.length - 1);
+      const i = Math.min(Math.floor(s), STOPS.length - 2);
+      const f = s - i;
+      const a = screenRect(STOPS[i]).center;
+      const b = screenRect(STOPS[i + 1]).center;
+      lamp.position.set(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f + 0.7);
+      lamp.color.copy(glow[current]);
+      lamp.intensity = sinceOn === null ? 0 : 2.4 * Math.min(1, levels.current[current]);
     }
   });
 

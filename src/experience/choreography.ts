@@ -78,7 +78,11 @@ export function reducedYaw(p: number): number {
   return yawFacing(activeSection(p) ?? 'work');
 }
 
-type Vec3 = [number, number, number];
+export type Vec3 = [number, number, number];
+export interface Pose {
+  position: Vec3;
+  target: Vec3;
+}
 const CAMERA_KEYS: readonly { p: number; position: Vec3; target: Vec3 }[] = [
   // the blueprint: raised three-quarter angle, like an axonometric drawing
   { p: 0, position: [2.2, 3.6, 9.2], target: [0, 2.7, 0] },

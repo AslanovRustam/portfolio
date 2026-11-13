@@ -4,7 +4,8 @@ import { gotoScene, progress, scrollTo, waitReady } from './helpers';
 test('hovering a sign shows a pointer, clicking it scrolls to its section', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
-  await scrollTo(page, 0.2);
+  // on the way to the TV wall: the WORK arrow is still in frame, pointing at it
+  await scrollTo(page, 0.165);
   await page.waitForTimeout(2000);
   const { x, y } = (await page.evaluate(() => window.__portfolio.probe('signScreen:work'))) as { x: number; y: number };
   await page.mouse.move(x, y);
