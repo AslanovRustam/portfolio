@@ -1,7 +1,8 @@
 // Downloads the CC0 assets listed in scripts/assets.manifest.json into public/ and copies the OFL fonts.
-// Texture maps are re-encoded to WebP (they would not fit the 6 MB asset budget as JPG). Idempotent.
+// Texture maps are re-encoded to WebP (they would not fit the 6 MB asset budget as JPG). Model textures
+// stay JPEG (their glTF names them) but are shrunk to the manifest's size. Idempotent.
 import { copyFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
@@ -45,6 +46,31 @@ for (const t of manifest.textures) {
     await mkdir(dirname(out), { recursive: true });
     await sharp(await download(src)).webp({ quality: webpQuality(map) }).toFile(out);
     console.log('texture', out);
+  }
+}
+
+for (const m of manifest.models ?? []) {
+  const dir = join(root, 'public/models', m.dir);
+  const g = (await files(m.id)).gltf?.[m.res]?.gltf;
+  if (!g) throw new Error(`${m.id}: no ${m.res} glTF`);
+  const gltfOut = join(dir, basename(new URL(g.url).pathname));
+  if (!(await exists(gltfOut))) {
+    await mkdir(dir, { recursive: true });
+    await writeFile(gltfOut, await download(g.url));
+    console.log('model', gltfOut);
+  }
+  for (const [rel, inc] of Object.entries(g.include ?? {})) {
+    const out = join(dir, rel);
+    if (await exists(out)) continue;
+    await mkdir(dirname(out), { recursive: true });
+    const data = await download(inc.url);
+    if (/\.jpe?g$/i.test(rel))
+      await sharp(data)
+        .resize(m.texture, m.texture, { fit: 'inside' })
+        .jpeg({ quality: rel.includes('nor') ? 90 : 80, mozjpeg: true })
+        .toFile(out);
+    else await writeFile(out, data);
+    console.log('model file', out);
   }
 }
 

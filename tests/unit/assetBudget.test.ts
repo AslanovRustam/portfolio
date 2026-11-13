@@ -10,7 +10,7 @@ const size = (d: string): number =>
   }, 0);
 
 it('3D assets stay within 6 MB', () => {
-  const total = ['public/hdri', 'public/textures', 'public/fonts'].reduce((s, d) => s + size(d), 0);
+  const total = ['public/hdri', 'public/textures', 'public/fonts', 'public/models'].reduce((s, d) => s + size(d), 0);
   expect(total).toBeGreaterThan(0);
   expect(total).toBeLessThanOrEqual(6 * 1024 * 1024);
 });
