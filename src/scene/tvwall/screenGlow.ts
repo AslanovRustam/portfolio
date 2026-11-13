@@ -1,4 +1,5 @@
 import { Color, type Material, MeshLambertMaterial, type MeshStandardMaterial, Vector3 } from 'three';
+import { revealCompile, type RevealUniforms } from '../reveal/revealMaterial';
 
 /**
  * The current screen's light on the TV sets around it, computed in the sets' own shader. A real point
@@ -21,10 +22,13 @@ export function createGlowUniforms(): GlowUniforms {
  * PBR material when `pbr`, otherwise a Lambert one with only its colour map. Close up the bodies fill most
  * of the frame, and on the lighter tiers PBR with normal and ARM maps there cost ~7 ms a frame.
  */
-export function withScreenGlow(source: Material, glow: GlowUniforms, pbr: boolean): Material {
+export function withScreenGlow(source: Material, glow: GlowUniforms, pbr: boolean, reveal: RevealUniforms): Material {
   const pbrSource = source as MeshStandardMaterial;
   const m = pbr ? pbrSource.clone() : new MeshLambertMaterial({ map: pbrSource.map, color: pbrSource.color });
+  const renderOut = revealCompile(reveal);
   m.onBeforeCompile = (shader) => {
+    // the sets render out of the blueprint with the street, then take the screen's glow
+    renderOut(shader);
     Object.assign(shader.uniforms, glow);
     shader.fragmentShader = shader.fragmentShader
       .replace(
@@ -43,6 +47,6 @@ export function withScreenGlow(source: Material, glow: GlowUniforms, pbr: boolea
         }`,
       );
   };
-  m.customProgramCacheKey = () => `tv-screen-glow-${pbr ? 'pbr' : 'lambert'}`;
+  m.customProgramCacheKey = () => `tv-screen-glow-reveal-${pbr ? 'pbr' : 'lambert'}`;
   return m;
 }

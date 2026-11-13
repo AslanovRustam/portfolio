@@ -26,7 +26,8 @@ import { registerProbe } from '@/dev/sceneProbe';
 import { activeSection } from '@/experience/choreography';
 import { experienceStore, useExperience } from '@/experience/store';
 import { stopAt, wallPosition } from '@/experience/workStops';
-import { globalReveal } from '../reveal/registry';
+import { revealUniforms } from '../reveal/registry';
+import { applyReveal } from '../reveal/revealMaterial';
 import { overUi } from '../uiPointer';
 import { createCrtMaterial } from './crtMaterial';
 import { screenRect, stopSlots, TV_MODELS, type TvModel, type TvSlot, wallLayout } from './layout';
@@ -177,13 +178,15 @@ export default function TvWall() {
   const posters = useLoader(ImageLoader, PROJECTS.map((p) => p.poster ?? '/projects/devdigest.webp'));
 
   const glowUniforms = useMemo(() => createGlowUniforms(), []);
+  // the wall is part of the street: it renders out of the blueprint on the street's front
+  const reveal = useMemo(() => revealUniforms('street'), []);
   const bodies = useMemo(() => {
     const body = (root: Object3D) => {
       const mesh = firstMesh(root);
-      return { geometry: mesh.geometry, material: withScreenGlow(mesh.material as Material, glowUniforms, curved) };
+      return { geometry: mesh.geometry, material: withScreenGlow(mesh.material as Material, glowUniforms, curved, reveal) };
     };
     return { tv1: body(tv1.scene), tv2: body(tv2.scene) };
-  }, [tv1, tv2, glowUniforms, curved]);
+  }, [tv1, tv2, glowUniforms, curved, reveal]);
   const screenGeo = useMemo(() => ({ tv1: screenGeometry('tv1'), tv2: screenGeometry('tv2') }), []);
   const pictures = useMemo(() => {
     const aniso = Math.min(4, gl.capabilities.getMaxAnisotropy());
@@ -196,9 +199,9 @@ export default function TvWall() {
     () =>
       STOPS.map((s, i) => {
         const [w, h] = TV_MODELS[s.model].screen.size;
-        return createCrtMaterial({ map: pictures[Math.min(i, pictures.length - 1)], curved, aspect: w / h, seed: i });
+        return createCrtMaterial({ map: pictures[Math.min(i, pictures.length - 1)], curved, aspect: w / h, seed: i, reveal });
       }),
-    [pictures, curved],
+    [pictures, curved, reveal],
   );
   const fillerGeo = useMemo(() => {
     const out = {} as Record<TvModel, PlaneGeometry>;
@@ -218,14 +221,17 @@ export default function TvWall() {
   }, []);
   const fillerMats = useMemo(
     () => ({
-      tv1: createCrtMaterial({ map: null, curved, instanced: true }),
-      tv2: createCrtMaterial({ map: null, curved, instanced: true }),
+      tv1: createCrtMaterial({ map: null, curved, instanced: true, reveal }),
+      tv2: createCrtMaterial({ map: null, curved, instanced: true, reveal }),
     }),
-    [curved],
+    [curved, reveal],
   );
   const led = useMemo(
-    () => ({ geo: new CircleGeometry(0.009, 12), mat: new MeshBasicMaterial({ color: new Color(3, 0.12, 0.06), toneMapped: false }) }),
-    [],
+    () => ({
+      geo: new CircleGeometry(0.009, 12),
+      mat: applyReveal(new MeshBasicMaterial({ color: new Color(3, 0.12, 0.06), toneMapped: false }), reveal),
+    }),
+    [reveal],
   );
 
   const bodyRefs = useRef<Partial<Record<TvModel, InstancedMesh | null>>>({});
@@ -269,7 +275,7 @@ export default function TvWall() {
   useEffect(() => {
     const v = new Vector3();
     return registerProbe('wall', () => ({
-      visible: !!group.current?.visible,
+      revealed: reveal.uReveal.value,
       loaded: true,
       levels: [...levels.current],
       streaks: [...streaks.current],
@@ -278,15 +284,14 @@ export default function TvWall() {
         return { stop: i, ndc: [v.x, v.y] as [number, number] };
       }),
     }));
-  }, [camera]);
+  }, [camera, reveal]);
 
   useFrame((state) => {
     const g = group.current;
     if (!g) return;
     const { progress, reducedMotion, hoveredScreen } = experienceStore.getState();
     const t = state.clock.elapsedTime;
-    g.visible = globalReveal() >= 0.999;
-    const inWork = g.visible && activeSection(progress) === 'work';
+    const inWork = reveal.uReveal.value >= 0.999 && activeSection(progress) === 'work';
     if (inWork && onAt.current === null) onAt.current = t;
     if (!inWork) onAt.current = null;
     const sinceOn = onAt.current === null ? null : t - onAt.current;
@@ -328,7 +333,7 @@ export default function TvWall() {
     glowUniforms.uGlowPower.value = sinceOn === null ? 0 : 2.4 * Math.min(1, levels.current[current]);
   });
 
-  const lit = () => !!group.current?.visible && activeSection(experienceStore.getState().progress) === 'work';
+  const lit = () => reveal.uReveal.value >= 0.999 && activeSection(experienceStore.getState().progress) === 'work';
   const handlers = (i: number) => ({
     onPointerOver: (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
@@ -348,7 +353,7 @@ export default function TvWall() {
   });
 
   return (
-    <group ref={group} name="tv-wall" visible={false}>
+    <group ref={group} name="tv-wall">
       {MODELS.map((m) => {
         const count = LAYOUT.filter((s) => s.model === m).length;
         return (

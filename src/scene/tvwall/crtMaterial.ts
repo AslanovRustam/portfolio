@@ -1,4 +1,5 @@
 import { ShaderMaterial, type Texture, Vector2 } from 'three';
+import { REVEAL_PARS, revealFront, type RevealUniforms } from '../reveal/revealMaterial';
 
 /**
  * The picture on an old CRT: the poster (or a filler pattern), bent by the tube's barrel, with
@@ -13,6 +14,7 @@ const vertex = (instanced: boolean) => /* glsl */ `
   varying float vAge;
   varying float vPattern;
   varying float vSeed;
+  varying vec3 vRevealWorld;
   ${
     instanced
       ? 'attribute float aLevel; attribute float aAge; attribute float aPattern; attribute float aSeed;'
@@ -27,6 +29,7 @@ const vertex = (instanced: boolean) => /* glsl */ `
     }
     vec4 p = vec4(position, 1.0);
     ${instanced ? 'p = instanceMatrix * p;' : ''}
+    vRevealWorld = (modelMatrix * p).xyz;
     gl_Position = projectionMatrix * modelViewMatrix * p;
   }
 `;
@@ -43,6 +46,7 @@ const fragment = /* glsl */ `
   varying float vAge;
   varying float vPattern;
   varying float vSeed;
+  ${REVEAL_PARS}
 
   float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 
@@ -77,6 +81,7 @@ const fragment = /* glsl */ `
   }
 
   void main() {
+    ${revealFront(false)}
     vec2 c = vUv - 0.5;
     vec2 uv = 0.5 + c * (1.0 + uCurve * dot(c, c));
     float inside = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
@@ -100,7 +105,7 @@ const fragment = /* glsl */ `
     vec3 lit = col * min(level, 1.0) * 1.6 + vec3(max(level - 1.0, 0.0) * 1.4);
     lit = lit * rows + vec3(line) * step(0.0, vAge) * step(0.001, level);
     vec3 outCol = level > 0.001 ? mix(glass, lit, inside) : glass;
-    gl_FragColor = vec4(outCol, 1.0);
+    gl_FragColor = vec4(outCol + uEdge * 3.0 * revealBand, 1.0);
     #include <colorspace_fragment>
   }
 `;
@@ -116,6 +121,8 @@ export interface CrtOptions {
   /** picture aspect (w/h) of the screen, to cover-crop the map */
   aspect?: number;
   seed?: number;
+  /** the street's blueprint → render front, which the screens render out of with their sets */
+  reveal: RevealUniforms;
 }
 
 export function createCrtMaterial(o: CrtOptions): ShaderMaterial {
@@ -128,6 +135,7 @@ export function createCrtMaterial(o: CrtOptions): ShaderMaterial {
     vertexShader: vertex(!!o.instanced),
     fragmentShader: fragment,
     uniforms: {
+      ...o.reveal,
       uMap: { value: o.map },
       uHasMap: { value: o.map ? 1 : 0 },
       uTime: { value: 0 },

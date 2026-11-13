@@ -2,7 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { gotoScene, scrollTo, waitReady } from './helpers';
 
 interface Wall {
-  visible: boolean;
+  /** how far the street's blueprint → render front has passed over the sets, 0..1 */
+  revealed: number;
   loaded: boolean;
   levels: number[];
   streaks: number[];
@@ -10,12 +11,16 @@ interface Wall {
 }
 const wall = (page: Page) => page.evaluate(() => window.__portfolio.probe('wall') as Wall | undefined);
 
-test('the wall is off on the blueprint, wakes in Work and sleeps after it', async ({ page }) => {
+test('the wall renders out of the blueprint with the street, wakes in Work and sleeps after it', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
   await expect.poll(async () => (await wall(page))?.loaded, { timeout: 20_000 }).toBe(true);
   await scrollTo(page, 0.05);
-  expect((await wall(page))!.visible).toBe(false);
+  expect((await wall(page))!.revealed).toBe(0);
+  // mid-intro the sets dissolve in with the road, not at the end of it
+  await scrollTo(page, 0.125);
+  await expect.poll(async () => (await wall(page))!.revealed).toBeGreaterThan(0.3);
+  expect((await wall(page))!.revealed).toBeLessThan(1);
   await scrollTo(page, 0.18);
   await expect.poll(async () => (await wall(page))!.levels[0], { timeout: 8000 }).toBeCloseTo(1, 1);
   // the wave reaches the fourth project a moment later
