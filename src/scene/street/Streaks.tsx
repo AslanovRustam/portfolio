@@ -19,7 +19,7 @@ import { mulberry32 } from './random';
  * One streak, drawn once: brightest under the light (canvas top = far end), fading toward the viewer,
  * soft across, broken into the fine wavering lines that ripples on a wet road make.
  */
-function streakTexture(): CanvasTexture {
+export function streakTexture(): CanvasTexture {
   const W = 64;
   const H = 256;
   const c = document.createElement('canvas');

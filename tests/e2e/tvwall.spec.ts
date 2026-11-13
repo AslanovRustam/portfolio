@@ -5,6 +5,7 @@ interface Wall {
   visible: boolean;
   loaded: boolean;
   levels: number[];
+  streaks: number[];
   stops: { stop: number; ndc: [number, number] }[];
 }
 const wall = (page: Page) => page.evaluate(() => window.__portfolio.probe('wall') as Wall | undefined);
@@ -19,8 +20,10 @@ test('the wall is off on the blueprint, wakes in Work and sleeps after it', asyn
   await expect.poll(async () => (await wall(page))!.levels[0], { timeout: 8000 }).toBeCloseTo(1, 1);
   // the wave reaches the fourth project a moment later
   await expect.poll(async () => (await wall(page))!.levels[3], { timeout: 4000 }).toBeCloseTo(0.25, 1);
+  expect(Math.max(...(await wall(page))!.streaks)).toBeGreaterThan(0); // the lit wall glows on the road
   await scrollTo(page, 0.48);
   await expect.poll(async () => Math.max(...(await wall(page))!.levels)).toBe(0);
+  expect(Math.max(...(await wall(page))!.streaks)).toBe(0);
 });
 
 // Review Focus 3

@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { WORK_STOPS } from '@/experience/workStops';
-import { screenRect, stopSlots, TV_MODELS, type TvSlot, WALL, wallLayout } from '@/scene/tvwall/layout';
+import { screenRect, stopSlots, TV_MODELS, type TvSlot, WALL, wallLayout, wallStreaks } from '@/scene/tvwall/layout';
 
 const layout = wallLayout(7);
 const stops = stopSlots(layout);
@@ -39,4 +39,15 @@ it('a stacked wall right of the pole: no overlaps, fillers around the stops', ()
 
 it('the layout is deterministic', () => {
   expect(wallLayout(7)).toEqual(layout);
+});
+
+it('each lit screen throws one streak on the road, toward the viewer', () => {
+  const s = wallStreaks(layout);
+  expect(s.map((x) => x.stop)).toEqual([...Array(WORK_STOPS).keys()]);
+  s.forEach((x, i) => {
+    expect(x.x).toBeCloseTo(screenRect(stops[i]).center[0], 3);
+    expect(x.h).toBeCloseTo(screenRect(stops[i]).center[1], 3);
+    expect(x.zFar).toBeLessThanOrEqual(WALL.z + 0.1);
+    expect(x.length).toBeGreaterThan(1);
+  });
 });

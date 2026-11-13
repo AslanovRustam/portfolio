@@ -113,3 +113,26 @@ export function stopSlots(layout: TvSlot[]): TvSlot[] {
     .filter((s): s is TvSlot & { content: { kind: 'stop'; stop: number } } => s.content.kind === 'stop')
     .sort((a, b) => a.content.stop - b.content.stop);
 }
+
+export interface WallStreak {
+  stop: number;
+  /** the screen's centre: x, height above the road */
+  x: number;
+  h: number;
+  /** the far end of the streak, under the set */
+  zFar: number;
+  /** longest it may get, and how wide (the screen's width) */
+  length: number;
+  width: number;
+}
+
+/**
+ * One reflection per project screen on the wet road, laid like the street lamps' (streakPlacement):
+ * from under the set toward the viewer, as wide as the screen.
+ */
+export function wallStreaks(layout: TvSlot[]): WallStreak[] {
+  return stopSlots(layout).map((s, stop) => {
+    const r = screenRect(s);
+    return { stop, x: r.center[0], h: r.center[1], zFar: s.position[2], length: 2.6, width: r.width * 0.9 };
+  });
+}

@@ -32,6 +32,7 @@ import { overUi } from '../uiPointer';
 import { createCrtMaterial } from './crtMaterial';
 import { screenRect, stopSlots, TV_MODELS, type TvModel, type TvSlot, wallLayout } from './layout';
 import { screenAge, screenLevel } from './power';
+import WallStreaks from './WallStreaks';
 
 const LAYOUT = wallLayout();
 const STOPS = stopSlots(LAYOUT);
@@ -245,6 +246,7 @@ export default function TvWall() {
 
   const onAt = useRef<number | null>(null);
   const levels = useRef<number[]>(STOPS.map(() => 0));
+  const streaks = useRef<number[]>(STOPS.map(() => 0));
   // what the frame loop writes to each frame (uniforms, instance attributes), kept current with the memos
   const live = useRef({ stopMats, fillerMats, fillerGeo, glow });
   useEffect(() => {
@@ -265,6 +267,7 @@ export default function TvWall() {
       visible: !!group.current?.visible,
       loaded: true,
       levels: [...levels.current],
+      streaks: [...streaks.current],
       stops: STOPS.map((s, i) => {
         v.set(...screenRect(s).center).project(camera);
         return { stop: i, ndc: [v.x, v.y] as [number, number] };
@@ -369,6 +372,7 @@ export default function TvWall() {
           </group>
         );
       })}
+      <WallStreaks levels={levels} glow={glow} out={streaks} />
       {STOPS.map((s, i) => (
         <mesh
           key={i}
