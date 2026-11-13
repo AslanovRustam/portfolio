@@ -113,3 +113,8 @@ it('reduced motion: the camera holds one pose per section', () => {
   expect(reducedCameraPose(0.36)).toEqual(cameraPose(0.26));
   expect(reducedCameraPose(0.95)).toEqual(cameraPose(0.9));
 });
+
+it('an instant damp (reduced motion) lands on the target even on a zero-length frame', () => {
+  expect(damp(1, 2, Infinity, 0)).toBe(2);
+  expect(damp(1, 2, Infinity, 0.016)).toBe(2);
+});

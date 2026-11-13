@@ -51,11 +51,11 @@ export default function SectionPanel({
 
     // Content taller than the sheet scrolls natively inside it; otherwise the wheel keeps driving the
     // journey through Lenis.
-    // While more of it is below the fold, the bottom edge fades out (data-more) as a cue to scroll.
+    // Content taller than the sheet scrolls inside it (Lenis allowNestedScroll hands the wheel back to
+    // the journey at its end). While more is below, the bottom edge fades out (data-more) as a cue.
     const body = el.firstElementChild as HTMLElement | null;
     const fit = () => {
       if (!body) return;
-      body.toggleAttribute('data-lenis-prevent', body.scrollHeight > body.clientHeight + 1);
       body.toggleAttribute('data-more', body.scrollTop + body.clientHeight < body.scrollHeight - 2);
     };
     const ro = new ResizeObserver(fit);

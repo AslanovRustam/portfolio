@@ -17,7 +17,14 @@ export async function sendContactMail(data: ContactData): Promise<'sent' | 'conf
 
   const transport = json
     ? nodemailer.createTransport({ jsonTransport: true })
-    : nodemailer.createTransport({ service: 'gmail', auth: { user, pass } });
+    : nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user, pass },
+        // fail in seconds, not minutes, so the form can offer email and Telegram instead
+        connectionTimeout: 10_000,
+        greetingTimeout: 10_000,
+        socketTimeout: 15_000,
+      });
   const inbox = json ? 'portfolio@example.invalid' : (process.env.CONTACT_TO || user!);
   const name = oneLine(data.name);
 

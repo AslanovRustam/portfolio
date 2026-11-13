@@ -19,7 +19,7 @@ test('header nav scrolls to a section and the language switch keeps the path', a
   await page.getByRole('button', { name: 'About' }).click();
   await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(0.48, 1);
   await page.getByRole('link', { name: 'RU', exact: true }).click();
-  await expect(page).toHaveURL(/\/ru$/);
+  await expect(page).toHaveURL(/\/ru(#about)?$/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
 });
 
@@ -106,4 +106,32 @@ test('hovering a stack chip lights its sticker on the pole', async ({ page }) =>
   await expect.poll(() => page.evaluate(() => window.__portfolio.probe('stickerGlow'))).toBe('react');
   await page.mouse.move(5, 5);
   await expect.poll(() => page.evaluate(() => window.__portfolio.probe('stickerGlow'))).toBeNull();
+});
+
+// final review: switching language mid-journey must not throw the visitor back to the blueprint
+test('switching language keeps the visitor at the same section', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await page.getByRole('button', { name: 'About' }).click();
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(0.48, 1);
+  await page.getByRole('link', { name: 'RU', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+  await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 30_000 }).toBeGreaterThan(2000);
+  await page.mouse.wheel(0, 100);
+  await page.waitForTimeout(800);
+  expect(await progress(page)).toBeCloseTo(0.48, 1);
+});
+
+// final review: a panel taller than its sheet must not trap the wheel
+test('the wheel over a long panel scrolls it, then carries on along the street', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.42);
+  const box = (await page.locator('section#about').boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  for (let i = 0; i < 25; i++) {
+    await page.mouse.wheel(0, 400);
+    await page.waitForTimeout(60);
+  }
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeGreaterThan(0.5);
 });

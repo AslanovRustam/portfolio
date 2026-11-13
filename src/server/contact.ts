@@ -30,20 +30,24 @@ const MIN_FILL_MS = 3000;
 /**
  * Sorts a submission: a filled honeypot is a bot; then invalid fields are named (so an impatient
  * person who sends an empty form sees what to fix); then a form sent faster than a human could fill
- * it is a bot too.
+ * it is a bot too. The fill time is measured in the browser (elapsed ms since the form mounted), so
+ * clock skew cannot drop a real message, and a post without it (no script ran) counts as a bot.
  */
-export function screenSubmission(
-  raw: { name: string; email: string; message: string; company: string; startedAt: string },
-  now: number,
-):
+export function screenSubmission(raw: {
+  name: string;
+  email: string;
+  message: string;
+  trap: string;
+  elapsed: string;
+}):
   | { verdict: 'ok'; data: ContactData }
   | { verdict: 'spam' }
   | { verdict: 'invalid'; fields: Partial<Record<ContactField, true>> } {
-  if (raw.company.trim() !== '') return { verdict: 'spam' };
+  if (raw.trap.trim() !== '') return { verdict: 'spam' };
   const parsed = contactSchema.safeParse(raw);
   if (!parsed.success) return { verdict: 'invalid', fields: invalidFields(raw)! };
-  const started = Number(raw.startedAt);
-  if (!Number.isFinite(started) || now - started < MIN_FILL_MS) return { verdict: 'spam' };
+  const elapsed = raw.elapsed.trim() === '' ? Number.NaN : Number(raw.elapsed);
+  if (!Number.isFinite(elapsed) || elapsed < MIN_FILL_MS) return { verdict: 'spam' };
   return { verdict: 'ok', data: parsed.data };
 }
 

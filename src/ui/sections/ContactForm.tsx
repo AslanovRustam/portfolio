@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useActionState, useEffect, useRef, useState } from 'react';
+import { startTransition, useActionState, useEffect, useRef, useState } from 'react';
 import { submitContact } from '@/app/[locale]/(site)/actions';
 import { CONTACTS } from '@/content/contacts';
 import { experienceStore } from '@/experience/store';
@@ -22,18 +22,27 @@ const input =
  */
 export default function ContactForm() {
   const t = useTranslations('contact');
-  const [state, action, pending] = useActionState<ContactResult, FormData>(submitContact, { status: 'idle' });
+  // a request that never reaches the action (offline, a redeploy, a timeout) rejects; that must show
+  // the email/Telegram fallback, not take the whole page down
+  const [state, action, pending] = useActionState<ContactResult, FormData>(async (prev, data) => {
+    try {
+      return await submitContact(prev, data);
+    } catch {
+      return { status: 'error' };
+    }
+  }, { status: 'idle' });
   const [local, setLocal] = useState<Partial<Record<ContactField, true>> | null>(null);
-  const started = useRef<HTMLInputElement>(null);
+  const form = useRef<HTMLFormElement>(null);
+  const mounted = useRef(0);
 
-  // when the visitor started filling the form in (the server rejects inhumanly fast sends);
-  // set as the default value so React's reset after a successful send keeps it
+  // the fill time is measured here, as elapsed time, so a skewed device clock cannot matter
   useEffect(() => {
-    if (started.current) started.current.defaultValue = String(Date.now());
+    mounted.current = performance.now();
   }, []);
 
   useEffect(() => {
     if (state.status !== 'sent') return;
+    form.current?.reset(); // only a sent message clears the form; any other answer keeps the text
     experienceStore.getState().setCelebrate(true);
     const stop = setTimeout(() => experienceStore.getState().setCelebrate(false), 2000);
     return () => clearTimeout(stop);
@@ -43,13 +52,17 @@ export default function ContactForm() {
 
   return (
     <form
-      action={action}
+      ref={form}
       noValidate
       onSubmit={(e) => {
-        const data = Object.fromEntries(new FormData(e.currentTarget));
-        const bad = invalidFields(data);
+        // dispatched by hand: a form action would reset the fields whatever the answer was
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        const bad = invalidFields(Object.fromEntries(data));
         setLocal(bad);
-        if (bad) e.preventDefault();
+        if (bad) return;
+        data.set('elapsed', String(Math.round(performance.now() - mounted.current)));
+        startTransition(() => action(data));
       }}
       className="space-y-3"
     >
@@ -83,14 +96,21 @@ export default function ContactForm() {
           </div>
         );
       })}
-      {/* a field people never see; bots fill it in */}
-      <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+      {/* a field people never see and autofill has no profile for; bots fill it in */}
+      <div aria-hidden="true" className="absolute left-[-9999px] h-px w-px overflow-hidden">
         <label>
-          Company
-          <input name="company" tabIndex={-1} autoComplete="off" />
+          Leave empty
+          <input
+            name="hp_note"
+            tabIndex={-1}
+            autoComplete="off"
+            data-1p-ignore=""
+            data-lpignore="true"
+            data-bwignore=""
+            data-form-type="other"
+          />
         </label>
       </div>
-      <input ref={started} type="hidden" name="startedAt" />
       <div className="flex flex-wrap items-center gap-4">
         <button
           type="submit"

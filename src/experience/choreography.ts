@@ -125,5 +125,7 @@ export function fitDistance(aspect: number): number {
 
 /** Frame-rate independent exponential approach; dt is clamped so a returning hidden tab does not jump. */
 export function damp(current: number, target: number, lambda: number, dt: number): number {
+  // an infinite rate means "jump" (reduced motion); Infinity × a zero-length frame would be NaN
+  if (lambda === Infinity) return target;
   return current + (target - current) * (1 - Math.exp(-lambda * Math.min(dt, 0.1)));
 }

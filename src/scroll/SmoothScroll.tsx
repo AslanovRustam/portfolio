@@ -56,11 +56,13 @@ export default function SmoothScroll() {
     // a reload always starts at the blueprint, never half-rendered
     history.scrollRestoration = 'manual';
     window.scrollTo(0, 0);
+    experienceStore.getState().setProgress(0); // a remount (language switch) must not keep the old spot
     ScrollTrigger.clearScrollMemory('manual');
     // the mobile address bar collapsing must not re-measure the journey mid-swipe
     ScrollTrigger.config({ ignoreMobileResize: true });
 
-    const instance = new Lenis({ autoRaf: false });
+    // a panel taller than its sheet scrolls natively, then the wheel carries on along the journey
+    const instance = new Lenis({ autoRaf: false, allowNestedScroll: true });
     lenis = instance;
     if (locked) instance.stop(); // a case opened by a direct link locked the page before Lenis existed
     const raf = (time: number) => instance.raf(time * 1000);

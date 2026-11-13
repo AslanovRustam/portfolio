@@ -30,6 +30,10 @@ export default function Ready() {
     );
     return () => {
       alive = false;
+      // a remounted scene (e.g. after a language switch) starts unready, so the loader covers it again
+      frames.current = 0;
+      compiled.current = false;
+      experienceStore.getState().setReady(false);
     };
   }, [gl, scene, camera]);
 

@@ -7,26 +7,31 @@ const ok = {
   name: 'Ann',
   email: 'ann@example.com',
   message: 'Hello, I have a role for you.',
-  company: '',
-  startedAt: String(now - 10_000),
+  trap: '',
+  elapsed: '10000',
 };
 
 afterEach(() => vi.unstubAllEnvs());
 
 it('accepts a real message, trimmed', () => {
-  expect(screenSubmission({ ...ok, name: '  Ann ' }, now)).toEqual({
+  expect(screenSubmission({ ...ok, name: '  Ann ' })).toEqual({
     verdict: 'ok',
     data: { name: 'Ann', email: 'ann@example.com', message: ok.message },
   });
 });
 
 it('flags bots: honeypot or too fast', () => {
-  expect(screenSubmission({ ...ok, company: 'ACME' }, now).verdict).toBe('spam');
-  expect(screenSubmission({ ...ok, startedAt: String(now - 1000) }, now).verdict).toBe('spam');
+  expect(screenSubmission({ ...ok, trap: 'ACME' }).verdict).toBe('spam');
+  expect(screenSubmission({ ...ok, elapsed: '1000' }).verdict).toBe('spam');
+});
+
+it('a post without a fill time (no JS ran, so the form was never filled by a person) is spam', () => {
+  expect(screenSubmission({ ...ok, elapsed: '' }).verdict).toBe('spam');
+  expect(screenSubmission({ ...ok, elapsed: 'soon' }).verdict).toBe('spam');
 });
 
 it('names the invalid fields', () => {
-  expect(screenSubmission({ ...ok, email: 'nope', message: 'hi' }, now)).toEqual({
+  expect(screenSubmission({ ...ok, email: 'nope', message: 'hi' })).toEqual({
     verdict: 'invalid',
     fields: { email: true, message: true },
   });
