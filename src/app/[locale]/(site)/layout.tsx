@@ -33,7 +33,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <main className="relative z-10">
         <SmoothScroll />
         <HooksMount />
-        <Hero name={t('hero.name')} role={t('hero.role')} cue={t('hero.cue')} />
+        <Hero name={t('hero.name')} role={t('hero.role')} line={t('hero.line')} cue={t('hero.cue')} />
         {/* the scroll track the whole journey is measured against; clicks pass through to the scene */}
         <div id="journey" className="pointer-events-none" style={{ height: '1100svh' }} />
         <SectionPanel id="work" layout="bottom" labelledBy="work-title">

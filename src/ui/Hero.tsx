@@ -8,7 +8,7 @@ import { experienceStore } from '@/experience/store';
  * stamp of a technical drawing. It is server-rendered (the page's largest paint) and fades away as the
  * first scroll starts rendering the scene.
  */
-export default function Hero({ name, role, cue }: { name: string; role: string; cue: string }) {
+export default function Hero({ name, role, line, cue }: { name: string; role: string; line: string; cue: string }) {
   const block = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -39,6 +39,7 @@ export default function Hero({ name, role, cue }: { name: string; role: string; 
             {cue} <span aria-hidden="true">↓</span>
           </p>
         </div>
+        <p className="max-w-[60ch] border-t border-[#7fe3ff]/60 px-4 py-2 text-xs text-[#e8f7ff]/80 sm:text-sm">{line}</p>
       </div>
     </header>
   );

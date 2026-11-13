@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import en from '../../messages/en.json';
 import { gotoScene, progress, scrollTo, waitReady } from './helpers';
 
 test('a case URL renders inside the same experience', async ({ page }) => {
@@ -79,4 +80,9 @@ test('a hash deep link opens its section, also without WebGL', async ({ page }) 
   await page.waitForFunction(() => !!window.__portfolio);
   await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(0.695, 1);
   await expect(page.locator('section#stack')).toBeVisible();
+});
+
+test('the hero carries the positioning line', async ({ page }) => {
+  await gotoScene(page);
+  await expect(page.locator('header[data-hero]')).toContainText(en.hero.line);
 });

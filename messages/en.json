@@ -6,7 +6,8 @@
   "hero": {
     "name": "Rustam Aslanov",
     "role": "Front-end engineer",
-    "cue": "Scroll"
+    "cue": "Scroll",
+    "line": "Five years of React and Next.js. I lead a front-end team and teach React at GoIT."
   },
   "loader": {
     "label": "Rendering"
@@ -24,15 +25,162 @@
     "language": "Language"
   },
   "work": {
-    "title": "Selected work"
+    "title": "Selected work",
+    "lead": "Commercial products and my own projects. Open a card to see the task, what I built and the stack.",
+    "more": "This is only a small part of the projects I’ve worked on.",
+    "ndaTitle": "Under NDA",
+    "nda": {
+      "port": "CRM for port management: moved the app from React 16 to React 19",
+      "safety": "Platform for industrial safety and staff training",
+      "social": "Social network for architects",
+      "architecture": "Website for an architecture agency"
+    },
+    "open": "Open case",
+    "live": "Live site",
+    "repo": "Source code",
+    "site": "Product site",
+    "course": "Course project",
+    "commercial": "Commercial",
+    "private": "Private repo"
   },
   "about": {
-    "title": "About"
+    "title": "About",
+    "lead": "Front-end developer for five years, team lead since 2023, React mentor at GoIT since 2022. Before code, 14 years in sales.",
+    "story": "I spent 14 years in sales, from consultant to Senior Key Account Manager at Henkel, Colgate-Palmolive and Shabo. In 2020 I started the Full Stack course at GoIT, and in 2021 I joined Clickable Agency as a front-end developer. Two years later I was leading the team: estimates, code review, a development plan for each developer, calls with clients. From sales I kept the habit of asking what the client needs before I write any code.",
+    "timelineTitle": "Path",
+    "timeline": {
+      "sales": {
+        "years": "2007–2021",
+        "what": "Sales at Henkel, Colgate-Palmolive and Shabo, from consultant to Senior Key Account Manager"
+      },
+      "goit": {
+        "years": "2020–2021",
+        "what": "Full Stack course at GoIT"
+      },
+      "clickable": {
+        "years": "2021–2023",
+        "what": "Front-end developer at Clickable Agency"
+      },
+      "mentor": {
+        "years": "Since 2022",
+        "what": "React mentor at GoIT"
+      },
+      "lead": {
+        "years": "Since 2023",
+        "what": "Team lead at Clickable Agency"
+      },
+      "gipper": {
+        "years": "2025–2026",
+        "what": "Full stack developer at Gipper"
+      }
+    },
+    "langsTitle": "Languages",
+    "langs": "Ukrainian (native), Russian (fluent), English (B2)",
+    "how": "I use Claude, Cursor and ChatGPT every day to speed up development, and n8n to automate routine work."
   },
   "stack": {
-    "title": "Stack"
+    "title": "Stack",
+    "lead": "The tools I work with. Point at one and its sticker lights up on the pole.",
+    "groups": {
+      "frontend": "Front-end",
+      "state": "State",
+      "motion": "3D, motion and canvas",
+      "backend": "Back-end basics and CMS",
+      "tools": "Tools",
+      "ai": "AI"
+    }
   },
   "contact": {
-    "title": "Let’s go"
+    "title": "Let’s go",
+    "lead": "Tell me about a role or a project. The form sends straight to my email, and Telegram works too.",
+    "name": "Name",
+    "email": "Email",
+    "message": "Message",
+    "send": "Send",
+    "sending": "Sending…",
+    "sent": "Sent. Thanks, I’ll reply to the email you left.",
+    "invalid": "Check the highlighted fields.",
+    "rate": "Too many messages in a short time. Try again in ten minutes or write in Telegram.",
+    "config": "The form isn’t connected yet.",
+    "error": "The message didn’t go through.",
+    "fallback": "Write to me directly:",
+    "telegram": "Telegram",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "copyEmail": "Copy email",
+    "copied": "Email copied",
+    "cv": "Download CV",
+    "errors": {
+      "name": "Enter a name, 2 to 80 characters.",
+      "email": "Enter a valid email.",
+      "message": "Write 10 to 4000 characters."
+    }
+  },
+  "projects": {
+    "gipper": {
+      "title": "Gipper",
+      "kind": "Canvas graphics editor",
+      "summary": "Full stack. Tables for a Fabric.js canvas editor, server rendering of canvases with Skia, drag and drop in the editor and CMS.",
+      "problem": "Gipper is a graphics editor built on canvas. It needed tables, and finished designs had to turn into production-ready images on the server, with no browser involved.",
+      "did": "Took tables on the Fabric.js canvas from prototype to production: cell editing, styles, rendering. Set up server rendering of canvases with Skia (CanvasKit) and HarfBuzz text shaping in Node.js, with delivery to S3. Reworked drag and drop in the editor and the CMS.",
+      "result": "Tables and server rendering are in production. Along the way I shipped features across a Module Federation setup of React modules with MobX."
+    },
+    "aslanair": {
+      "title": "AslanAir",
+      "kind": "Airline concept, 3D seat picker",
+      "summary": "A night flight where you choose your seat inside a real 3D cabin. React Three Fiber, drei, GSAP, Lenis and synthesized sound.",
+      "problem": "Airline seat maps are flat grids. In this concept the passenger stands inside the cabin of a night flight and picks a seat in 3D.",
+      "did": "Built the cabin scene with React Three Fiber and drei, the scroll and transitions with GSAP and Lenis, and synthesized the sound. The plane model went through a Blender pipeline. Playwright covers the flows end to end, Vitest covers the logic.",
+      "result": "The concept is live on Vercel, and the code is open on GitHub with its tests."
+    },
+    "gengo": {
+      "title": "GenGO",
+      "kind": "AI creative platform for iGaming",
+      "summary": "One brief in, banners, interactive landings, playable ads, videos and emails out. About 50k lines of TypeScript.",
+      "problem": "The platform had to turn one brief into banners, interactive landing pages, playable ads, videos and emails, with paid credits and an admin panel.",
+      "did": "Built it on Next.js 16 and React 19 with Supabase (Postgres, Auth, row-level security) and TanStack Query. Connected OpenAI and OpenRouter for generation, wrote the credit ledger and the admin panel.",
+      "result": "About 50,000 lines of TypeScript, 36 API routes and 26 pages, live at gen-go.ai."
+    },
+    "moto": {
+      "title": "Moto aggregator",
+      "kind": "Moto gear aggregator for Ukraine",
+      "summary": "Parses 9 shops into one catalogue of 102,777 products. Matches duplicates and maps 8,357 raw categories into one tree.",
+      "problem": "Nine Ukrainian shops list the same gear under different names and in different category trees, so one product shows up many times.",
+      "did": "Wrote parsers for 9 shops, matched duplicate products and mapped 8,357 raw categories into one canonical tree. Built the catalogue on Next.js, Payload CMS and Postgres with search, facets, SEO and content in Ukrainian and Russian.",
+      "result": "102,777 products from 9 shops in one catalogue. The code is private, the preview build is open."
+    },
+    "altus": {
+      "title": "ALTUS",
+      "kind": "Landing for mountain expeditions",
+      "summary": "The background video plays with the scroll. 3D blur reveal of the heading, a pinned horizontal section, a 3D wordmark, EN and UA."
+    },
+    "aslan-can": {
+      "title": "Aslan-can",
+      "kind": "Creative site with 3D scenes",
+      "summary": "3D scenes on React Three Fiber and drei, scroll animations with GSAP, content from Prismic CMS."
+    },
+    "kolir": {
+      "title": "Kolir",
+      "kind": "Website for the Kolir agency",
+      "summary": "kolir.agency on Payload CMS: case studies in Ukrainian and English, generated PDFs and OG images, deployed on Vercel."
+    },
+    "tuti": {
+      "title": "TUTI Games",
+      "kind": "Landing for a kids’ games studio",
+      "summary": "Not a single runtime dependency. The admin panel saves content as a commit to GitHub through the API."
+    },
+    "devdigest": {
+      "title": "DevDigest",
+      "kind": "Course project: starter + my features",
+      "summary": "AI agents course. On top of the starter I added a conventions extractor, PR intent classifier, Smart Diff, an MCP server and Blast Radius."
+    }
+  },
+  "case": {
+    "close": "Close",
+    "problem": "Task",
+    "did": "What I did",
+    "result": "Result",
+    "stack": "Stack",
+    "links": "Links"
   }
 }

@@ -2,14 +2,13 @@
 
 import { activeSection } from '@/experience/choreography';
 import type { SectionId } from '@/experience/signs';
+import { CONTACTS } from '@/content/contacts';
 import { useExperience } from '@/experience/store';
 import { Link } from '@/i18n/navigation';
 import { scrollToProgress, scrollToSection } from '@/scroll/SmoothScroll';
 import LanguageSwitch from './LanguageSwitch';
 
 const NAV: readonly SectionId[] = ['work', 'about', 'stack', 'contact'];
-
-export const CV_HREF = '/cv/rustam-aslanov-cv.pdf';
 
 interface Labels {
   work: string;
@@ -58,7 +57,7 @@ export default function SiteHeader({ name, labels }: { name: string; labels: Lab
               </li>
             ))}
             <li>
-              <a href={CV_HREF} download className={`${cell} text-[#1fd16a] hover:text-[#1fd16a]/80`}>
+              <a href={CONTACTS.cv} download className={`${cell} text-[#1fd16a] hover:text-[#1fd16a]/80`}>
                 {labels.cv}
               </a>
             </li>
