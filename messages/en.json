@@ -22,5 +22,17 @@
     "contact": "Contact",
     "cv": "CV",
     "language": "Language"
+  },
+  "work": {
+    "title": "Selected work"
+  },
+  "about": {
+    "title": "About"
+  },
+  "stack": {
+    "title": "Stack"
+  },
+  "contact": {
+    "title": "Let’s go"
   }
 }

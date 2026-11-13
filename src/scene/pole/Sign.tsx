@@ -42,6 +42,26 @@ export const MOUNT = POLE.radius + 0.035 + FRONT;
 const NEON_LIGHT = 1.4;
 const HOVER_GLOW = 2.6;
 
+/**
+ * R3F listens on document.body, so a pointer over HTML that happens to lie on top of a sign (header,
+ * panels, overlays — all marked data-ui) still raycasts onto the sign. Those events belong to the HTML.
+ */
+function overUi(e: { nativeEvent: Event }): boolean {
+  const target = e.nativeEvent.target as Element | null;
+  return !!target?.closest?.('[data-ui]');
+}
+
+function hover(id: SignDef['id'], on: boolean) {
+  const store = experienceStore.getState();
+  if (on) {
+    store.setHoveredSign(id);
+    document.body.style.cursor = 'pointer';
+  } else if (store.hoveredSign === id) {
+    store.setHoveredSign(null);
+    document.body.style.cursor = '';
+  }
+}
+
 function labelSize(def: SignDef) {
   if (def.shape === 'octagon') return 0.25;
   if (def.shape === 'square') return 0.21;
@@ -162,15 +182,17 @@ export default function Sign({ def, mats }: { def: SignDef; mats: Mats }) {
           material={[own.face, own.edge, own.edge]}
           onPointerOver={(e) => {
             e.stopPropagation();
-            experienceStore.getState().setHoveredSign(def.id);
-            document.body.style.cursor = 'pointer';
+            if (!overUi(e)) hover(def.id, true);
           }}
-          onPointerOut={() => {
-            if (experienceStore.getState().hoveredSign === def.id) experienceStore.getState().setHoveredSign(null);
-            document.body.style.cursor = '';
+          onPointerMove={(e) => {
+            // the pointer can slide from the bare sign onto HTML lying over it without leaving the mesh
+            const over = !overUi(e);
+            if (over !== (experienceStore.getState().hoveredSign === def.id)) hover(def.id, over);
           }}
+          onPointerOut={() => hover(def.id, false)}
           onClick={(e) => {
             e.stopPropagation();
+            if (overUi(e)) return;
             scrollToSection(def.id === 'cv' ? 'contact' : def.id);
           }}
         />

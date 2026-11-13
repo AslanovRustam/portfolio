@@ -5,7 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 import { useEffect } from 'react';
-import { sectionCenter } from '@/experience/choreography';
+import { SECTIONS, sectionCenter } from '@/experience/choreography';
 import type { SectionId } from '@/experience/signs';
 import { experienceStore } from '@/experience/store';
 
@@ -25,6 +25,8 @@ export function scrollToProgress(p: number, immediate = false): void {
 export function scrollToSection(id: SectionId): void {
   scrollToProgress(sectionCenter(id), experienceStore.getState().reducedMotion);
 }
+
+const isSection = (v: string): v is SectionId => SECTIONS.some((s) => s.id === v);
 
 /** Lenis smooth scroll + one ScrollTrigger over #journey that writes progress into the store. */
 export default function SmoothScroll() {
@@ -96,7 +98,25 @@ export default function SmoothScroll() {
     ScrollTrigger.addEventListener('refreshInit', onRefreshInit);
     ScrollTrigger.addEventListener('refresh', onRefresh);
 
+    // A deep link (/en#stack) opens its section once there is something to look at: when the scene is
+    // ready, or straight away on the no-WebGL fallback, which never becomes ready.
+    const hash = location.hash.slice(1);
+    let stopDeepLink = () => {};
+    if (isSection(hash)) {
+      const go = (s: { ready: boolean; webgl: boolean }) => {
+        if (!s.ready && s.webgl) return false;
+        scrollToSection(hash);
+        return true;
+      };
+      if (!go(experienceStore.getState())) {
+        stopDeepLink = experienceStore.subscribe((s) => {
+          if (go(s)) stopDeepLink();
+        });
+      }
+    }
+
     return () => {
+      stopDeepLink();
       window.removeEventListener('resize', onResize);
       clearTimeout(release);
       ScrollTrigger.removeEventListener('refreshInit', onRefreshInit);

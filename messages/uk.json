@@ -22,5 +22,17 @@
     "contact": "Контакти",
     "cv": "CV",
     "language": "Мова"
+  },
+  "work": {
+    "title": "Вибрані проєкти"
+  },
+  "about": {
+    "title": "Про мене"
+  },
+  "stack": {
+    "title": "Стек"
+  },
+  "contact": {
+    "title": "Поїхали"
   }
 }

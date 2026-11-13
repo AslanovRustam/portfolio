@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* the layout where panels sit beside the scene; must match frameShift() in src/experience/panels.ts */
+@custom-variant wide {
+  @media (min-width: 1024px) and (min-aspect-ratio: 1/1) {
+    @slot;
+  }
+}
+
 :root {
   --bg: #050507;
   --fg: #e8f7ff;
