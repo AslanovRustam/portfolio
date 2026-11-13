@@ -17,7 +17,7 @@ export default function LanguageSwitch({ label }: { label: string }) {
   const hash = useExperience((s) => hashFor(s.progress));
   const href = hash ? `${pathname}#${hash}` : pathname;
   return (
-    <ul aria-label={label} className="flex divide-x divide-[#7fe3ff]/40">
+    <ul aria-label={label} className="flex gap-1">
       {routing.locales.map((l) => (
         <li key={l}>
           <Link
@@ -27,7 +27,7 @@ export default function LanguageSwitch({ label }: { label: string }) {
             lang={l}
             scroll={false}
             aria-current={l === current ? 'true' : undefined}
-            className="block px-2.5 py-2 text-[#e8f7ff]/60 transition-colors hover:text-[#e8f7ff] focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-2 focus-visible:outline-[#7fe3ff] aria-[current]:text-[#7fe3ff]"
+            className={`plate px-2.5 text-[13px] sm:text-sm lg:text-[15px] ${l === current ? 'plate-inverse' : ''}`}
           >
             {l.toUpperCase()}
           </Link>

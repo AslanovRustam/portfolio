@@ -7,6 +7,7 @@ import { useExperience } from '@/experience/store';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { scrollToProgress, scrollToSection } from '@/scroll/SmoothScroll';
 import LanguageSwitch from './LanguageSwitch';
+import { plateStyle } from './plates';
 
 const NAV: readonly SectionId[] = ['work', 'about', 'stack', 'contact'];
 
@@ -19,12 +20,12 @@ interface Labels {
   language: string;
 }
 
-const cell =
-  'block px-3 py-2 transition-colors hover:text-[#ff7a1a] focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-2 focus-visible:outline-[#7fe3ff]';
+const navPlate = 'plate plate-sign text-[13px] sm:text-sm lg:text-[15px]';
 
 /**
  * The plain-HTML twin of the signpost: the same five destinations for keyboards, screen readers and
- * recruiters who would rather not play. Styled as the strip along the top of a drawing sheet.
+ * recruiters who would rather not play, as enamel street plates. The plate of the section whose sign
+ * faces the camera takes that sign's colours.
  */
 export default function SiteHeader({ name, labels }: { name: string; labels: Labels }) {
   const active = useExperience((s) => activeSection(s.progress));
@@ -36,43 +37,39 @@ export default function SiteHeader({ name, labels }: { name: string; labels: Lab
     scrollToSection(id);
   };
   return (
-    <header
-      data-ui
-      className="fixed inset-x-0 top-0 z-30 flex items-start justify-between gap-2 p-3 text-xs text-[#e8f7ff] sm:p-6 sm:text-sm"
-    >
+    <header data-ui className="fixed inset-x-0 top-0 z-30 flex items-start justify-between gap-2 p-3 sm:p-6">
       <Link
         href="/"
         scroll={false}
         onClick={() => scrollToProgress(0)}
-        className={`${cell} hidden border border-[#7fe3ff]/40 bg-[#050507]/50 backdrop-blur-sm md:block`}
+        className="plate plate-lg hidden md:inline-flex"
       >
         {name}
       </Link>
-      <div className="flex flex-wrap justify-end gap-2">
-        <nav className="border border-[#7fe3ff]/40 bg-[#050507]/50 backdrop-blur-sm">
-          <ul className="flex divide-x divide-[#7fe3ff]/40">
+      <div className="flex flex-wrap items-start justify-end gap-x-3 gap-y-2">
+        <nav>
+          <ul className="flex flex-wrap justify-end gap-1.5">
             {NAV.map((id) => (
               <li key={id}>
                 <button
                   type="button"
                   onClick={() => go(id)}
                   aria-current={active === id ? 'true' : undefined}
-                  className={`${cell} aria-[current]:text-[#ff7a1a]`}
+                  className={navPlate}
+                  style={plateStyle(id)}
                 >
                   {labels[id]}
                 </button>
               </li>
             ))}
             <li>
-              <a href={CONTACTS.cv} download className={`${cell} text-[#1fd16a] hover:text-[#1fd16a]/80`}>
+              <a href={CONTACTS.cv} download className={navPlate} style={plateStyle('cv')}>
                 {labels.cv}
               </a>
             </li>
           </ul>
         </nav>
-        <div className="border border-[#7fe3ff]/40 bg-[#050507]/50 backdrop-blur-sm">
-          <LanguageSwitch label={labels.language} />
-        </div>
+        <LanguageSwitch label={labels.language} />
       </div>
     </header>
   );

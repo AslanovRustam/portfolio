@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { JetBrains_Mono } from 'next/font/google';
+import { JetBrains_Mono, Oswald } from 'next/font/google';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -9,6 +9,13 @@ import '../globals.css';
 const mono = JetBrains_Mono({
   variable: '--font-jetbrains-mono',
   subsets: ['latin', 'cyrillic'],
+});
+
+/** The street-plate face: condensed and heavy like Anton on the signs, but with Cyrillic (Anton has none). */
+const plate = Oswald({
+  variable: '--font-oswald',
+  subsets: ['latin', 'cyrillic'],
+  weight: ['500', '600', '700'],
 });
 
 export function generateStaticParams() {
@@ -32,7 +39,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
   if (!hasLocale(routing.locales, locale)) notFound();
 
   return (
-    <html lang={locale} className={`${mono.variable} antialiased`}>
+    <html lang={locale} className={`${mono.variable} ${plate.variable} antialiased`}>
       <body>
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>

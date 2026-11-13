@@ -15,6 +15,10 @@
   --blueprint: #0b1f38;
   --blueprint-line: #7fe3ff;
   --go: #1fd16a;
+  /* enamel street plates: navy with a white rule inside the edge */
+  --plate: #17345f;
+  --plate-rule: #f4f4f4;
+  --plate-ink: #ffffff;
 }
 
 @theme inline {
@@ -24,6 +28,7 @@
   --color-blueprint: var(--blueprint);
   --color-blueprint-line: var(--blueprint-line);
   --font-mono: var(--font-jetbrains-mono);
+  --font-plate: var(--font-oswald);
 }
 
 html {
@@ -37,6 +42,107 @@ html {
   button:not(:disabled),
   [role='button']:not([aria-disabled='true']) {
     cursor: pointer;
+  }
+}
+
+@layer components {
+  /*
+   * An enamel street plate: navy, a white rule just inside the edge (an outline pulled inwards follows the
+   * rounded corners), a faint sheen from above like reflective sheeting, and a dark rim. --sign-bg and
+   * --sign-fg (from SIGNS, set inline) are the colours of the sign on the pole it stands for.
+   */
+  .plate {
+    --plate-bg: var(--plate);
+    --plate-fg: var(--plate-ink);
+    --plate-line: var(--plate-rule);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    padding: 0.55rem 0.8rem 0.5rem;
+    background-color: var(--plate-bg);
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0.03) 45%, rgb(0 0 0 / 0.14));
+    color: var(--plate-fg);
+    outline: 2px solid var(--plate-line);
+    outline-offset: -5px;
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 0.6),
+      0 6px 14px -6px rgb(0 0 0 / 0.75);
+    font-family: var(--font-oswald), 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+  .plate:focus-visible {
+    box-shadow:
+      0 0 0 2px var(--bg),
+      0 0 0 4px #ffffff;
+  }
+  .plate-lg {
+    padding: 0.7rem 1.1rem 0.65rem;
+    font-size: 1.05rem;
+    letter-spacing: 0.06em;
+  }
+  /* the plate of a section takes its sign's colours while that sign faces the camera */
+  .plate-sign[aria-current] {
+    --plate-bg: var(--sign-bg);
+    --plate-fg: var(--sign-fg);
+  }
+  @media (hover: hover) {
+    .plate-sign:hover {
+      --plate-bg: var(--sign-bg);
+      --plate-fg: var(--sign-fg);
+    }
+  }
+  .plate-inverse {
+    --plate-bg: var(--plate-rule);
+    --plate-fg: var(--plate);
+    --plate-line: var(--plate);
+  }
+
+  /* A big information board: the same enamel, a wider rule, two bolts at the top corners. */
+  .board {
+    position: relative;
+    border-radius: 10px;
+    background-color: rgb(23 52 95 / 0.94);
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.08), transparent 35%);
+    outline: 2px solid var(--plate-rule);
+    outline-offset: -6px;
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 0.6),
+      0 18px 40px -18px rgb(0 0 0 / 0.85);
+  }
+  .board::before,
+  .board::after {
+    content: '';
+    position: absolute;
+    top: 13px;
+    z-index: 1;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffffff, #9aa3ad 55%, #3c4550);
+    box-shadow: 0 1px 1px rgb(0 0 0 / 0.6);
+    pointer-events: none;
+  }
+  .board::before {
+    left: 13px;
+  }
+  .board::after {
+    right: 13px;
+  }
+  /* the board's title band, in the colours of its sign */
+  .board-head {
+    background-color: var(--sign-bg);
+    color: var(--sign-fg);
+    font-family: var(--font-oswald), 'Arial Narrow', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
   }
 }
 
