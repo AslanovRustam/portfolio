@@ -20,3 +20,8 @@ export async function progress(page: Page): Promise<number> {
 export async function waitReady(page: Page): Promise<void> {
   await page.waitForFunction(() => window.__portfolio.state().ready, undefined, { timeout: 30_000 });
 }
+
+/** Story progress of Work stop i (0 = the first project, 9 = "a small part"). */
+export function stop(i: number): number {
+  return 0.18 + (0.14 / 9) * i;
+}

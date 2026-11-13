@@ -11,6 +11,8 @@ const PLACE = {
   // wide screens: a column on the left (the scene steps right) or, for Work, a band along the bottom
   side: 'wide:inset-x-auto wide:left-6 wide:top-24 wide:bottom-6 wide:max-h-none wide:w-[min(40rem,40vw)]',
   bottom: 'wide:inset-x-6 wide:bottom-6 wide:max-h-[42svh]',
+  // the caption beside the TV wall: a bottom sheet on phones, a board in the lower-left corner on wide screens
+  caption: 'wide:inset-x-auto wide:left-6 wide:bottom-6 wide:max-h-[60svh] wide:w-[min(34rem,40vw)]',
 } as const;
 
 /**
@@ -25,7 +27,7 @@ export default function SectionPanel({
   children,
 }: {
   id: SectionId;
-  layout: 'side' | 'bottom';
+  layout: keyof typeof PLACE;
   labelledBy: string;
   children: React.ReactNode;
 }) {

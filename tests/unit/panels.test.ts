@@ -28,7 +28,7 @@ it('the scene steps aside for the panel', () => {
   const phone = { w: 412, h: 915 };
   expect(frameShift(null, 1, wide)).toEqual({ x: 0, y: 0 });
   expect(frameShift('about', 1, wide)).toEqual({ x: 0.2, y: 0 });
-  expect(frameShift('work', 0.5, wide)).toEqual({ x: 0, y: 0 }); // the wall frames itself above the caption
+  expect(frameShift('work', 0.5, wide)).toEqual({ x: 0.04, y: 0 }); // clear of the caption in the corner
   expect(frameShift('about', 1, phone)).toEqual({ x: 0, y: 0.2 });
   expect(frameShift('contact', 1, { w: 900, h: 700 })).toEqual({ x: 0, y: 0.2 });
 });

@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { gotoScene, progress, scrollTo } from './helpers';
+import { gotoScene, progress, scrollTo, stop } from './helpers';
 
 // Review Focus 2
 test('a case opens over the scene, locks scrolling, and closes back to the same spot', async ({ page }) => {
   await gotoScene(page);
-  await scrollTo(page, 0.19);
+  await scrollTo(page, stop(0));
   const before = await progress(page);
-  await page.getByRole('link', { name: /Gipper/ }).click();
+  await page.locator('section#work').getByRole('link', { name: 'Open case' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('heading', { level: 2 })).toHaveText(/Gipper/, { timeout: 15_000 }); // dev compiles the case on first use
   await page.mouse.wheel(0, 1500);

@@ -42,7 +42,8 @@
     "course": "Навчальний проєкт",
     "commercial": "Комерційний",
     "private": "Закритий репозиторій",
-    "inDevelopment": "У розробці"
+    "inDevelopment": "У розробці",
+    "pager": "Проєкти"
   },
   "about": {
     "title": "Про мене",

@@ -50,7 +50,7 @@ export function frameShift(
   if (!id) return { x: 0, y: 0 };
   const wide = viewport.w >= 1024 && viewport.w / viewport.h >= 1;
   if (!wide) return { x: 0, y: 0.2 * presence };
-  // the wall frames its screen itself; the Work caption sits in a corner
-  if (id === 'work') return { x: 0, y: 0 };
+  // the wall frames its screen itself; the frame only steps clear of the caption in the lower-left corner
+  if (id === 'work') return { x: 0.08 * presence, y: 0 };
   return { x: 0.2 * presence, y: 0 };
 }

@@ -42,7 +42,8 @@
     "course": "Course project",
     "commercial": "Commercial",
     "private": "Private repo",
-    "inDevelopment": "In development"
+    "inDevelopment": "In development",
+    "pager": "Projects"
   },
   "about": {
     "title": "About",

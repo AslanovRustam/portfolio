@@ -42,7 +42,8 @@
     "course": "Учебный проект",
     "commercial": "Коммерческий",
     "private": "Закрытый репозиторий",
-    "inDevelopment": "В разработке"
+    "inDevelopment": "В разработке",
+    "pager": "Проекты"
   },
   "about": {
     "title": "Обо мне",

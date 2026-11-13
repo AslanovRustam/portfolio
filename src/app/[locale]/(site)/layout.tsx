@@ -6,6 +6,7 @@ import ExperienceGate from '@/ui/ExperienceGate';
 import Hero from '@/ui/Hero';
 import SiteHeader from '@/ui/SiteHeader';
 import SectionPanel from '@/ui/sections/SectionPanel';
+import WorkPanel from '@/ui/sections/WorkPanel';
 import WorkSection from '@/ui/sections/WorkSection';
 import AboutSection from '@/ui/sections/AboutSection';
 import StackSection from '@/ui/sections/StackSection';
@@ -41,9 +42,9 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         <Hero name={t('hero.name')} role={t('hero.role')} line={t('hero.line')} cue={t('hero.cue')} />
         {/* the scroll track the whole journey is measured against; clicks pass through to the scene */}
         <div id="journey" className="pointer-events-none" style={{ height: JOURNEY_HEIGHT }} />
-        <SectionPanel id="work" layout="bottom" labelledBy="work-title">
+        <WorkPanel>
           <WorkSection />
-        </SectionPanel>
+        </WorkPanel>
         <SectionPanel id="about" layout="side" labelledBy="about-title">
           <AboutSection />
         </SectionPanel>
