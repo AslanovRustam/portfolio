@@ -32,6 +32,11 @@ export function trackProgress(p: number): number {
   return clamp01((p - TRACK_FROM) / (TRACK_TO - TRACK_FROM));
 }
 
+/** The scroll progress at which the Work track sits at position t (the inverse of trackProgress). */
+export function progressForTrack(t: number): number {
+  return TRACK_FROM + clamp01(t) * (TRACK_TO - TRACK_FROM);
+}
+
 /**
  * How far the rendered scene steps aside for the active panel, as fractions of the viewport: on wide
  * screens it moves right of the left-hand panel (or up above the Work cards); on narrow ones it moves

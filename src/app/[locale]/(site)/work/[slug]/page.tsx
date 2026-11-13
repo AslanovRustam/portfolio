@@ -1,6 +1,8 @@
+import { PROJECTS } from '@/content/projects';
+
 /** Placeholder until the case overlay lands (plan 2, task 7). */
 export function generateStaticParams() {
-  return [{ slug: 'altus' }];
+  return PROJECTS.map((p) => ({ slug: p.slug }));
 }
 
 export default async function CasePage({ params }: PageProps<'/[locale]/work/[slug]'>) {

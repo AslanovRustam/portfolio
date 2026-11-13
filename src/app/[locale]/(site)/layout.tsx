@@ -5,6 +5,7 @@ import ExperienceGate from '@/ui/ExperienceGate';
 import Hero from '@/ui/Hero';
 import SiteHeader from '@/ui/SiteHeader';
 import SectionPanel, { PanelTitle } from '@/ui/sections/SectionPanel';
+import WorkSection from '@/ui/sections/WorkSection';
 
 /**
  * The persistent experience: scene, scroll, header and sections. It wraps both the home page and the
@@ -37,7 +38,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         {/* the scroll track the whole journey is measured against; clicks pass through to the scene */}
         <div id="journey" className="pointer-events-none" style={{ height: '1100svh' }} />
         <SectionPanel id="work" layout="bottom" labelledBy="work-title">
-          <PanelTitle id="work-title">{t('work.title')}</PanelTitle>
+          <WorkSection />
         </SectionPanel>
         <SectionPanel id="about" layout="side" labelledBy="about-title">
           <PanelTitle id="about-title">{t('about.title')}</PanelTitle>

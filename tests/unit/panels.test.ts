@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { frameShift, sectionPresence, trackProgress } from '@/experience/panels';
+import { frameShift, progressForTrack, sectionPresence, trackProgress } from '@/experience/panels';
 
 const close = (a: number, b: number) => expect(a).toBeCloseTo(b, 6);
 
@@ -31,4 +31,11 @@ it('the scene steps aside for the panel', () => {
   expect(frameShift('work', 0.5, wide)).toEqual({ x: 0, y: 0.08 });
   expect(frameShift('about', 1, phone)).toEqual({ x: 0, y: 0.2 });
   expect(frameShift('contact', 1, { w: 900, h: 700 })).toEqual({ x: 0, y: 0.2 });
+});
+
+it('a track position maps back to the scroll progress that shows it (keyboard focus on a hidden card)', () => {
+  close(progressForTrack(0), 0.18);
+  close(progressForTrack(1), 0.32);
+  close(trackProgress(progressForTrack(0.4)), 0.4);
+  close(progressForTrack(7), 0.32);
 });
