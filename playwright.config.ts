@@ -67,6 +67,6 @@ export default defineConfig({
         port: 3200,
         reuseExistingServer: true,
         timeout: 120_000,
-        env: { NEXT_PUBLIC_TEST_HOOKS: '1' },
+        env: { NEXT_PUBLIC_TEST_HOOKS: '1', MAIL_TRANSPORT: 'json', CONTACT_RATE_LIMIT: '1000' },
       },
 });

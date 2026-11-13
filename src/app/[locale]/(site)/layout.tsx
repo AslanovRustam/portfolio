@@ -4,10 +4,11 @@ import SmoothScroll from '@/scroll/SmoothScroll';
 import ExperienceGate from '@/ui/ExperienceGate';
 import Hero from '@/ui/Hero';
 import SiteHeader from '@/ui/SiteHeader';
-import SectionPanel, { PanelTitle } from '@/ui/sections/SectionPanel';
+import SectionPanel from '@/ui/sections/SectionPanel';
 import WorkSection from '@/ui/sections/WorkSection';
 import AboutSection from '@/ui/sections/AboutSection';
 import StackSection from '@/ui/sections/StackSection';
+import ContactSection from '@/ui/sections/ContactSection';
 
 /**
  * The persistent experience: scene, scroll, header and sections. It wraps both the home page and the
@@ -49,7 +50,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           <StackSection />
         </SectionPanel>
         <SectionPanel id="contact" layout="side" labelledBy="contact-title">
-          <PanelTitle id="contact-title">{t('contact.title')}</PanelTitle>
+          <ContactSection />
         </SectionPanel>
       </main>
       {children}

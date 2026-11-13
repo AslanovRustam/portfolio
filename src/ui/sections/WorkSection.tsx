@@ -47,9 +47,11 @@ export default function WorkSection() {
 
     // Keyboard focus on a card that is off the visible part of the track scrolls the journey to it.
     const onFocus = (e: FocusEvent) => {
-      const item = (e.target as HTMLElement).closest('li');
+      const target = e.target as HTMLElement;
+      const item = target.closest('li');
       vp.scrollLeft = 0; // the browser may have scrolled the clipped viewport itself
-      if (!item || max <= 0) return;
+      // only keyboard focus: a mouse click on a half-visible card must not move the journey
+      if (!item || max <= 0 || !target.matches(':focus-visible')) return;
       // a card already in view stays put (focus coming back from a closed case lands here too)
       const card = item.getBoundingClientRect();
       const view = vp.getBoundingClientRect();

@@ -19,6 +19,8 @@ export interface ExperienceState {
   loadProgress: number;
   /** sticker key lit by the Stack panel (a chip under the pointer or focus) */
   highlight: string | null;
+  /** a contact message was just sent: the green light pulses for a moment */
+  celebrate: boolean;
   setProgress(p: number): void;
   setTier(t: Tier): void;
   setReducedMotion(v: boolean): void;
@@ -27,6 +29,7 @@ export interface ExperienceState {
   setWebgl(v: boolean): void;
   setLoadProgress(v: number): void;
   setHighlight(key: string | null): void;
+  setCelebrate(v: boolean): void;
 }
 
 export const experienceStore = createStore<ExperienceState>()((set) => ({
@@ -38,6 +41,7 @@ export const experienceStore = createStore<ExperienceState>()((set) => ({
   webgl: true,
   loadProgress: 0,
   highlight: null,
+  celebrate: false,
   setProgress: (p) => set({ progress: Math.min(1, Math.max(0, p)) }),
   setTier: (tier) => set({ tier }),
   setReducedMotion: (reducedMotion) => set({ reducedMotion }),
@@ -46,6 +50,7 @@ export const experienceStore = createStore<ExperienceState>()((set) => ({
   setWebgl: (webgl) => set({ webgl }),
   setLoadProgress: (loadProgress) => set({ loadProgress }),
   setHighlight: (highlight) => set({ highlight }),
+  setCelebrate: (celebrate) => set({ celebrate }),
 }));
 
 export function useExperience<T>(selector: (s: ExperienceState) => T): T {

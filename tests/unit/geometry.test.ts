@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { SIGNS } from '@/experience/signs';
-import { arrowPoints, lensIntensity, octagonPoints, signGeometry } from '@/scene/pole/geometry';
+import { arrowPoints, celebrateBoost, lensIntensity, octagonPoints, signGeometry } from '@/scene/pole/geometry';
 
 it('octagon: 8 points on radius r with a flat top', () => {
   const pts = octagonPoints(0.45);
@@ -44,4 +44,13 @@ it('one lens on per state', () => {
   expect(lensIntensity('off')).toEqual({ red: 0.05, yellow: 0.05, green: 0.05 });
   expect(lensIntensity('red')).toEqual({ red: 6, yellow: 0.05, green: 0.05 });
   expect(lensIntensity('green')).toEqual({ red: 0.05, yellow: 0.05, green: 6 });
+});
+
+it('a sent message makes the green lens pulse brighter than its steady glow', () => {
+  const samples = Array.from({ length: 200 }, (_, i) => celebrateBoost(i * 0.017));
+  for (const v of samples) {
+    expect(v).toBeGreaterThanOrEqual(1);
+    expect(v).toBeLessThanOrEqual(2.2);
+  }
+  expect(Math.max(...samples) - Math.min(...samples)).toBeGreaterThan(0.8);
 });

@@ -19,3 +19,10 @@ test('a card opens its case over the scene by client navigation', async ({ page 
   await expect(page).toHaveURL(/\/en\/work\/gipper$/);
   await expect(page.locator('canvas[data-mark="same"]')).toHaveCount(1);
 });
+
+test('keyboard focus on a card clipped off the track brings it into view', async ({ page }) => {
+  await gotoScene(page);
+  await scrollTo(page, 0.19);
+  await page.getByRole('link', { name: /TUTI/ }).focus();
+  await expect.poll(() => page.evaluate(() => window.__portfolio.state().progress), { timeout: 8000 }).toBeGreaterThan(0.25);
+});

@@ -145,3 +145,8 @@ export function lensIntensity(state: LightState): { red: number; yellow: number;
     green: state === 'green' ? ON : OFF,
   };
 }
+
+/** Multiplier on the green lens while a sent message is celebrated: a quick pulse between 1× and 2.2×. */
+export function celebrateBoost(t: number): number {
+  return 1.6 + 0.6 * Math.sin(t * 9);
+}

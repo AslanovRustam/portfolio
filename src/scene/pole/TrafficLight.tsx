@@ -25,7 +25,7 @@ import { registerProbe } from '@/dev/sceneProbe';
 import EdgesOverlay from '../reveal/EdgesOverlay';
 import { revealUniforms } from '../reveal/registry';
 import { applyReveal } from '../reveal/revealMaterial';
-import { lensIntensity, roundedRectShape } from './geometry';
+import { celebrateBoost, lensIntensity, roundedRectShape } from './geometry';
 import { ledLayout } from './led';
 import { BOARD, HOUSING, LIGHT_FACING, LIGHT_Y } from './lightMount';
 import type { usePoleMaterials } from './materials';
@@ -182,8 +182,11 @@ export default function TrafficLight({ mats }: { mats: Mats }) {
     [led, geo, own, lensMats],
   );
 
-  useFrame((_, dt) => {
-    const target = lensIntensity(lightState(experienceStore.getState().progress));
+  useFrame((state, dt) => {
+    const { progress, celebrate } = experienceStore.getState();
+    const target = lensIntensity(lightState(progress));
+    // a message just went out: the green light pulses
+    if (celebrate) target.green *= celebrateBoost(state.clock.elapsedTime);
     for (const l of LENSES) {
       applied.current[l.id] = damp(applied.current[l.id], target[l.id], 6, dt);
       live.current[l.id].leds.emissiveIntensity = applied.current[l.id];
