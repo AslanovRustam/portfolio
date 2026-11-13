@@ -36,7 +36,7 @@ export default function ProjectCard({ project, copy }: { project: Project; copy:
       scroll={false}
       prefetch
       data-ui
-      className="group relative block h-full overflow-hidden border border-[#7fe3ff]/30 bg-[#0b1f38] transition-colors hover:border-[#ff7a1a] focus-visible:border-[#7fe3ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7fe3ff]"
+      className="group relative block h-full overflow-hidden rounded-[8px] bg-[#0b1f38] shadow-[0_0_0_1px_rgb(0_0_0/0.6)] outline-2 outline-offset-[-5px] outline-[#f4f4f4] outline-solid transition-[outline-color] hover:outline-[#ff7a1a] focus-visible:outline-[#ffffff] focus-visible:shadow-[0_0_0_2px_#050507,0_0_0_4px_#ffffff]"
     >
       {project.poster ? (
         <Image

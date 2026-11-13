@@ -9,11 +9,11 @@ const EDUCATION = ['goit', 'onat'] as const;
 function Dated({ title, items, kind }: { title: string; items: readonly { years: string; what: string }[]; kind: 'path' | 'education' }) {
   return (
     <div>
-      <h3 className="text-xs text-[#7fe3ff]">{title}</h3>
+      <h3 className="board-label">{title}</h3>
       <ol
         data-path={kind === 'path' ? '' : undefined}
         data-education={kind === 'education' ? '' : undefined}
-        className="mt-2 divide-y divide-[#7fe3ff]/15 border-y border-[#7fe3ff]/15 text-sm"
+        className="mt-2 divide-y divide-[#f4f4f4]/15 border-y border-[#f4f4f4]/15 text-sm"
       >
         {items.map((i) => (
           <li key={i.years + i.what} className="grid grid-cols-[6.5rem_1fr] gap-3 py-1">
@@ -54,7 +54,7 @@ export default function AboutSection() {
       />
       <div className="grid gap-4 text-sm sm:grid-cols-2">
         <div>
-          <h3 className="text-xs text-[#7fe3ff]">{t('langsTitle')}</h3>
+          <h3 className="board-label">{t('langsTitle')}</h3>
           <p className="mt-1 text-[#e8f7ff]/85">{t('langs')}</p>
         </div>
         <p className="text-[#e8f7ff]/85 sm:pt-5">{t('how')}</p>

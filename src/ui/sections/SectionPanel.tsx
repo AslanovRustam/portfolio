@@ -5,6 +5,7 @@ import { registerProbe } from '@/dev/sceneProbe';
 import { sectionPresence } from '@/experience/panels';
 import type { SectionId } from '@/experience/signs';
 import { experienceStore } from '@/experience/store';
+import { plateStyle } from '../plates';
 
 const PLACE = {
   // wide screens: a column on the left (the scene steps right) or, for Work, a band along the bottom
@@ -81,21 +82,27 @@ export default function SectionPanel({
       aria-labelledby={labelledBy}
       data-ui
       data-section={id}
-      style={{ opacity: 0, visibility: 'hidden' }}
-      className={`fixed inset-x-3 bottom-3 z-20 flex max-h-[46svh] flex-col border border-[#7fe3ff]/40 bg-[#050507]/75 text-[#e8f7ff] backdrop-blur-md will-change-[opacity,transform] ${PLACE[layout]}`}
+      style={{ opacity: 0, visibility: 'hidden', ...plateStyle(id) }}
+      className={`board fixed inset-x-3 bottom-3 z-20 flex max-h-[46svh] flex-col overflow-hidden text-[#e8f7ff] will-change-[opacity,transform] ${PLACE[layout]}`}
     >
-      <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-7 data-[more]:[mask-image:linear-gradient(to_bottom,black_calc(100%-3rem),transparent)]">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 sm:px-7 sm:pb-7 data-[more]:[mask-image:linear-gradient(to_bottom,black_calc(100%-3rem),transparent)]">
         {children}
       </div>
+      <span aria-hidden="true" className="board-rule" />
     </section>
   );
 }
 
-/** A section heading in the panel's type scale. */
+/**
+ * The board's title band, in the colours of the section's sign. It runs edge to edge across the top of
+ * the board and stays put while a long board scrolls under it.
+ */
 export function PanelTitle({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <h2 id={id} className="text-[clamp(1.75rem,3.2vw,3rem)] font-bold leading-none tracking-[-0.03em]">
-      {children}
-    </h2>
+    <div data-board-head className="board-head sticky top-0 z-[1] -mx-5 mb-5 px-5 pb-3 pt-8 sm:-mx-7 sm:px-7 sm:pt-9">
+      <h2 id={id} className="text-[clamp(1.6rem,2.8vw,2.6rem)] leading-none">
+        {children}
+      </h2>
+    </div>
   );
 }

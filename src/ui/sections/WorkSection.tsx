@@ -75,11 +75,9 @@ export default function WorkSection() {
   }, []);
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-1">
-        <PanelTitle id="work-title">{t('work.title')}</PanelTitle>
-        <p className="max-w-[60ch] text-xs text-[#e8f7ff]/70 sm:text-sm">{t('work.lead')}</p>
-      </div>
+    <div className="flex h-full flex-col">
+      <PanelTitle id="work-title">{t('work.title')}</PanelTitle>
+      <p className="mb-4 max-w-[60ch] text-xs text-[#e8f7ff]/75 sm:text-sm">{t('work.lead')}</p>
       <div ref={viewport} className="overflow-hidden">
         <ol
           ref={track}
@@ -101,10 +99,10 @@ export default function WorkSection() {
               />
             </li>
           ))}
-          <li className="flex h-full w-[clamp(15rem,24vw,22rem)] shrink-0 flex-col justify-between border border-dashed border-[#7fe3ff]/40 p-4">
+          <li className="flex h-full w-[clamp(15rem,24vw,22rem)] shrink-0 flex-col justify-between rounded-[8px] border border-dashed border-[#f4f4f4]/40 p-4">
             <p className="text-base font-bold leading-snug sm:text-lg">{t('work.more')}</p>
             <div>
-              <p className="text-xs text-[#7fe3ff]">{t('work.ndaTitle')}</p>
+              <p className="board-label">{t('work.ndaTitle')}</p>
               <ul className="mt-1 space-y-0.5 text-xs text-[#e8f7ff]/70">
                 {NDA_KEYS.map((k) => (
                   <li key={k}>{t(`work.nda.${k}`)}</li>

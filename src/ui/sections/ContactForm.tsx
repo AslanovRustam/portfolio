@@ -6,6 +6,7 @@ import { submitContact } from '@/app/[locale]/(site)/actions';
 import { CONTACTS } from '@/content/contacts';
 import { experienceStore } from '@/experience/store';
 import { invalidFields, type ContactField, type ContactResult } from '@/server/contact';
+import { plateStyle } from '../plates';
 
 const FIELDS: readonly { name: ContactField; type: string; autoComplete: string }[] = [
   { name: 'name', type: 'text', autoComplete: 'name' },
@@ -13,8 +14,7 @@ const FIELDS: readonly { name: ContactField; type: string; autoComplete: string 
   { name: 'message', type: 'textarea', autoComplete: 'off' },
 ];
 
-const input =
-  'mt-1 block w-full border border-[#7fe3ff]/30 bg-[#050507]/60 px-3 py-2 text-sm text-[#e8f7ff] placeholder:text-[#e8f7ff]/30 focus:border-[#7fe3ff] focus:outline-none aria-[invalid=true]:border-[#ff5a1f]';
+const input = 'well';
 
 /**
  * Name, email, message. The browser checks the fields first (same zod schema as the server), the
@@ -80,7 +80,7 @@ export default function ContactForm() {
         };
         return (
           <div key={f.name}>
-            <label htmlFor={id} className="text-xs text-[#7fe3ff]">
+            <label htmlFor={id} className="board-label">
               {t(f.name)}
             </label>
             {f.type === 'textarea' ? (
@@ -115,7 +115,8 @@ export default function ContactForm() {
         <button
           type="submit"
           disabled={pending}
-          className="border border-[#1fd16a] bg-[#1fd16a]/10 px-5 py-2 text-sm text-[#1fd16a] transition-colors hover:bg-[#1fd16a]/20 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[#1fd16a] disabled:opacity-60"
+          className="plate plate-on px-6 text-base disabled:opacity-60"
+          style={plateStyle('cv')}
         >
           {pending ? t('sending') : t('send')}
         </button>

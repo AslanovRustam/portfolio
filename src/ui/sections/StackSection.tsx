@@ -20,8 +20,8 @@ export default function StackSection() {
       <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
         {STACK.map((g) => (
           <div key={g.key}>
-            <h3 className="text-xs text-[#7fe3ff]">{t(`groups.${g.key}`)}</h3>
-            <ul className="mt-2 flex flex-wrap gap-1.5 text-sm">
+            <h3 className="board-label">{t(`groups.${g.key}`)}</h3>
+            <ul className="mt-2 flex flex-wrap gap-1.5">
               {g.items.map((item) => {
                 const sticker = item.sticker ?? null;
                 return (
@@ -33,7 +33,7 @@ export default function StackSection() {
                     onPointerLeave={sticker ? () => light(null) : undefined}
                     onFocus={sticker ? () => light(sticker) : undefined}
                     onBlur={sticker ? () => light(null) : undefined}
-                    className="border border-[#e8f7ff]/20 px-2.5 py-1 transition-colors data-[sticker]:hover:border-[#ff7a1a] data-[sticker]:hover:text-[#ff7a1a] focus-visible:border-[#7fe3ff] focus-visible:outline-none"
+                    className="plate plate-sm plate-plain data-[sticker]:cursor-pointer data-[sticker]:hover:[--plate-bg:var(--sign-bg)] data-[sticker]:focus-visible:[--plate-bg:var(--sign-bg)]"
                   >
                     {item.label}
                   </li>
