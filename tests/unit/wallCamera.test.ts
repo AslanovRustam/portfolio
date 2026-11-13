@@ -43,3 +43,11 @@ it('reduced motion holds the nearest stop; on a phone the set fills the width', 
   expect(fill(16 / 9)).toBeCloseTo(wallFill(16 / 9), 6);
   expect(fill(0.46)).toBeCloseTo(0.85, 6);
 });
+
+it('reduced motion keeps the wall for the whole Work section, so a rounded scroll at the first or last stop still faces a set', () => {
+  expect(wallWeight(0.18 - 1e-5, true)).toBe(1);
+  expect(wallWeight(0.32 + 1e-5, true)).toBe(1);
+  expect(wallWeight(0.16, true)).toBe(1);
+  expect(wallWeight(0.14, true)).toBe(0);
+  expect(wallWeight(0.4, true)).toBe(0);
+});

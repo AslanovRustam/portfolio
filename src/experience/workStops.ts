@@ -36,10 +36,24 @@ export function wallPosition(q: number): number {
   return k + smoothstep(DWELL, 1 - DWELL, u - k);
 }
 
-/** The stop a scroll that came to rest at q should settle on; null outside the Work track or on a stop. */
-export function snapTarget(q: number): number | null {
+/** Share of the gap between stops a gesture has to travel to count as a step to the next project. */
+export const STEP = 0.12;
+
+/**
+ * The stop a scroll that came to rest at q should settle on; null outside the Work track or on a stop.
+ * Given where the visitor's gesture began (`from`), a gesture that travelled more than STEP of a gap goes
+ * on to the next stop in its direction (one wheel notch moves one project); a smaller one, or a rest with
+ * no gesture behind it, settles on the nearest stop.
+ */
+export function snapTarget(q: number, from?: number): number | null {
   if (q <= TRACK_FROM || q >= TRACK_TO) return null;
-  const target = stopProgress(stopAt(q));
+  const u = trackProgress(q) * last;
+  let stop = Math.round(u);
+  if (from !== undefined) {
+    const moved = u - trackProgress(from) * last;
+    if (Math.abs(moved) > STEP) stop = moved > 0 ? Math.ceil(u - 1e-9) : Math.floor(u + 1e-9);
+  }
+  const target = stopProgress(stop);
   return Math.abs(q - target) < 1e-6 ? null : target;
 }
 

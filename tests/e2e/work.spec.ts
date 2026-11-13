@@ -95,3 +95,10 @@ test('without WebGL the card strip lists every project and slides to "a small pa
   await expect(page.getByText(/small part/i)).toBeVisible();
   expect(await page.evaluate(() => window.__portfolio.probe('track') as number)).toBeLessThan(-200);
 });
+
+test('every case is linked from the Work board, for screen readers and crawlers', async ({ page }) => {
+  await gotoScene(page);
+  const hrefs = await page.locator('section#work a[href*="/work/"]').evaluateAll((as) => [...new Set(as.map((a) => a.getAttribute('href')))]);
+  for (const slug of ['gipper', 'aslanair', 'gengo', 'moto', 'altus', 'aslan-can', 'kolir', 'tuti', 'devdigest'])
+    expect(hrefs, slug).toContain(`/en/work/${slug}`);
+});

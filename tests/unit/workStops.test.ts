@@ -51,3 +51,16 @@ it('Work links land on the first project; hashes carry the stop', () => {
   expect(parseHash('work-99')).toBeNull();
   expect(parseHash('nope')).toBeNull();
 });
+
+it('a gesture that moved on from a stop settles on the next one in its direction; a nudge goes back', () => {
+  const gap = stopProgress(1) - stopProgress(0);
+  // one wheel notch from stop 4: ~0.2 of the gap
+  expect(snapTarget(stopProgress(4) + gap * 0.2, stopProgress(4))).toBeCloseTo(stopProgress(5), 9);
+  expect(snapTarget(stopProgress(4) - gap * 0.2, stopProgress(4))).toBeCloseTo(stopProgress(3), 9);
+  // a twitch is not a step
+  expect(snapTarget(stopProgress(4) + gap * 0.05, stopProgress(4))).toBeCloseTo(stopProgress(4), 9);
+  // a long fling settles on the stop just past where it came to rest
+  expect(snapTarget(stopProgress(4) + gap * 2.3, stopProgress(4))).toBeCloseTo(stopProgress(7), 9);
+  // from between stops (a site-made scroll left it there), the direction still decides
+  expect(snapTarget(stopProgress(3) + gap * 0.4, stopProgress(3) + gap * 0.3)).toBeCloseTo(stopProgress(3), 9);
+});

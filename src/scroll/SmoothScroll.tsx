@@ -19,6 +19,8 @@ let locked = false;
 let pending: { p: number; immediate: boolean } | null = null;
 /** the page is moving because the site asked it to (a link, a jump, a snap): the snap leaves it alone */
 let programmatic = false;
+/** story progress where the visitor's current scroll gesture began (the snap settles in its direction) */
+let gestureFrom: number | null = null;
 
 /** Page y of story progress q. */
 function yForStory(q: number): number | null {
@@ -35,6 +37,7 @@ export function scrollToProgress(q: number, immediate = false): void {
   const y = yForStory(q);
   if (!lenis || y === null) return;
   programmatic = true;
+  gestureFrom = null;
   lenis.scrollTo(y, {
     immediate,
     force: true,
@@ -150,7 +153,8 @@ export default function SmoothScroll() {
         snapTimer = setTimeout(settle, SNAP_IDLE_MS); // still gliding or coasting
         return;
       }
-      const target = snapTarget(experienceStore.getState().progress);
+      const target = snapTarget(experienceStore.getState().progress, gestureFrom ?? undefined);
+      gestureFrom = null;
       const y = target === null ? null : yForStory(target);
       if (y === null) return;
       const reduced = experienceStore.getState().reducedMotion;
@@ -170,6 +174,7 @@ export default function SmoothScroll() {
     };
     const onVisitorInput = () => {
       programmatic = false;
+      gestureFrom ??= experienceStore.getState().progress;
     };
     instance.on('scroll', onLenisScroll);
     for (const type of ['wheel', 'touchstart', 'keydown'] as const)

@@ -93,6 +93,21 @@ export default function WorkWall() {
           ))}
         </ul>
       </nav>
+      {/*
+        Every case, as links in the page for screen readers and crawlers: the caption only links the
+        current one. Out of the tab order: sighted keyboard users have the pager and "Open case".
+      */}
+      <nav aria-label={t('work.title')} className="sr-only">
+        <ul>
+          {PROJECTS.map((p) => (
+            <li key={p.slug}>
+              <Link href={`/work/${p.slug}`} scroll={false} tabIndex={-1}>
+                {t(`projects.${p.slug}.title`)}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </div>
   );
 }

@@ -43,6 +43,7 @@ export default function QualityGovernor() {
 
   useEffect(() => setDpr(TIER[tier].dpr), [tier, setDpr]);
   useEffect(() => registerProbe('dpr', () => gl.getPixelRatio()), [gl]);
+  useEffect(() => registerProbe('gpuTextures', () => gl.info.memory.textures), [gl]);
 
   useFrame((state, delta) => {
     if (off.current || chosen.current) return;

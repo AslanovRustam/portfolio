@@ -1,13 +1,14 @@
 'use client';
 
-import { useGLTF, useTexture } from '@react-three/drei';
-import { type ThreeEvent, useFrame, useThree } from '@react-three/fiber';
+import { useGLTF } from '@react-three/drei';
+import { type ThreeEvent, useFrame, useLoader, useThree } from '@react-three/fiber';
 import { Component, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import {
   CanvasTexture,
   CircleGeometry,
   Color,
   type Group,
+  ImageLoader,
   InstancedBufferAttribute,
   type InstancedMesh,
   type Material,
@@ -85,9 +86,11 @@ function screenGeometry(model: TvModel): PlaneGeometry {
   return g;
 }
 
-/** A poster redrawn at most `max` px wide: the 1200 px originals would only cost GPU memory here. */
-function shrink(tex: Texture, max: number, anisotropy: number): CanvasTexture {
-  const img = tex.image as HTMLImageElement | ImageBitmap;
+/**
+ * A poster redrawn at most `max` px wide. The posters are loaded as plain images, never as textures: the
+ * 1200 px originals must not reach the GPU (nine of them with mipmaps are ~43 MB nobody samples).
+ */
+function shrink(img: HTMLImageElement, max: number, anisotropy: number): CanvasTexture {
   const k = Math.min(1, max / img.width);
   const c = document.createElement('canvas');
   c.width = Math.round(img.width * k);
@@ -171,7 +174,7 @@ export default function TvWall() {
   const group = useRef<Group>(null);
   const tv1 = useGLTF(TV_MODELS.tv1.url);
   const tv2 = useGLTF(TV_MODELS.tv2.url);
-  const posters = useTexture(PROJECTS.map((p) => p.poster ?? '/projects/devdigest.webp'));
+  const posters = useLoader(ImageLoader, PROJECTS.map((p) => p.poster ?? '/projects/devdigest.webp'));
 
   const glowUniforms = useMemo(() => createGlowUniforms(), []);
   const bodies = useMemo(() => {
@@ -184,8 +187,10 @@ export default function TvWall() {
   const screenGeo = useMemo(() => ({ tv1: screenGeometry('tv1'), tv2: screenGeometry('tv2') }), []);
   const pictures = useMemo(() => {
     const aniso = Math.min(4, gl.capabilities.getMaxAnisotropy());
-    return [...posters.map((t) => shrink(t, tier === 'high' ? 1024 : 512, aniso)), ndaTexture()];
+    return [...posters.map((img) => shrink(img, tier === 'high' ? 1024 : 512, aniso)), ndaTexture()];
   }, [posters, tier, gl]);
+  // upload the pictures now, so the first walk along the wall never stalls on a texture upload
+  useEffect(() => pictures.forEach((t) => gl.initTexture(t)), [pictures, gl]);
   const glow = useMemo(() => [...pictures.slice(0, -1).map(averageColor), new Color('#5a7ac0')], [pictures]);
   const stopMats = useMemo(
     () =>

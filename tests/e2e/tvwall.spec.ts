@@ -35,3 +35,27 @@ test('a wall whose models fail to load leaves the site working', async ({ page }
   await expect(page.locator('section#work')).toBeVisible();
   expect(await page.evaluate(() => window.__portfolio.state().webgl)).toBe(true);
 });
+
+test('the wall puts only its small pictures on the GPU', async ({ page, context }) => {
+  const textures = (p: Page) => p.evaluate(() => window.__portfolio.probe('gpuTextures') as number);
+  // the scene without the wall
+  await page.route('**/models/tv/**', (r) => r.abort());
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.18);
+  await page.waitForTimeout(2500);
+  const without = await textures(page);
+  // and with it, every project screen drawn once
+  const full = await context.newPage();
+  await gotoScene(full);
+  await waitReady(full);
+  await expect.poll(async () => (await wall(full))?.loaded, { timeout: 20_000 }).toBe(true);
+  for (const q of [0.18, 0.26, 0.32]) {
+    await scrollTo(full, q);
+    await full.waitForTimeout(1200);
+  }
+  const added = (await textures(full)) - without;
+  console.log('wall textures', added);
+  // 10 screen pictures (9 posters + NDA), the sets' maps (≤ 6) and the road streak: no full-size originals
+  expect(added).toBeLessThanOrEqual(17);
+});

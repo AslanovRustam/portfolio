@@ -82,3 +82,23 @@ test('#work-5 opens the fifth project', async ({ page }) => {
   await waitReady(page);
   await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(0.18 + GAP * 4, 3);
 });
+
+test('one wheel notch inside Work moves on to the next project', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.18 + GAP * 3);
+  await page.mouse.move(720, 300);
+  await page.mouse.wheel(0, 100); // one notch: about a third of the gap between projects
+  await expect.poll(() => progress(page), { timeout: 5000 }).toBeCloseTo(0.18 + GAP * 4, 3);
+  await page.waitForTimeout(800);
+  expect(await progress(page)).toBeCloseTo(0.18 + GAP * 4, 3);
+});
+
+// Review Focus 2, inside Work: a site-made scroll that ends between two projects stays there
+test('a programmatic scroll between two stops is not pulled onto either', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.18 + GAP * 3.3);
+  await page.waitForTimeout(800);
+  expect(await progress(page)).toBeCloseTo(0.18 + GAP * 3.3, 3);
+});

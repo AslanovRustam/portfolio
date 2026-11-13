@@ -1,4 +1,4 @@
-import type { Pose, Vec3 } from '@/experience/choreography';
+import { activeSection, type Pose, type Vec3 } from '@/experience/choreography';
 import { stopAt, wallPosition } from '@/experience/workStops';
 import { screenRect, stopSlots, TV_MODELS, wallLayout } from './layout';
 
@@ -26,9 +26,12 @@ export function wallFill(aspect: number): number {
   return aspect >= 1 ? 0.55 : 0.85;
 }
 
-/** How much of the keyframed pose gives way to the wall pose (reduced motion: all or nothing). */
+/**
+ * How much of the keyframed pose gives way to the wall pose. Reduced motion: all of it for the whole Work
+ * section (a scroll rounded to the pixel can land a hair outside the track at the first or last stop).
+ */
 export function wallWeight(q: number, reduced: boolean): number {
-  if (reduced) return q >= WALL_IN[1] && q <= WALL_OUT[0] ? 1 : 0;
+  if (reduced) return activeSection(q) === 'work' ? 1 : 0;
   if (q <= WALL_IN[0] || q >= WALL_OUT[1]) return 0;
   if (q < WALL_IN[1]) return smoothstep((q - WALL_IN[0]) / (WALL_IN[1] - WALL_IN[0]));
   if (q > WALL_OUT[0]) return 1 - smoothstep((q - WALL_OUT[0]) / (WALL_OUT[1] - WALL_OUT[0]));
