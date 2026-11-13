@@ -1,5 +1,6 @@
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
+import type { ProjectSlug } from '@/content/projects';
 import type { SignId } from './signs';
 
 export type LightState = 'off' | 'red' | 'yellow' | 'green';
@@ -21,6 +22,10 @@ export interface ExperienceState {
   highlight: string | null;
   /** a contact message was just sent: the green light pulses for a moment */
   celebrate: boolean;
+  /** the Work stop whose TV is under the pointer */
+  hoveredScreen: number | null;
+  /** a TV in the scene asked to open this project's case (the HTML layer routes it) */
+  pendingCase: ProjectSlug | null;
   setProgress(p: number): void;
   setTier(t: Tier): void;
   setReducedMotion(v: boolean): void;
@@ -30,6 +35,8 @@ export interface ExperienceState {
   setLoadProgress(v: number): void;
   setHighlight(key: string | null): void;
   setCelebrate(v: boolean): void;
+  setHoveredScreen(stop: number | null): void;
+  requestCase(slug: ProjectSlug | null): void;
 }
 
 export const experienceStore = createStore<ExperienceState>()((set) => ({
@@ -42,6 +49,8 @@ export const experienceStore = createStore<ExperienceState>()((set) => ({
   loadProgress: 0,
   highlight: null,
   celebrate: false,
+  hoveredScreen: null,
+  pendingCase: null,
   setProgress: (p) => set({ progress: Math.min(1, Math.max(0, p)) }),
   setTier: (tier) => set({ tier }),
   setReducedMotion: (reducedMotion) => set({ reducedMotion }),
@@ -51,6 +60,8 @@ export const experienceStore = createStore<ExperienceState>()((set) => ({
   setLoadProgress: (loadProgress) => set({ loadProgress }),
   setHighlight: (highlight) => set({ highlight }),
   setCelebrate: (celebrate) => set({ celebrate }),
+  setHoveredScreen: (hoveredScreen) => set({ hoveredScreen }),
+  requestCase: (pendingCase) => set({ pendingCase }),
 }));
 
 export function useExperience<T>(selector: (s: ExperienceState) => T): T {

@@ -17,6 +17,7 @@ import Ready from './Ready';
 import Blueprint from './reveal/Blueprint';
 import RevealDriver from './reveal/RevealDriver';
 import PoleStickers from './stickers/PoleStickers';
+import TvWall, { WallBoundary } from './tvwall/TvWall';
 
 const start = cameraPose(0);
 
@@ -69,6 +70,12 @@ export default function Experience({ onContextLost }: { onContextLost?: () => vo
           <Ready />
           <Effects />
         </Suspense>
+        {/* the wall loads on its own: it never holds up the first frames, and a failed load only loses it */}
+        <WallBoundary>
+          <Suspense fallback={null}>
+            <TvWall />
+          </Suspense>
+        </WallBoundary>
       </Canvas>
       <PerfPanel />
       <LoadProgress />
