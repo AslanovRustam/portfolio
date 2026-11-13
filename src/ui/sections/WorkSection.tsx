@@ -96,6 +96,7 @@ export default function WorkSection() {
                   title: t(`projects.${p.slug}.title`),
                   kind: t(`projects.${p.slug}.kind`),
                   badge: p.badge ? t(`work.${p.badge}`) : undefined,
+                  status: p.status === 'in-development' ? t('work.inDevelopment') : undefined,
                 }}
               />
             </li>

@@ -1,9 +1,10 @@
 import { useTranslations } from 'next-intl';
 import { PanelTitle } from './SectionPanel';
 
-const PATH = ['sales', 'goit', 'clickable', 'mentor', 'lead', 'gipper'] as const;
+/** newest first */
+const PATH = ['gipper', 'lead', 'mentor', 'clickable', 'goit', 'sales'] as const;
 
-/** The About panel: from 14 years in sales to code, as a short story and the dated path. */
+/** The About panel: from 14 years in sales to code, as a short story and the dated path, latest first. */
 export default function AboutSection() {
   const t = useTranslations('about');
   return (

@@ -39,7 +39,9 @@ export default function Hero({ name, role, line, cue }: { name: string; role: st
             {cue} <span aria-hidden="true">↓</span>
           </p>
         </div>
-        <p className="max-w-[60ch] border-t border-[#7fe3ff]/60 px-4 py-2 text-xs text-[#e8f7ff]/80 sm:text-sm">{line}</p>
+        <p className="max-w-[60ch] border-t border-[#7fe3ff]/60 px-4 py-2 text-xs text-[#e8f7ff]/80 sm:text-sm lg:max-w-none lg:whitespace-nowrap">
+          {line}
+        </p>
       </div>
     </header>
   );

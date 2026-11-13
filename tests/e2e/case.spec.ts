@@ -31,3 +31,22 @@ test('an unknown case is a 404', async ({ page }) => {
   const res = await page.goto('/en/work/nope');
   expect(res?.status()).toBe(404);
 });
+
+test('gen-go links to its site and says the repo is private', async ({ page }) => {
+  await page.goto('/en/work/gengo');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { level: 2 })).toHaveText('gen-go', { timeout: 15_000 });
+  await expect(dialog.getByRole('link', { name: 'Live site' })).toHaveAttribute('href', 'https://gen-go.ai/');
+  await expect(dialog.getByRole('link', { name: 'Source code' })).toHaveCount(0);
+  await expect(dialog.getByText('Private repo')).toBeVisible();
+});
+
+test('Speca.bike is marked as in development, Kolir tells a full case', async ({ page }) => {
+  await page.goto('/en/work/moto');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { level: 2 })).toHaveText('Speca.bike', { timeout: 15_000 });
+  await expect(dialog.getByText('In development', { exact: true })).toBeVisible();
+  await page.goto('/en/work/kolir');
+  await expect(dialog.getByText('What I did')).toBeVisible({ timeout: 15_000 });
+  await expect(dialog.getByText('Private repo')).toBeVisible();
+});

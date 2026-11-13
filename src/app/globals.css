@@ -32,6 +32,14 @@ html {
   scrollbar-gutter: stable;
 }
 
+@layer base {
+  /* Tailwind 4 leaves buttons with the arrow; everything clickable here shows the hand */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+}
+
 body {
   background: var(--bg);
   color: var(--fg);

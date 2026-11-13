@@ -25,7 +25,7 @@
     "language": "Language"
   },
   "work": {
-    "title": "Selected work",
+    "title": "Examples of work",
     "lead": "Commercial products and my own projects. Open a card to see the task, what I built and the stack.",
     "more": "This is only a small part of the projects I’ve worked on.",
     "ndaTitle": "Under NDA",
@@ -41,7 +41,8 @@
     "site": "Product site",
     "course": "Course project",
     "commercial": "Commercial",
-    "private": "Private repo"
+    "private": "Private repo",
+    "inDevelopment": "In development"
   },
   "about": {
     "title": "About",
@@ -75,7 +76,7 @@
       }
     },
     "langsTitle": "Languages",
-    "langs": "Ukrainian (native), Russian (fluent), English (B2)",
+    "langs": "English (B2), Ukrainian (native), Russian (fluent)",
     "how": "I use Claude, Cursor and ChatGPT every day to speed up development, and n8n to automate routine work."
   },
   "stack": {
@@ -134,7 +135,7 @@
       "result": "The concept is live on Vercel, and the code is open on GitHub with its tests."
     },
     "gengo": {
-      "title": "GenGO",
+      "title": "gen-go",
       "kind": "AI creative platform for iGaming",
       "summary": "One brief in, banners, interactive landings, playable ads, videos and emails out. About 50k lines of TypeScript.",
       "problem": "The platform had to turn one brief into banners, interactive landing pages, playable ads, videos and emails, with paid credits and an admin panel.",
@@ -142,12 +143,12 @@
       "result": "About 50,000 lines of TypeScript, 36 API routes and 26 pages, live at gen-go.ai."
     },
     "moto": {
-      "title": "Moto aggregator",
+      "title": "Speca.bike",
       "kind": "Moto gear aggregator for Ukraine",
       "summary": "Parses 9 shops into one catalogue of 102,777 products. Matches duplicates and maps 8,357 raw categories into one tree.",
       "problem": "Nine Ukrainian shops list the same gear under different names and in different category trees, so one product shows up many times.",
       "did": "Wrote parsers for 9 shops, matched duplicate products and mapped 8,357 raw categories into one canonical tree. Built the catalogue on Next.js, Payload CMS and Postgres with search, facets, SEO and content in Ukrainian and Russian.",
-      "result": "102,777 products from 9 shops in one catalogue. The code is private, the preview build is open."
+      "result": "102,777 products from 9 shops in one catalogue. The project is still in development: the code is private, the preview build is open."
     },
     "altus": {
       "title": "ALTUS",
@@ -161,18 +162,27 @@
     },
     "kolir": {
       "title": "Kolir",
-      "kind": "Website for the Kolir agency",
-      "summary": "kolir.agency on Payload CMS: case studies in Ukrainian and English, generated PDFs and OG images, deployed on Vercel."
+      "kind": "Website for a branding agency",
+      "summary": "Site for an Odesa branding agency on Next.js and Payload CMS: cases in Ukrainian and English, briefs that arrive as PDF.",
+      "problem": "Kolir does branding in Odesa. The agency needed a site with case studies in two languages and a brief for each kind of order: logo, website, brand book, landing page, video, banners.",
+      "did": "Built the site on Next.js and Payload CMS. The server turns a filled brief into a readable PDF with pdf-lib, with a Cyrillic font and previews of the chosen options, and sends it by email. Added spam protection, JSON-LD, a sitemap and case pages in Ukrainian and English.",
+      "result": "The site is live at kolir.agency on Vercel. Which languages a case appears in is worked out at build time, so the serverless function stays under the Vercel size limit."
     },
     "tuti": {
       "title": "TUTI Games",
       "kind": "Landing for a kids’ games studio",
-      "summary": "Not a single runtime dependency. The admin panel saves content as a commit to GitHub through the API."
+      "summary": "One-page site for a kids’ games studio. The admin panel saves content as a commit to GitHub, and Vercel rebuilds the site.",
+      "problem": "A studio that makes games for children needed a one-page site in Ukrainian with a blog. The client had to edit news, games, vacancies and articles without a developer.",
+      "did": "Built it on Next.js 15 and Tailwind 4. The admin panel at /admin saves content as a commit through the GitHub API, so every edit has a history and can be reverted; without a token it writes to local files. Images are resized to WebP in the browser before upload. Articles are stored as blocks, not HTML, so there is nothing to sanitise.",
+      "result": "The site ships almost no client code of its own: one small script for scroll reveals and the mobile menu. Apart from Next.js and React it has no runtime libraries."
     },
     "devdigest": {
       "title": "DevDigest",
       "kind": "Starter + my features",
-      "summary": "AI agents course. On top of the starter I added a conventions extractor, PR intent classifier, Smart Diff, an MCP server and Blast Radius."
+      "summary": "Local AI review of pull requests. On top of the course starter I built PR intent, Smart Diff, Blast Radius and an MCP server.",
+      "problem": "DevDigest reviews pull requests with AI agents, locally. It comes from an AI agents course: the starter could only import a PR and run one agent review on it. Each lesson adds a feature, and I built them on top.",
+      "did": "Added a conventions extractor; an intent layer, where a cheap model reads the PR title, description and linked issues and narrows the review; Smart Diff, which groups changed files by role and shows findings inside the diff; Blast Radius, which lists the symbols in the changed files, their callers and the endpoints behind them without a model call; and an MCP server, so an assistant can run a review and read the findings.",
+      "result": "A review that hung for 20 minutes on a stalled model now finishes in about two: calls stream with an idle timeout and retry once. The stack is Fastify, Drizzle, Postgres with pgvector and Next.js 15, with Zod contracts shared by every package."
     }
   },
   "case": {

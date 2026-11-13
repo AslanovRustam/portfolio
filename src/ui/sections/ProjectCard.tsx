@@ -6,6 +6,8 @@ export interface CardCopy {
   title: string;
   kind: string;
   badge?: string;
+  /** "In development", for a product that is not finished yet */
+  status?: string;
 }
 
 /** A blueprint sheet standing in for a project without a public page to capture. */
@@ -54,8 +56,11 @@ export default function ProjectCard({ project, copy }: { project: Project; copy:
           <span className="text-[#7fe3ff]">{project.year}</span>
         </p>
       </div>
-      {copy.badge && (
-        <span className="absolute left-3 top-3 bg-[#050507]/80 px-2 py-1 text-[11px] text-[#ff7a1a]">{copy.badge}</span>
+      {(copy.badge || copy.status) && (
+        <span className="absolute left-3 top-3 flex gap-1.5 text-[11px]">
+          {copy.badge && <span className="bg-[#050507]/80 px-2 py-1 text-[#ff7a1a]">{copy.badge}</span>}
+          {copy.status && <span className="bg-[#050507]/80 px-2 py-1 text-[#ffd23f]">{copy.status}</span>}
+        </span>
       )}
     </Link>
   );

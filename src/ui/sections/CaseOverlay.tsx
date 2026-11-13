@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef } from 'react';
-import { projectBySlug, type ProjectSlug } from '@/content/projects';
+import { projectBySlug, repoIsPrivate, type ProjectSlug } from '@/content/projects';
 import { useRouter } from '@/i18n/navigation';
 import { lockScroll } from '@/scroll/SmoothScroll';
 import { BlueprintPoster } from './ProjectCard';
@@ -89,7 +89,7 @@ export default function CaseOverlay({ slug }: { slug: ProjectSlug }) {
                     </a>
                   </li>
                 ))}
-                {!project.links.repo && project.badge === 'commercial' && (
+                {repoIsPrivate(project) && (
                   <li className="px-3 py-1.5 text-[#e8f7ff]/50">{t('work.private')}</li>
                 )}
               </ul>
@@ -101,11 +101,12 @@ export default function CaseOverlay({ slug }: { slug: ProjectSlug }) {
               <span>{t(k('kind'))}</span>
               <span className="text-[#7fe3ff]">{project.year}</span>
               {project.badge && <span className="text-[#ff7a1a]">{t(`work.${project.badge}`)}</span>}
+              {project.status === 'in-development' && <span className="text-[#ffd23f]">{t('work.inDevelopment')}</span>}
             </p>
             <h2 id="case-title" className="mt-2 text-[clamp(2rem,4.5vw,3.75rem)] font-bold leading-none tracking-[-0.03em]">
               {t(k('title'))}
             </h2>
-            {project.featured ? (
+            {project.featured || project.detailed ? (
               <dl className="mt-6 space-y-5 text-sm leading-relaxed sm:text-[15px]">
                 {(['problem', 'did', 'result'] as const).map((part) => (
                   <div key={part}>

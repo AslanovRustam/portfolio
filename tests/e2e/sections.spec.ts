@@ -87,15 +87,40 @@ test('the hero carries the positioning line', async ({ page }) => {
   await expect(page.locator('header[data-hero]')).toContainText(en.hero.line);
 });
 
-test('About tells the path from sales to code, in order', async ({ page }) => {
+test('the hero line sits on one line on a laptop and a desktop, in every locale', async ({ page }) => {
+  for (const size of [
+    { width: 1280, height: 720 },
+    { width: 1920, height: 1080 },
+  ]) {
+    await page.setViewportSize(size);
+    for (const l of ['en', 'ru', 'uk']) {
+      await page.goto(`/${l}`);
+      const lines = await page.locator('header[data-hero] p').last().evaluate((el) => {
+        const s = getComputedStyle(el);
+        const h = el.clientHeight - parseFloat(s.paddingTop) - parseFloat(s.paddingBottom);
+        return Math.round(h / parseFloat(s.lineHeight));
+      });
+      expect(lines, `${l} at ${size.width}`).toBe(1);
+    }
+  }
+});
+
+test('header buttons show the hand cursor', async ({ page }) => {
+  await page.goto('/en');
+  for (const name of ['Work', 'About', 'Stack', 'Contact'])
+    await expect(page.getByRole('button', { name, exact: true })).toHaveCSS('cursor', 'pointer');
+});
+
+test('About tells the path from the latest job back to sales', async ({ page }) => {
   await gotoScene(page);
   await scrollTo(page, 0.48);
   const about = page.locator('section#about');
   await expect(about.getByRole('heading', { level: 2 })).toBeVisible();
   const items = about.locator('ol > li');
   await expect(items).toHaveCount(6);
-  await expect(items.first()).toContainText(/2007/);
-  await expect(items.last()).toContainText(/Gipper/);
+  // newest first (gate round 1)
+  await expect(items.first()).toContainText(/Gipper/);
+  await expect(items.last()).toContainText(/2007/);
 });
 
 test('hovering a stack chip lights its sticker on the pole', async ({ page }) => {
