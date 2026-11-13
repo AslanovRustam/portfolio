@@ -1,3 +1,5 @@
+import { existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { expect, it } from 'vitest';
 import { PROJECTS } from '@/content/projects';
 import { STACK } from '@/content/stack';
@@ -38,4 +40,13 @@ it('links are https and stack stickers exist on the pole', () => {
   for (const p of PROJECTS) for (const url of Object.values(p.links)) expect(url).toMatch(/^https:\/\//);
   const keys = new Set(STICKERS.map((s) => s.key));
   for (const g of STACK) for (const i of g.items) if (i.sticker) expect(keys.has(i.sticker)).toBe(true);
+});
+
+it('every poster file exists and stays small; the CV is there', () => {
+  for (const p of PROJECTS.filter((x) => x.poster)) {
+    const f = join('public', p.poster!);
+    expect(existsSync(f), f).toBe(true);
+    expect(statSync(f).size).toBeLessThanOrEqual(200 * 1024);
+  }
+  expect(existsSync('public/cv/rustam-aslanov-cv.pdf')).toBe(true);
 });
