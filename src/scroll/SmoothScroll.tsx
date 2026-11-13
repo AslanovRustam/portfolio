@@ -5,9 +5,10 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 import { useEffect } from 'react';
-import { SECTIONS, sectionCenter } from '@/experience/choreography';
+import { scrollFromStory, storyFromScroll } from '@/experience/journey';
 import type { SectionId } from '@/experience/signs';
 import { experienceStore } from '@/experience/store';
+import { parseHash, sectionTarget, snapTarget } from '@/experience/workStops';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -16,16 +17,31 @@ let trigger: ScrollTrigger | null = null;
 let locked = false;
 /** a scroll asked for while the page was locked (e.g. header nav over an open case), run on unlock */
 let pending: { p: number; immediate: boolean } | null = null;
+/** the page is moving because the site asked it to (a link, a jump, a snap): the snap leaves it alone */
+let programmatic = false;
 
-/** Scrolls the page so the journey sits at progress p (0..1). */
-export function scrollToProgress(p: number, immediate = false): void {
+/** Page y of story progress q. */
+function yForStory(q: number): number | null {
+  if (!trigger) return null;
+  return trigger.start + (trigger.end - trigger.start) * scrollFromStory(q);
+}
+
+/** Scrolls the page so the journey sits at story progress q (0..1). */
+export function scrollToProgress(q: number, immediate = false): void {
   if (locked) {
-    pending = { p, immediate };
+    pending = { p: q, immediate };
     return;
   }
-  if (!lenis || !trigger) return;
-  const y = trigger.start + (trigger.end - trigger.start) * Math.min(1, Math.max(0, p));
-  lenis.scrollTo(y, { immediate, force: true });
+  const y = yForStory(q);
+  if (!lenis || y === null) return;
+  programmatic = true;
+  lenis.scrollTo(y, {
+    immediate,
+    force: true,
+    onComplete: () => {
+      programmatic = false;
+    },
+  });
 }
 
 /** Freezes the page under an overlay (case dialog): no wheel, touch or keyboard scrolling, no jump. */
@@ -43,12 +59,14 @@ export function lockScroll(on: boolean): void {
   }
 }
 
-/** Scrolls to a section's centre; glides unless the visitor prefers reduced motion. */
+/** Scrolls to a section (Work: its first project); glides unless the visitor prefers reduced motion. */
 export function scrollToSection(id: SectionId): void {
-  scrollToProgress(sectionCenter(id), experienceStore.getState().reducedMotion);
+  scrollToProgress(sectionTarget(id), experienceStore.getState().reducedMotion);
 }
 
-const isSection = (v: string): v is SectionId => SECTIONS.some((s) => s.id === v);
+/** How long the page has to rest inside Work before it settles on the nearest project. */
+const SNAP_IDLE_MS = 150;
+const SNAP_GLIDE_S = 0.4;
 
 /** Lenis smooth scroll + one ScrollTrigger over #journey that writes progress into the store. */
 export default function SmoothScroll() {
@@ -85,7 +103,7 @@ export default function SmoothScroll() {
       start: 'top top',
       end: 'bottom bottom',
       onUpdate: (self) => {
-        if (!holding) experienceStore.getState().setProgress(self.progress);
+        if (!holding) experienceStore.getState().setProgress(storyFromScroll(self.progress));
       },
     });
     trigger = st;
@@ -123,14 +141,48 @@ export default function SmoothScroll() {
     ScrollTrigger.addEventListener('refreshInit', onRefreshInit);
     ScrollTrigger.addEventListener('refresh', onRefresh);
 
-    // A deep link (/en#stack) opens its section once there is something to look at: when the scene is
-    // ready, or straight away on the no-WebGL fallback, which never becomes ready.
-    const hash = location.hash.slice(1);
+    // Inside Work a scroll that comes to rest between two projects settles on the nearest one. Only the
+    // visitor's own scrolling counts: any wheel, touch or key hands control back from a site-made scroll.
+    let snapTimer: ReturnType<typeof setTimeout> | undefined;
+    const settle = () => {
+      if (programmatic || locked || holding || instance.isTouching) return;
+      if (instance.isScrolling) {
+        snapTimer = setTimeout(settle, SNAP_IDLE_MS); // still gliding or coasting
+        return;
+      }
+      const target = snapTarget(experienceStore.getState().progress);
+      const y = target === null ? null : yForStory(target);
+      if (y === null) return;
+      const reduced = experienceStore.getState().reducedMotion;
+      programmatic = true;
+      instance.scrollTo(y, {
+        immediate: reduced,
+        duration: SNAP_GLIDE_S,
+        force: true,
+        onComplete: () => {
+          programmatic = false;
+        },
+      });
+    };
+    const onLenisScroll = () => {
+      clearTimeout(snapTimer);
+      if (!programmatic) snapTimer = setTimeout(settle, SNAP_IDLE_MS);
+    };
+    const onVisitorInput = () => {
+      programmatic = false;
+    };
+    instance.on('scroll', onLenisScroll);
+    for (const type of ['wheel', 'touchstart', 'keydown'] as const)
+      window.addEventListener(type, onVisitorInput, { capture: true, passive: true });
+
+    // A deep link (/en#stack, /en#work-5) opens its place once there is something to look at: when the
+    // scene is ready, or straight away on the no-WebGL fallback, which never becomes ready.
+    const target = parseHash(location.hash.slice(1));
     let stopDeepLink = () => {};
-    if (isSection(hash)) {
+    if (target !== null) {
       const go = (s: { ready: boolean; webgl: boolean }) => {
         if (!s.ready && s.webgl) return false;
-        scrollToSection(hash);
+        scrollToProgress(target, experienceStore.getState().reducedMotion);
         return true;
       };
       if (!go(experienceStore.getState())) {
@@ -142,6 +194,9 @@ export default function SmoothScroll() {
 
     return () => {
       stopDeepLink();
+      clearTimeout(snapTimer);
+      for (const type of ['wheel', 'touchstart', 'keydown'] as const)
+        window.removeEventListener(type, onVisitorInput, { capture: true });
       window.removeEventListener('resize', onResize);
       clearTimeout(release);
       ScrollTrigger.removeEventListener('refreshInit', onRefreshInit);

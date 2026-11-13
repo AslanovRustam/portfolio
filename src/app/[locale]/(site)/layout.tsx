@@ -1,5 +1,6 @@
 import { useTranslations } from 'next-intl';
 import HooksMount from '@/dev/HooksMount';
+import { JOURNEY_HEIGHT } from '@/experience/journey';
 import SmoothScroll from '@/scroll/SmoothScroll';
 import ExperienceGate from '@/ui/ExperienceGate';
 import Hero from '@/ui/Hero';
@@ -39,7 +40,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         <HooksMount />
         <Hero name={t('hero.name')} role={t('hero.role')} line={t('hero.line')} cue={t('hero.cue')} />
         {/* the scroll track the whole journey is measured against; clicks pass through to the scene */}
-        <div id="journey" className="pointer-events-none" style={{ height: '1100svh' }} />
+        <div id="journey" className="pointer-events-none" style={{ height: JOURNEY_HEIGHT }} />
         <SectionPanel id="work" layout="bottom" labelledBy="work-title">
           <WorkSection />
         </SectionPanel>

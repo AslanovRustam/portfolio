@@ -10,7 +10,8 @@ test('hovering a sign shows a pointer, clicking it scrolls to its section', asyn
   await page.mouse.move(x, y);
   await expect.poll(() => page.evaluate(() => document.body.style.cursor)).toBe('pointer');
   await page.mouse.click(x, y);
-  await expect.poll(() => progress(page), { timeout: 4000 }).toBeCloseTo(0.26, 2);
+  // Work opens on its first project (Plan 2b)
+  await expect.poll(() => progress(page), { timeout: 4000 }).toBeCloseTo(0.18, 3);
 });
 
 test('hero is visible at the top and gone after the intro starts', async ({ page }) => {

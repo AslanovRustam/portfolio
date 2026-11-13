@@ -1,20 +1,21 @@
 'use client';
 
 import { useLocale } from 'next-intl';
-import { activeSection } from '@/experience/choreography';
 import { useExperience } from '@/experience/store';
+import { hashFor } from '@/experience/workStops';
 import { Link, usePathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 
 /**
  * EN / RU / UK: the same page in another language. A case stays open across the switch, and the
- * section the visitor is at travels along as a hash, so the street picks up where it was.
+ * section (in Work, the project) the visitor is at travels along as a hash, so the street picks up
+ * where it was.
  */
 export default function LanguageSwitch({ label }: { label: string }) {
   const current = useLocale();
   const pathname = usePathname();
-  const section = useExperience((s) => activeSection(s.progress));
-  const href = section ? `${pathname}#${section}` : pathname;
+  const hash = useExperience((s) => hashFor(s.progress));
+  const href = hash ? `${pathname}#${hash}` : pathname;
   return (
     <ul aria-label={label} className="flex divide-x divide-[#7fe3ff]/40">
       {routing.locales.map((l) => (
