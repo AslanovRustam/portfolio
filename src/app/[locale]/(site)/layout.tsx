@@ -6,6 +6,7 @@ import Hero from '@/ui/Hero';
 import SiteHeader from '@/ui/SiteHeader';
 import SectionPanel, { PanelTitle } from '@/ui/sections/SectionPanel';
 import WorkSection from '@/ui/sections/WorkSection';
+import AboutSection from '@/ui/sections/AboutSection';
 
 /**
  * The persistent experience: scene, scroll, header and sections. It wraps both the home page and the
@@ -41,7 +42,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           <WorkSection />
         </SectionPanel>
         <SectionPanel id="about" layout="side" labelledBy="about-title">
-          <PanelTitle id="about-title">{t('about.title')}</PanelTitle>
+          <AboutSection />
         </SectionPanel>
         <SectionPanel id="stack" layout="side" labelledBy="stack-title">
           <PanelTitle id="stack-title">{t('stack.title')}</PanelTitle>

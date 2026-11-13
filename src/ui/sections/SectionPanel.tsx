@@ -8,7 +8,7 @@ import { experienceStore } from '@/experience/store';
 
 const PLACE = {
   // wide screens: a column on the left (the scene steps right) or, for Work, a band along the bottom
-  side: 'wide:inset-x-auto wide:left-6 wide:top-24 wide:bottom-6 wide:max-h-none wide:w-[min(36rem,38vw)]',
+  side: 'wide:inset-x-auto wide:left-6 wide:top-24 wide:bottom-6 wide:max-h-none wide:w-[min(40rem,40vw)]',
   bottom: 'wide:inset-x-6 wide:bottom-6 wide:max-h-[42svh]',
 } as const;
 
@@ -51,18 +51,26 @@ export default function SectionPanel({
 
     // Content taller than the sheet scrolls natively inside it; otherwise the wheel keeps driving the
     // journey through Lenis.
+    // While more of it is below the fold, the bottom edge fades out (data-more) as a cue to scroll.
     const body = el.firstElementChild as HTMLElement | null;
     const fit = () => {
-      if (body) body.toggleAttribute('data-lenis-prevent', body.scrollHeight > body.clientHeight + 1);
+      if (!body) return;
+      body.toggleAttribute('data-lenis-prevent', body.scrollHeight > body.clientHeight + 1);
+      body.toggleAttribute('data-more', body.scrollTop + body.clientHeight < body.scrollHeight - 2);
     };
     const ro = new ResizeObserver(fit);
-    if (body) ro.observe(body);
+    if (body) {
+      ro.observe(body);
+      if (body.firstElementChild) ro.observe(body.firstElementChild);
+      body.addEventListener('scroll', fit, { passive: true });
+    }
     fit();
 
     return () => {
       unsubscribe();
       unprobe();
       ro.disconnect();
+      body?.removeEventListener('scroll', fit);
     };
   }, [id]);
 
@@ -76,7 +84,9 @@ export default function SectionPanel({
       style={{ opacity: 0, visibility: 'hidden' }}
       className={`fixed inset-x-3 bottom-3 z-20 flex max-h-[46svh] flex-col border border-[#7fe3ff]/40 bg-[#050507]/75 text-[#e8f7ff] backdrop-blur-md will-change-[opacity,transform] ${PLACE[layout]}`}
     >
-      <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-7">{children}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-7 data-[more]:[mask-image:linear-gradient(to_bottom,black_calc(100%-3rem),transparent)]">
+        {children}
+      </div>
     </section>
   );
 }

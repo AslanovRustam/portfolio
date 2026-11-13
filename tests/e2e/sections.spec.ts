@@ -86,3 +86,14 @@ test('the hero carries the positioning line', async ({ page }) => {
   await gotoScene(page);
   await expect(page.locator('header[data-hero]')).toContainText(en.hero.line);
 });
+
+test('About tells the path from sales to code, in order', async ({ page }) => {
+  await gotoScene(page);
+  await scrollTo(page, 0.48);
+  const about = page.locator('section#about');
+  await expect(about.getByRole('heading', { level: 2 })).toBeVisible();
+  const items = about.locator('ol > li');
+  await expect(items).toHaveCount(6);
+  await expect(items.first()).toContainText(/2007/);
+  await expect(items.last()).toContainText(/Gipper/);
+});
