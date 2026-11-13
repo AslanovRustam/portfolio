@@ -111,16 +111,23 @@ test('header buttons show the hand cursor', async ({ page }) => {
     await expect(page.getByRole('button', { name, exact: true })).toHaveCSS('cursor', 'pointer');
 });
 
-test('About tells the path from the latest job back to sales', async ({ page }) => {
+test('About lists the work path and, apart, the education', async ({ page }) => {
   await gotoScene(page);
   await scrollTo(page, 0.48);
   const about = page.locator('section#about');
   await expect(about.getByRole('heading', { level: 2 })).toBeVisible();
-  const items = about.locator('ol > li');
-  await expect(items).toHaveCount(6);
-  // newest first (gate round 1)
-  await expect(items.first()).toContainText(/Gipper/);
-  await expect(items.last()).toContainText(/2007/);
+  // Rustam's order (gate round 1): Clickable, GoIT mentoring, then sales
+  const path = about.locator('ol[data-path] > li');
+  await expect(path).toHaveCount(4);
+  await expect(path.nth(0)).toContainText(/Since 2023.*Team lead at Clickable Agency/);
+  await expect(path.nth(1)).toContainText(/2021–2023.*Front-end developer at Clickable Agency/);
+  await expect(path.nth(2)).toContainText(/Since 2022.*React mentor at GoIT/);
+  await expect(path.nth(3)).toContainText(/2007–2021.*Sales at Henkel/);
+  await expect(about.getByRole('heading', { name: 'Education' })).toBeVisible();
+  const school = about.locator('ol[data-education] > li');
+  await expect(school).toHaveCount(2);
+  await expect(school.nth(0)).toContainText(/2020–2021.*Full Stack course at GoIT/);
+  await expect(school.nth(1)).toContainText(/2002–2007.*Popov Odesa National Academy of Telecommunications/);
 });
 
 test('hovering a stack chip lights its sticker on the pole', async ({ page }) => {
