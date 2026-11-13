@@ -97,3 +97,13 @@ test('About tells the path from sales to code, in order', async ({ page }) => {
   await expect(items.first()).toContainText(/2007/);
   await expect(items.last()).toContainText(/Gipper/);
 });
+
+test('hovering a stack chip lights its sticker on the pole', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.695);
+  await page.locator('section#stack').getByText('React', { exact: true }).hover();
+  await expect.poll(() => page.evaluate(() => window.__portfolio.probe('stickerGlow'))).toBe('react');
+  await page.mouse.move(5, 5);
+  await expect.poll(() => page.evaluate(() => window.__portfolio.probe('stickerGlow'))).toBeNull();
+});

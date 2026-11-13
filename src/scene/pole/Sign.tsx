@@ -19,6 +19,7 @@ import { experienceStore } from '@/experience/store';
 import { registerProbe } from '@/dev/sceneProbe';
 import { scrollToSection } from '@/scroll/SmoothScroll';
 import EdgesOverlay from '../reveal/EdgesOverlay';
+import { overUi } from '../uiPointer';
 import { revealUniforms } from '../reveal/registry';
 import { applyReveal } from '../reveal/revealMaterial';
 import { neonFlicker } from '../reveal/revealMath';
@@ -41,15 +42,6 @@ const FRONT = PLATE.depth / 2 + PLATE.bevel;
 export const MOUNT = POLE.radius + 0.035 + FRONT;
 const NEON_LIGHT = 1.4;
 const HOVER_GLOW = 2.6;
-
-/**
- * R3F listens on document.body, so a pointer over HTML that happens to lie on top of a sign (header,
- * panels, overlays — all marked data-ui) still raycasts onto the sign. Those events belong to the HTML.
- */
-function overUi(e: { nativeEvent: Event }): boolean {
-  const target = e.nativeEvent.target as Element | null;
-  return !!target?.closest?.('[data-ui]');
-}
 
 function hover(id: SignDef['id'], on: boolean) {
   const store = experienceStore.getState();

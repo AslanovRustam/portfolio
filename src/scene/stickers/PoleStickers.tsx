@@ -2,10 +2,13 @@
 
 import { use, useEffect, useMemo, useState } from 'react';
 import { CanvasTexture, CylinderGeometry, SRGBColorSpace } from 'three';
+import { registerProbe } from '@/dev/sceneProbe';
 import { POLE } from '@/experience/signs';
+import { useExperience } from '@/experience/store';
 import { useNightEnv } from '../env';
 import { revealUniforms } from '../reveal/registry';
 import { revealCompile } from '../reveal/revealMaterial';
+import { overUi } from '../uiPointer';
 import { type AtlasRect, layoutAtlas } from './atlas';
 import { getIcon } from './icons';
 import { type StickerDef, STICKERS } from './stickers';
@@ -120,8 +123,13 @@ export default function PoleStickers() {
   const atlas = useMemo(() => drawAtlas(STICKERS, rects), [rects]);
   const geometries = useMemo(() => STICKERS.map((s, i) => stickerGeometry(s, rects[i])), [rects]);
   const [hovered, setHovered] = useState<string | null>(null);
+  // a chip in the Stack panel lights its sticker too
+  const highlight = useExperience((st) => st.highlight);
+  const glowing = hovered ?? highlight;
   // stickers are part of the pole: they render with it
   const compile = useMemo(() => revealCompile(revealUniforms('pole')), []);
+
+  useEffect(() => registerProbe('stickerGlow', () => glowing), [glowing]);
 
   useEffect(
     () => () => {
@@ -139,7 +147,7 @@ export default function PoleStickers() {
           geometry={geometries[i]}
           position-y={s.y}
           onPointerOver={(e) => {
-            if (s.kind !== 'logo') return;
+            if (s.kind !== 'logo' || overUi(e)) return;
             e.stopPropagation();
             setHovered(s.key);
           }}
@@ -154,7 +162,7 @@ export default function PoleStickers() {
             envMapIntensity={0.5}
             emissiveMap={atlas}
             emissive="#ffffff"
-            emissiveIntensity={hovered === s.key ? 1.4 : 0.06}
+            emissiveIntensity={glowing === s.key ? 1.4 : 0.06}
             polygonOffset
             polygonOffsetFactor={-2}
             onBeforeCompile={compile}
