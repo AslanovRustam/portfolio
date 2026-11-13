@@ -14,5 +14,13 @@
   "fallback": {
     "title": "Цій вулиці потрібен WebGL2",
     "body": "Відкрийте сайт у свіжому Chrome, Edge, Firefox або Safari, щоб побачити 3D-сцену."
+  },
+  "nav": {
+    "work": "Проєкти",
+    "about": "Про мене",
+    "stack": "Стек",
+    "contact": "Контакти",
+    "cv": "CV",
+    "language": "Мова"
   }
 }

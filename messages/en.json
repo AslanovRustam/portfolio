@@ -14,5 +14,13 @@
   "fallback": {
     "title": "This street needs WebGL2",
     "body": "Open the site in a recent Chrome, Edge, Firefox or Safari to see the 3D scene."
+  },
+  "nav": {
+    "work": "Work",
+    "about": "About",
+    "stack": "Stack",
+    "contact": "Contact",
+    "cv": "CV",
+    "language": "Language"
   }
 }
