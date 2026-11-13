@@ -2,7 +2,7 @@
 // Run: npm run perf → test-results/perf.json
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
-import { gotoScene, waitReady } from './helpers';
+import { gotoScene, scrollTo, stop, waitReady } from './helpers';
 
 test('scrolling the whole journey keeps at least 30 fps', async ({ page }) => {
   test.setTimeout(120_000);
@@ -47,5 +47,43 @@ test('scrolling the whole journey keeps at least 30 fps', async ({ page }) => {
   mkdirSync('test-results', { recursive: true });
   writeFileSync('test-results/perf.json', JSON.stringify(report, null, 2));
   console.log('perf', JSON.stringify(report));
+  expect(medianMs).toBeLessThanOrEqual(33.4);
+});
+
+test('standing at a Work stop keeps at least 30 fps', async ({ page }) => {
+  test.setTimeout(120_000);
+  await gotoScene(page);
+  await waitReady(page);
+  await page.waitForFunction(() => (window.__portfolio.probe('wall') as { loaded?: boolean } | undefined)?.loaded, undefined, {
+    timeout: 30_000,
+  });
+  await scrollTo(page, stop(3));
+  await page.waitForTimeout(3000);
+  const frames = await page.evaluate(
+    () =>
+      new Promise<number[]>((resolve) => {
+        const out: number[] = [];
+        let last = performance.now();
+        const end = last + 3000;
+        const tick = (t: number) => {
+          out.push(t - last);
+          last = t;
+          if (t < end) requestAnimationFrame(tick);
+          else resolve(out.slice(3));
+        };
+        requestAnimationFrame(tick);
+      }),
+  );
+  const sorted = [...frames].sort((a, b) => a - b);
+  const medianMs = sorted[Math.floor(sorted.length / 2)];
+  const report = {
+    tier: await page.evaluate(() => window.__portfolio.state().tier),
+    medianMs: +medianMs.toFixed(2),
+    p95Ms: +sorted[Math.floor(sorted.length * 0.95)].toFixed(2),
+    frames: frames.length,
+  };
+  mkdirSync('test-results', { recursive: true });
+  writeFileSync('test-results/perf-work.json', JSON.stringify(report, null, 2));
+  console.log('perf-work', JSON.stringify(report));
   expect(medianMs).toBeLessThanOrEqual(33.4);
 });

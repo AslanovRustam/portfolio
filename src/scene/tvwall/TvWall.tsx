@@ -14,7 +14,6 @@ import {
   Matrix4,
   type Mesh,
   MeshBasicMaterial,
-  type PointLight,
   Object3D,
   PlaneGeometry,
   SRGBColorSpace,
@@ -26,12 +25,12 @@ import { registerProbe } from '@/dev/sceneProbe';
 import { activeSection } from '@/experience/choreography';
 import { experienceStore, useExperience } from '@/experience/store';
 import { stopAt, wallPosition } from '@/experience/workStops';
-import { WALL_LIGHT } from '../Lighting';
 import { globalReveal } from '../reveal/registry';
 import { overUi } from '../uiPointer';
 import { createCrtMaterial } from './crtMaterial';
 import { screenRect, stopSlots, TV_MODELS, type TvModel, type TvSlot, wallLayout } from './layout';
 import { screenAge, screenLevel } from './power';
+import { createGlowUniforms, withScreenGlow } from './screenGlow';
 import WallStreaks from './WallStreaks';
 
 const LAYOUT = wallLayout();
@@ -77,9 +76,10 @@ function screenGeometry(model: TvModel): PlaneGeometry {
   for (let i = 0; i < p.count; i++) {
     const nx = p.getX(i) / (size[0] / 2);
     const ny = p.getY(i) / (size[1] / 2);
-    // a flat-topped bulge, a little proud of the measured glass, so the tube never shows through the picture
+    // a flat-topped bulge proud of the measured glass (edges 8 mm, still behind the bezel lip), so the tube
+    // never shows through the picture
     const dome = (1 - nx ** 4) * (1 - ny ** 4);
-    p.setXYZ(i, p.getX(i) + center[0], p.getY(i) + center[1], z + 0.004 + (bulge + 0.004) * dome);
+    p.setXYZ(i, p.getX(i) + center[0], p.getY(i) + center[1], z + 0.008 + (bulge + 0.004) * dome);
   }
   g.computeVertexNormals();
   return g;
@@ -173,7 +173,14 @@ export default function TvWall() {
   const tv2 = useGLTF(TV_MODELS.tv2.url);
   const posters = useTexture(PROJECTS.map((p) => p.poster ?? '/projects/devdigest.webp'));
 
-  const bodies = useMemo(() => ({ tv1: firstMesh(tv1.scene), tv2: firstMesh(tv2.scene) }), [tv1, tv2]);
+  const glowUniforms = useMemo(() => createGlowUniforms(), []);
+  const bodies = useMemo(() => {
+    const body = (root: Object3D) => {
+      const mesh = firstMesh(root);
+      return { geometry: mesh.geometry, material: withScreenGlow(mesh.material as Material, glowUniforms, curved) };
+    };
+    return { tv1: body(tv1.scene), tv2: body(tv2.scene) };
+  }, [tv1, tv2, glowUniforms, curved]);
   const screenGeo = useMemo(() => ({ tv1: screenGeometry('tv1'), tv2: screenGeometry('tv2') }), []);
   const pictures = useMemo(() => {
     const aniso = Math.min(4, gl.capabilities.getMaxAnisotropy());
@@ -248,18 +255,11 @@ export default function TvWall() {
   const levels = useRef<number[]>(STOPS.map(() => 0));
   const streaks = useRef<number[]>(STOPS.map(() => 0));
   // what the frame loop writes to each frame (uniforms, instance attributes), kept current with the memos
-  const live = useRef({ stopMats, fillerMats, fillerGeo, glow });
+  const live = useRef({ stopMats, fillerMats, fillerGeo, glow, glowUniforms });
   useEffect(() => {
-    live.current = { stopMats, fillerMats, fillerGeo, glow };
-  }, [stopMats, fillerMats, fillerGeo, glow]);
-  // the screen light belongs to the main scene, which may still be loading when the wall arrives
-  const light = useRef<PointLight | null>(null);
-  useEffect(
-    () => () => {
-      if (light.current) light.current.intensity = 0;
-    },
-    [],
-  );
+    live.current = { stopMats, fillerMats, fillerGeo, glow, glowUniforms };
+  }, [stopMats, fillerMats, fillerGeo, glow, glowUniforms]);
+  const glowAt = useMemo(() => new Vector3(), []);
 
   useEffect(() => {
     const v = new Vector3();
@@ -286,7 +286,7 @@ export default function TvWall() {
     if (!inWork) onAt.current = null;
     const sinceOn = onAt.current === null ? null : t - onAt.current;
     const current = stopAt(progress);
-    const { stopMats, fillerMats, fillerGeo, glow } = live.current;
+    const { stopMats, fillerMats, fillerGeo, glow, glowUniforms } = live.current;
 
     STOPS.forEach((s, i) => {
       const st = { order: s.order, sinceOn, active: i === current, hovered: hoveredScreen === i, reduced: reducedMotion };
@@ -311,19 +311,16 @@ export default function TvWall() {
       if (lamps) lamps.visible = sinceOn === null;
     }
 
-    // the current screen lights the sets around it: the light rides along the wall with the camera
-    light.current ??= (state.scene.getObjectByName(WALL_LIGHT) as PointLight | undefined) ?? null;
-    const lamp = light.current;
-    if (lamp) {
-      const s = Math.min(wallPosition(progress), STOPS.length - 1);
-      const i = Math.min(Math.floor(s), STOPS.length - 2);
-      const f = s - i;
-      const a = screenRect(STOPS[i]).center;
-      const b = screenRect(STOPS[i + 1]).center;
-      lamp.position.set(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f + 0.7);
-      lamp.color.copy(glow[current]);
-      lamp.intensity = sinceOn === null ? 0 : 2.4 * Math.min(1, levels.current[current]);
-    }
+    // the current screen lights the sets around it: the glow rides along the wall with the camera
+    const s = Math.min(wallPosition(progress), STOPS.length - 1);
+    const i = Math.min(Math.floor(s), STOPS.length - 2);
+    const f = s - i;
+    const a = screenRect(STOPS[i]).center;
+    const b = screenRect(STOPS[i + 1]).center;
+    glowAt.set(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f + 0.7);
+    glowUniforms.uGlowView.value.copy(glowAt).applyMatrix4(state.camera.matrixWorldInverse);
+    glowUniforms.uGlowColor.value.copy(glow[current]);
+    glowUniforms.uGlowPower.value = sinceOn === null ? 0 : 2.4 * Math.min(1, levels.current[current]);
   });
 
   const lit = () => !!group.current?.visible && activeSection(experienceStore.getState().progress) === 'work';

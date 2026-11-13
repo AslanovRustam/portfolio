@@ -32,15 +32,6 @@ export default function Lighting() {
         color="#ffb36b"
       />
       <hemisphereLight args={['#1a2236', '#050507', 0.35]} />
-      {/*
-        The light of the TV wall's current screen. TvWall moves, colours and dims it; it lives here from
-        the first frame, at zero, so the wall arriving later never changes the light count (and never
-        recompiles every material in the scene).
-      */}
-      <pointLight name={WALL_LIGHT} intensity={0} distance={4.5} decay={2} />
     </>
   );
 }
-
-/** Name of the TV wall's screen light, for TvWall to find it. */
-export const WALL_LIGHT = 'tv-wall-light';

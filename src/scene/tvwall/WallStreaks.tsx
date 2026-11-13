@@ -53,6 +53,8 @@ export default function WallStreaks({
     });
     m.instanceMatrix.needsUpdate = true;
     if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    // on standby every streak is black: skip the draw (it is never culled)
+    m.visible = out.current.some((v) => v > 0);
   });
 
   return (
