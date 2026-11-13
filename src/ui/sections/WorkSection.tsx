@@ -50,6 +50,10 @@ export default function WorkSection() {
       const item = (e.target as HTMLElement).closest('li');
       vp.scrollLeft = 0; // the browser may have scrolled the clipped viewport itself
       if (!item || max <= 0) return;
+      // a card already in view stays put (focus coming back from a closed case lands here too)
+      const card = item.getBoundingClientRect();
+      const view = vp.getBoundingClientRect();
+      if (card.left >= view.left - 1 && card.right <= view.right + 1) return;
       scrollToProgress(progressForTrack(Math.min(max, item.offsetLeft) / max));
     };
 

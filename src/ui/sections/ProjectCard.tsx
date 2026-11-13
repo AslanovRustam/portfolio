@@ -32,6 +32,7 @@ export default function ProjectCard({ project, copy }: { project: Project; copy:
     <Link
       href={`/work/${project.slug}`}
       scroll={false}
+      prefetch
       data-ui
       className="group relative block h-full overflow-hidden border border-[#7fe3ff]/30 bg-[#0b1f38] transition-colors hover:border-[#ff7a1a] focus-visible:border-[#7fe3ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7fe3ff]"
     >

@@ -4,7 +4,7 @@ import { activeSection } from '@/experience/choreography';
 import type { SectionId } from '@/experience/signs';
 import { CONTACTS } from '@/content/contacts';
 import { useExperience } from '@/experience/store';
-import { Link } from '@/i18n/navigation';
+import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { scrollToProgress, scrollToSection } from '@/scroll/SmoothScroll';
 import LanguageSwitch from './LanguageSwitch';
 
@@ -28,6 +28,13 @@ const cell =
  */
 export default function SiteHeader({ name, labels }: { name: string; labels: Labels }) {
   const active = useExperience((s) => activeSection(s.progress));
+  const pathname = usePathname();
+  const router = useRouter();
+  // over an open case, a destination closes it first; the scroll waits for the page to unlock
+  const go = (id: SectionId) => {
+    if (pathname !== '/') router.push('/', { scroll: false });
+    scrollToSection(id);
+  };
   return (
     <header
       data-ui
@@ -48,7 +55,7 @@ export default function SiteHeader({ name, labels }: { name: string; labels: Lab
               <li key={id}>
                 <button
                   type="button"
-                  onClick={() => scrollToSection(id)}
+                  onClick={() => go(id)}
                   aria-current={active === id ? 'true' : undefined}
                   className={`${cell} aria-[current]:text-[#ff7a1a]`}
                 >

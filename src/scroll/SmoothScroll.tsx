@@ -13,12 +13,34 @@ gsap.registerPlugin(ScrollTrigger);
 
 let lenis: Lenis | null = null;
 let trigger: ScrollTrigger | null = null;
+let locked = false;
+/** a scroll asked for while the page was locked (e.g. header nav over an open case), run on unlock */
+let pending: { p: number; immediate: boolean } | null = null;
 
 /** Scrolls the page so the journey sits at progress p (0..1). */
 export function scrollToProgress(p: number, immediate = false): void {
+  if (locked) {
+    pending = { p, immediate };
+    return;
+  }
   if (!lenis || !trigger) return;
   const y = trigger.start + (trigger.end - trigger.start) * Math.min(1, Math.max(0, p));
   lenis.scrollTo(y, { immediate, force: true });
+}
+
+/** Freezes the page under an overlay (case dialog): no wheel, touch or keyboard scrolling, no jump. */
+export function lockScroll(on: boolean): void {
+  locked = on;
+  document.documentElement.style.overflow = on ? 'hidden' : '';
+  if (on) lenis?.stop();
+  else {
+    lenis?.start();
+    if (pending) {
+      const { p, immediate } = pending;
+      pending = null;
+      scrollToProgress(p, immediate);
+    }
+  }
 }
 
 /** Scrolls to a section's centre; glides unless the visitor prefers reduced motion. */
@@ -40,6 +62,7 @@ export default function SmoothScroll() {
 
     const instance = new Lenis({ autoRaf: false });
     lenis = instance;
+    if (locked) instance.stop(); // a case opened by a direct link locked the page before Lenis existed
     const raf = (time: number) => instance.raf(time * 1000);
     gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);

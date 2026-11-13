@@ -1,0 +1,33 @@
+import { expect, test } from '@playwright/test';
+import { gotoScene, progress, scrollTo } from './helpers';
+
+// Review Focus 2
+test('a case opens over the scene, locks scrolling, and closes back to the same spot', async ({ page }) => {
+  await gotoScene(page);
+  await scrollTo(page, 0.19);
+  const before = await progress(page);
+  await page.getByRole('link', { name: /Gipper/ }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { level: 2 })).toHaveText(/Gipper/);
+  await page.mouse.wheel(0, 1500);
+  await page.waitForTimeout(600);
+  expect(Math.abs((await progress(page)) - before)).toBeLessThan(0.01);
+  await page.keyboard.press('Escape');
+  await expect(page).toHaveURL(/\/en$/, { timeout: 15_000 }); // a cold dev server compiles /en on the way back
+  await expect(dialog).toHaveCount(0);
+  expect(Math.abs((await progress(page)) - before)).toBeLessThan(0.01);
+});
+
+// Review Focus 3
+test('switching language on a case keeps the case', async ({ page }) => {
+  await page.goto('/en/work/altus');
+  await page.getByRole('link', { name: 'RU', exact: true }).click();
+  await expect(page).toHaveURL(/\/ru\/work\/altus$/);
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+  await expect(page.getByRole('dialog').getByRole('heading', { level: 2 })).toBeVisible();
+});
+
+test('an unknown case is a 404', async ({ page }) => {
+  const res = await page.goto('/en/work/nope');
+  expect(res?.status()).toBe(404);
+});

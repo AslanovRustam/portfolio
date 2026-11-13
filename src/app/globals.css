@@ -28,6 +28,8 @@
 
 html {
   color-scheme: dark;
+  /* locking scroll under a case must not change the viewport width (and re-measure the journey) */
+  scrollbar-gutter: stable;
 }
 
 body {

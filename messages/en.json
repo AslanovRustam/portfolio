@@ -171,7 +171,7 @@
     },
     "devdigest": {
       "title": "DevDigest",
-      "kind": "Course project: starter + my features",
+      "kind": "Starter + my features",
       "summary": "AI agents course. On top of the starter I added a conventions extractor, PR intent classifier, Smart Diff, an MCP server and Blast Radius."
     }
   },
