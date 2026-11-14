@@ -27,3 +27,6 @@ npm-debug.log*
 
 # local look-dev screenshots
 tests/e2e/_scratch/
+
+# Playwright MCP session artefacts
+.playwright-mcp/
