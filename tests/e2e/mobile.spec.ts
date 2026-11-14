@@ -193,3 +193,55 @@ test('a phone (low tier) keeps the boxes unblurred', async ({ page }) => {
   await expect.poll(() => page.evaluate(() => window.__portfolio.state().tier), { timeout: 30_000 }).toBe('low');
   expect(await page.locator('#about .nbox').first().evaluate((el) => getComputedStyle(el).backdropFilter)).toBe('none');
 });
+
+test('Esc over an open case closes only the menu', async ({ page }) => {
+  await gotoScene(page, '/en/work/altus');
+  const caseDialog = page.locator('[role="dialog"][data-crt]');
+  // the case is fully on (it listens for Esc from then on)
+  await expect(caseDialog).toHaveAttribute('data-crt', 'open', { timeout: 15_000 });
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  const menu = page.getByRole('dialog', { name: 'Menu' });
+  await expect(menu).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(menu).toHaveCount(0);
+  await page.waitForTimeout(800);
+  // the case did not even start to switch off
+  await expect(caseDialog).not.toHaveAttribute('data-crt', 'closing');
+  await expect(page).toHaveURL(/\/en\/work\/altus$/);
+});
+
+test('the open menu keeps the keyboard inside it', async ({ page }) => {
+  await gotoScene(page);
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  const menu = page.getByRole('dialog', { name: 'Menu' });
+  await expect(menu).toBeVisible();
+  for (let i = 0; i < 10; i++) {
+    await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]')), `tab ${i}`).toBe(true);
+  }
+});
+
+test('choices leave no dead history behind, and focus goes back to the menu button', async ({ page }) => {
+  await gotoScene(page);
+  const burger = page.getByRole('button', { name: 'Menu', exact: true });
+  for (const n of ['About', 'Stack']) {
+    await burger.click();
+    await page.getByRole('dialog', { name: 'Menu' }).getByRole('button', { name: n, exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Menu' })).toHaveCount(0);
+    await expect(burger).toBeFocused();
+  }
+  await page.goBack();
+  await expect(page).not.toHaveURL(/localhost:3200\/en/);
+});
+
+test('the page under the open menu stays put', async ({ page }) => {
+  await gotoScene(page);
+  await scrollTo(page, 0.48);
+  const before = await progress(page);
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Menu' })).toBeVisible();
+  for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 600);
+  await page.keyboard.press('PageDown');
+  await page.waitForTimeout(800);
+  expect(Math.abs((await progress(page)) - before)).toBeLessThan(0.002);
+});

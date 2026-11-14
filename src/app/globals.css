@@ -909,20 +909,16 @@ html:not([data-tier='low']) :is(.nbox, .blade) {
   }
 }
 
-/* a single letter tiring: two short drops in the middle of its beat */
+/* a single letter tiring: one short drop in the middle of its beat (with its word's two, never more than three) */
 @keyframes neon-letter {
   0%,
   50%,
   51.2%,
-  53%,
   100% {
     opacity: 1;
   }
   50.4% {
     opacity: 0.15;
-  }
-  51.8% {
-    opacity: 0.2;
   }
 }
 

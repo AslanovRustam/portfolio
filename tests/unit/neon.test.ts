@@ -29,16 +29,22 @@ it('flicker periods sit between 8 and 16 s, are deterministic, and neighbours di
 
 it('a flicker burst drops at most three times', () => {
   const css = readFileSync('src/app/globals.css', 'utf8');
-  const block = /@keyframes neon-buzz\s*{([\s\S]*?)\n {0,2}}/.exec(css);
+  // up to the keyframes' own closing brace at the start of a line, not the first inner rule's
+  const block = /@keyframes neon-buzz\s*{([\s\S]*?)\n}/.exec(css);
   expect(block).not.toBeNull();
   expect((block![1].match(/opacity:\s*0?\.\d/g) ?? []).length).toBeLessThanOrEqual(3);
 });
 
-it('the name dips a word or a letter at most twice at a time', () => {
+/** How many times a keyframes block drops the opacity below 1. */
+const drops = (css: string, name: string) => {
+  const block = new RegExp(String.raw`@keyframes ${name}\s*{([\s\S]*?)\n}`).exec(css);
+  expect(block, name).not.toBeNull();
+  return (block![1].match(/opacity:\s*0?\.\d/g) ?? []).length;
+};
+
+it('the name never flashes more than three times at once: a word dips twice, a letter inside it once', () => {
   const css = readFileSync('src/app/globals.css', 'utf8');
-  for (const name of ['neon-word', 'neon-letter']) {
-    const block = new RegExp(String.raw`@keyframes ${name}\s*{([\s\S]*?)\n {0,2}}`).exec(css);
-    expect(block, name).not.toBeNull();
-    expect((block![1].match(/opacity:\s*0?\.\d/g) ?? []).length, name).toBeLessThanOrEqual(2);
-  }
+  expect(drops(css, 'neon-word')).toBe(2);
+  expect(drops(css, 'neon-letter')).toBe(1);
+  expect(drops(css, 'neon-buzz')).toBe(2);
 });

@@ -22,20 +22,22 @@ export default function LanguagePicker({ label }: { label: string }) {
       const t = e.target as Node;
       if (!drop.current?.contains(t) && !button.current?.contains(t)) setOpen(false);
     };
+    // capture, so the picker answers first and a case under it never hears this Esc
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
+      e.stopPropagation();
       setOpen(false);
       button.current?.focus();
     };
     // turned to a laptop-wide screen: the row of tubes takes over
-    const wide = matchMedia('(min-width: 768px)');
+    const wide = matchMedia('(min-width: 48rem)');
     const onWide = () => wide.matches && setOpen(false);
     document.addEventListener('pointerdown', onDown);
-    window.addEventListener('keydown', onKey);
+    window.addEventListener('keydown', onKey, true);
     wide.addEventListener('change', onWide);
     return () => {
       document.removeEventListener('pointerdown', onDown);
-      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keydown', onKey, true);
       wide.removeEventListener('change', onWide);
     };
   }, [open]);
