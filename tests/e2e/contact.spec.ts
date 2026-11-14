@@ -15,6 +15,8 @@ test('the form validates, then sends (json transport in tests)', async ({ page }
   await expect(page.locator('section#contact')).toContainText(/sent|thanks/i);
   await expect.poll(() => page.evaluate(() => window.__portfolio.state().celebrate)).toBe(true);
   await expect(form.getByLabel('Name')).toHaveValue('');
+  // the emptied form's sign goes dark again
+  await expect(form.getByRole('button', { name: 'Send' })).toHaveAttribute('data-ready', 'false');
 });
 
 // Review Focus 4 (final review): a failed request must not crash the site or lose the message

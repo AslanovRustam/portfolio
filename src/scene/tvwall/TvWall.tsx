@@ -31,6 +31,7 @@ import { applyReveal } from '../reveal/revealMaterial';
 import { overUi } from '../uiPointer';
 import { createCrtMaterial } from './crtMaterial';
 import { screenRect, stopSlots, TV_MODELS, type TvModel, type TvSlot, wallLayout } from './layout';
+import { projectScreen, setScreenRectSource } from './screenRects';
 import { screenAge, screenLevel } from './power';
 import { createGlowUniforms, withScreenGlow } from './screenGlow';
 import WallStreaks from './WallStreaks';
@@ -286,6 +287,18 @@ export default function TvWall() {
     }));
   }, [camera, reveal]);
 
+  // where each stop's screen is on the page: the case grows out of it
+  useEffect(() => {
+    const rectOf = (stop: number) => {
+      const slot = STOPS[stop];
+      if (!slot) return null;
+      const r = gl.domElement.getBoundingClientRect();
+      return projectScreen(slot, camera, { x: r.left, y: r.top, width: r.width, height: r.height });
+    };
+    setScreenRectSource(rectOf);
+    return () => setScreenRectSource(null);
+  }, [camera, gl]);
+
   useFrame((state) => {
     const g = group.current;
     if (!g) return;
@@ -348,7 +361,9 @@ export default function TvWall() {
     onClick: (e: ThreeEvent<MouseEvent>) => {
       e.stopPropagation();
       if (overUi(e) || !lit() || i >= PROJECTS.length) return;
-      experienceStore.getState().requestCase(PROJECTS[i].slug);
+      const r = gl.domElement.getBoundingClientRect();
+      const origin = projectScreen(STOPS[i], camera, { x: r.left, y: r.top, width: r.width, height: r.height });
+      experienceStore.getState().requestCase(PROJECTS[i].slug, origin);
     },
   });
 

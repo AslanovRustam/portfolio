@@ -1,4 +1,6 @@
+import { PerspectiveCamera } from 'three';
 import { expect, it } from 'vitest';
+import { projectScreen } from '@/scene/tvwall/screenRects';
 import { WORK_STOPS } from '@/experience/workStops';
 import { screenRect, stopSlots, TV_MODELS, type TvSlot, WALL, wallLayout, wallStreaks } from '@/scene/tvwall/layout';
 
@@ -50,4 +52,19 @@ it('each lit screen throws one streak on the road, toward the viewer', () => {
     expect(x.zFar).toBeLessThanOrEqual(WALL.z + 0.1);
     expect(x.length).toBeGreaterThan(1);
   });
+});
+
+it("a TV straight ahead projects to a screen-shaped rect in the middle of the canvas", () => {
+  const slot = stops[3];
+  const { center } = screenRect(slot);
+  const camera = new PerspectiveCamera(40, 1440 / 800, 0.1, 100);
+  camera.position.set(center[0], center[1], center[2] + 3);
+  camera.lookAt(center[0], center[1], center[2]);
+  camera.updateMatrixWorld();
+  const canvas = { x: 0, y: 0, width: 1440, height: 800 };
+  const r = projectScreen(slot, camera, canvas);
+  expect(Math.abs(r.x + r.width / 2 - 720)).toBeLessThan(2);
+  expect(Math.abs(r.y + r.height / 2 - 400)).toBeLessThan(2);
+  expect(r.width).toBeGreaterThan(r.height);
+  expect(r.height).toBeGreaterThan(0);
 });

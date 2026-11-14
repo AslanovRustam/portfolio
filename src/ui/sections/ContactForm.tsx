@@ -35,6 +35,12 @@ export default function ContactForm() {
   }, { status: 'idle' });
   const [local, setLocal] = useState<Partial<Record<ContactField, true>> | null>(null);
   const [ready, setReady] = useState(false);
+  // a sent message empties the form, so the sign goes dark again (adjusted while rendering the new answer)
+  const [answered, setAnswered] = useState(state);
+  if (state !== answered) {
+    setAnswered(state);
+    if (state.status === 'sent') setReady(false);
+  }
   const form = useRef<HTMLFormElement>(null);
   const mounted = useRef(0);
 
@@ -46,7 +52,6 @@ export default function ContactForm() {
   useEffect(() => {
     if (state.status !== 'sent') return;
     form.current?.reset(); // only a sent message clears the form; any other answer keeps the text
-    setReady(false);
     experienceStore.getState().setCelebrate(true);
     const stop = setTimeout(() => experienceStore.getState().setCelebrate(false), 2000);
     return () => clearTimeout(stop);

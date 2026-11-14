@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { gotoScene, progress, scrollTo, stop } from './helpers';
 
 // Review Focus 2
@@ -49,4 +49,58 @@ test('Speca.bike is marked as in development, Kolir tells a full case', async ({
   await page.goto('/en/work/kolir');
   await expect(dialog.getByText('What I did')).toBeVisible({ timeout: 15_000 });
   await expect(dialog.getByText('Private repo')).toBeVisible();
+});
+
+/** The dialog's first animation keyframe (the switch-on starts there). */
+const firstFrame = (page: Page) =>
+  page.getByRole('dialog').evaluate((el) => {
+    const k = (el.getAnimations()[0]?.effect as KeyframeEffect | null)?.getKeyframes()[0] as Record<string, string> | undefined;
+    return k ? { clip: k.clipPath ?? '', transform: k.transform ?? '' } : null;
+  });
+const insetTop = (clip: string) => parseFloat(/inset\(\s*([\d.]+)%/.exec(clip)?.[1] ?? '0');
+
+test('a case switches on like a TV and switches off on close', async ({ page }) => {
+  await gotoScene(page);
+  await scrollTo(page, stop(0));
+  const open = page.locator('section#work').getByRole('link', { name: 'Open case' });
+  await open.click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toHaveAttribute('data-crt', /opening|open/, { timeout: 15_000 });
+  const first = await firstFrame(page);
+  expect(first).not.toBeNull();
+  expect(insetTop(first!.clip)).toBeGreaterThanOrEqual(45);
+  // the duration is pinned in crt.test; a busy GPU can only delay the first frame of the animation
+  await expect(dialog).toHaveAttribute('data-crt', 'open', { timeout: 6000 });
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveAttribute('data-crt', 'closing');
+  await expect(page).toHaveURL(/\/en$/, { timeout: 15_000 });
+  await expect(open).toBeFocused();
+});
+
+test('reduced motion: the case just appears', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await gotoScene(page, '/en/work/altus');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toHaveAttribute('data-crt', 'open', { timeout: 15_000 });
+  const clips = await dialog.evaluate((el) =>
+    el.getAnimations({ subtree: true }).filter((a) => (a.effect as KeyframeEffect | null)?.getKeyframes().some((k) => 'clipPath' in k)).length,
+  );
+  expect(clips).toBe(0);
+});
+
+test('a direct link opens with the same switch-on', async ({ page }) => {
+  await gotoScene(page, '/en/work/altus');
+  const dialog = page.getByRole('dialog');
+  // the server's markup already says "opening": wait for the page to start the switch-on
+  await expect.poll(() => firstFrame(page), { timeout: 15_000 }).not.toBeNull();
+  expect(insetTop((await firstFrame(page))!.clip)).toBeGreaterThanOrEqual(45);
+  // the duration is pinned in crt.test; a busy GPU can only delay the first frame of the animation
+  await expect(dialog).toHaveAttribute('data-crt', 'open', { timeout: 6000 });
+});
+
+test("the case's tubes burn in Work's orange", async ({ page }) => {
+  await gotoScene(page, '/en/work/devdigest');
+  const dialog = page.getByRole('dialog');
+  for (const tube of [dialog.getByRole('button', { name: 'Close' }), dialog.getByRole('link', { name: 'Source' })])
+    expect(await tube.evaluate((el) => getComputedStyle(el).getPropertyValue('--c').trim())).toBe('#ff8a2a');
 });

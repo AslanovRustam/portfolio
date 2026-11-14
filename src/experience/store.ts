@@ -1,6 +1,7 @@
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import type { ProjectSlug } from '@/content/projects';
+import type { Rect } from '@/scene/tvwall/screenRects';
 import type { SignId } from './signs';
 
 export type LightState = 'off' | 'red' | 'yellow' | 'green';
@@ -26,6 +27,8 @@ export interface ExperienceState {
   hoveredScreen: number | null;
   /** a TV in the scene asked to open this project's case (the HTML layer routes it) */
   pendingCase: ProjectSlug | null;
+  /** where on the page the clicked TV's screen was: the case switches on out of it */
+  caseOrigin: Rect | null;
   setProgress(p: number): void;
   setTier(t: Tier): void;
   setReducedMotion(v: boolean): void;
@@ -36,10 +39,13 @@ export interface ExperienceState {
   setHighlight(key: string | null): void;
   setCelebrate(v: boolean): void;
   setHoveredScreen(stop: number | null): void;
-  requestCase(slug: ProjectSlug | null): void;
+  /** ask for a case (from a TV: with its screen rect); null clears the request and keeps the origin */
+  requestCase(slug: ProjectSlug | null, origin?: Rect | null): void;
+  /** the origin for the case that is opening, once: it is cleared as it is read */
+  takeCaseOrigin(): Rect | null;
 }
 
-export const experienceStore = createStore<ExperienceState>()((set) => ({
+export const experienceStore = createStore<ExperienceState>()((set, get) => ({
   progress: 0,
   tier: 'high',
   reducedMotion: false,
@@ -51,6 +57,7 @@ export const experienceStore = createStore<ExperienceState>()((set) => ({
   celebrate: false,
   hoveredScreen: null,
   pendingCase: null,
+  caseOrigin: null,
   setProgress: (p) => set({ progress: Math.min(1, Math.max(0, p)) }),
   setTier: (tier) => set({ tier }),
   setReducedMotion: (reducedMotion) => set({ reducedMotion }),
@@ -61,7 +68,12 @@ export const experienceStore = createStore<ExperienceState>()((set) => ({
   setHighlight: (highlight) => set({ highlight }),
   setCelebrate: (celebrate) => set({ celebrate }),
   setHoveredScreen: (hoveredScreen) => set({ hoveredScreen }),
-  requestCase: (pendingCase) => set({ pendingCase }),
+  requestCase: (slug, origin) => set(slug ? { pendingCase: slug, caseOrigin: origin ?? null } : { pendingCase: null }),
+  takeCaseOrigin: () => {
+    const o = get().caseOrigin;
+    if (o) set({ caseOrigin: null });
+    return o;
+  },
 }));
 
 export function useExperience<T>(selector: (s: ExperienceState) => T): T {

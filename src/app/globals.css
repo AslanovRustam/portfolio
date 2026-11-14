@@ -730,6 +730,89 @@ html::-webkit-scrollbar-thumb {
   }
 }
 
+/* the case as an old TV screen in Work's neon (src/ui/sections/CaseOverlay.tsx) */
+@layer components {
+  .crt-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px;
+    border: 2px solid color-mix(in srgb, var(--c) 45%, #fff);
+    background: radial-gradient(ellipse at 50% 40%, #121a26 0%, #070a10 75%);
+    color: var(--fg);
+    box-shadow:
+      0 0 6px var(--c),
+      0 0 30px color-mix(in srgb, var(--c) 55%, transparent),
+      0 0 90px color-mix(in srgb, var(--c) 25%, transparent),
+      inset 0 0 60px rgb(0 0 0 / 0.85);
+  }
+  /* scanlines and the tube's vignette, with a rare breath of flicker */
+  .crt-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.22) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse at center, transparent 60%, rgb(0 0 0 / 0.5) 100%);
+    animation: crt-flick 4s steps(1, end) infinite;
+  }
+  /* the title with the colour fringe of an old picture tube */
+  .crt-title {
+    font-family: var(--font-oswald), 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #fff;
+    text-shadow:
+      -2px 0 rgb(255 40 80 / 0.7),
+      2px 0 rgb(40 220 255 / 0.7),
+      0 0 12px var(--c),
+      0 0 30px var(--c);
+  }
+  .crt-body::-webkit-scrollbar {
+    width: 10px;
+  }
+  .crt-body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .crt-body::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--c) 60%, #fff);
+    border: 3px solid #0a0d14;
+    border-radius: 8px;
+  }
+  @supports not selector(::-webkit-scrollbar) {
+    .crt-body {
+      scrollbar-color: color-mix(in srgb, var(--c) 60%, #fff) transparent;
+      scrollbar-width: thin;
+    }
+  }
+  .crt-chip {
+    padding: 2px 8px 3px;
+    border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: #ffe2cc;
+  }
+}
+
+@keyframes crt-flick {
+  0%,
+  96%,
+  100% {
+    opacity: 1;
+  }
+  97% {
+    opacity: 0.75;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crt-card::after {
+    animation: none;
+  }
+}
+
 /* one burst of two quick drops per period: never more than three flashes a second */
 @keyframes neon-buzz {
   0%,
