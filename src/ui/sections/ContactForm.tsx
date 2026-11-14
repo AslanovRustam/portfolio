@@ -6,7 +6,7 @@ import { submitContact } from '@/app/[locale]/(site)/actions';
 import { CONTACTS } from '@/content/contacts';
 import { experienceStore } from '@/experience/store';
 import { invalidFields, type ContactField, type ContactResult } from '@/server/contact';
-import { plateStyle } from '../plates';
+import { flicker, neonStyle } from '../neon';
 
 const FIELDS: readonly { name: ContactField; type: string; autoComplete: string }[] = [
   { name: 'name', type: 'text', autoComplete: 'name' },
@@ -14,11 +14,13 @@ const FIELDS: readonly { name: ContactField; type: string; autoComplete: string 
   { name: 'message', type: 'textarea', autoComplete: 'off' },
 ];
 
-const input = 'well';
+const input = 'nfield';
 
 /**
  * Name, email, message. The browser checks the fields first (same zod schema as the server), the
- * server action checks again and mails it. A sent message makes the traffic light pulse green.
+ * server action checks again and mails it. The Send sign stays dark until all three fields would pass,
+ * then lights up; a press on the dark sign still shows what is missing (it is never `disabled`, so a
+ * keyboard or a screen reader learns why). A sent message makes the traffic light pulse green.
  */
 export default function ContactForm() {
   const t = useTranslations('contact');
@@ -32,6 +34,7 @@ export default function ContactForm() {
     }
   }, { status: 'idle' });
   const [local, setLocal] = useState<Partial<Record<ContactField, true>> | null>(null);
+  const [ready, setReady] = useState(false);
   const form = useRef<HTMLFormElement>(null);
   const mounted = useRef(0);
 
@@ -43,6 +46,7 @@ export default function ContactForm() {
   useEffect(() => {
     if (state.status !== 'sent') return;
     form.current?.reset(); // only a sent message clears the form; any other answer keeps the text
+    setReady(false);
     experienceStore.getState().setCelebrate(true);
     const stop = setTimeout(() => experienceStore.getState().setCelebrate(false), 2000);
     return () => clearTimeout(stop);
@@ -64,7 +68,9 @@ export default function ContactForm() {
         data.set('elapsed', String(Math.round(performance.now() - mounted.current)));
         startTransition(() => action(data));
       }}
-      className="space-y-3"
+      onInput={(e) => setReady(invalidFields(Object.fromEntries(new FormData(e.currentTarget))) === null)}
+      className="space-y-4"
+      style={neonStyle('contact')}
     >
       {FIELDS.map((f) => {
         const id = `contact-${f.name}`;
@@ -80,7 +86,7 @@ export default function ContactForm() {
         };
         return (
           <div key={f.name}>
-            <label htmlFor={id} className="board-label">
+            <label htmlFor={id} className="nfield-label">
               {t(f.name)}
             </label>
             {f.type === 'textarea' ? (
@@ -115,8 +121,9 @@ export default function ContactForm() {
         <button
           type="submit"
           disabled={pending}
-          className="plate plate-on px-6 text-base disabled:opacity-60"
-          style={plateStyle('cv')}
+          data-ready={ready}
+          className={`nsend ${ready ? 'neon-flicker' : ''}`}
+          style={flicker(5)}
         >
           {pending ? t('sending') : t('send')}
         </button>
@@ -124,6 +131,9 @@ export default function ContactForm() {
           {state.status === 'sent' && <span className="text-[#1fd16a]">{t('sent')}</span>}
           {state.status === 'invalid' && <span className="text-[#ff7a1a]">{t('invalid')}</span>}
           {state.status === 'rate' && <span className="text-[#ff7a1a]">{t('rate')}</span>}
+        </p>
+        <p aria-live="polite" className="w-full text-xs text-[#ffb3e1]/75 empty:hidden">
+          {!ready && !pending && state.status !== 'sent' ? t('sendHint') : ''}
         </p>
       </div>
       {(state.status === 'config' || state.status === 'error') && (

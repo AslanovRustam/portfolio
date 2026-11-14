@@ -3,11 +3,23 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { CONTACTS } from '@/content/contacts';
-import { plateStyle } from '../plates';
+import { getIcon } from '@/scene/stickers/icons';
+import { neonStyle } from '../neon';
 import ContactForm from './ContactForm';
 import NeonBox from '../flow/NeonBox';
 
-const link = 'plate plate-sm plate-sign';
+const tube = 'neon text-[15px] sm:text-base';
+
+/** A contact's logo from simple-icons, glowing in the tube's colour. */
+function Logo({ slug }: { slug: string }) {
+  const icon = getIcon(slug);
+  if (!icon) return null;
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="neon-logo">
+      <path d={icon.path} />
+    </svg>
+  );
+}
 
 /** The last stop, under the green light: the form, direct links, the email to copy and the CV. */
 export default function ContactSection() {
@@ -32,32 +44,35 @@ export default function ContactSection() {
         <ContactForm />
       </NeonBox>
       <NeonBox id="contact" className="space-y-3 text-sm">
-        <ul className="flex flex-wrap gap-2">
+        <ul className="-mx-1 flex flex-wrap items-center">
           {(['telegram', 'linkedin', 'github'] as const).map((k) => (
             <li key={k}>
-              <a href={CONTACTS[k]} target="_blank" rel="noopener" className={link}>
+              <a href={CONTACTS[k]} target="_blank" rel="noopener" className={tube} style={neonStyle('contact')}>
+                <Logo slug={k} />
                 {t(k)}
               </a>
             </li>
           ))}
           <li>
-            <a href={CONTACTS.cv} download className="plate plate-sm plate-on" style={plateStyle('cv')}>
+            <a href={CONTACTS.cv} download className={tube} style={neonStyle('cv')}>
               {t('cv')}
             </a>
           </li>
         </ul>
-        <p className="flex flex-wrap items-center gap-3">
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <a href={`mailto:${CONTACTS.email}`} className="underline underline-offset-2">
             {CONTACTS.email}
           </a>
           <button
             type="button"
             onClick={() => navigator.clipboard?.writeText(CONTACTS.email).then(() => setCopied(true), () => {})}
-            className={link}
+            className={tube}
+            style={neonStyle('contact')}
           >
+            <Logo slug="gmail" />
             {t('copyEmail')}
           </button>
-          <span role="status" className="text-xs text-[#1fd16a]">
+          <span role="status" className="text-xs text-[#3dff8f]">
             {copied ? t('copied') : ''}
           </span>
         </p>

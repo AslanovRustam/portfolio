@@ -8,6 +8,7 @@ import {
   siGit,
   siGithub,
   siGitlab,
+  siGmail,
   siGreensock,
   siHtml5,
   siJavascript,
@@ -22,6 +23,7 @@ import {
   siRedux,
   siSanity,
   siSass,
+  siTelegram,
   siTailwindcss,
   siThreedotjs,
   siTypescript,
@@ -59,8 +61,10 @@ const bySlug = new Map<string, SimpleIcon>(
     siGitlab,
     siBitbucket,
     siN8n,
-    // HTML only (Stack blades), no sticker on the pole
+    // HTML only (Stack blades, Contact links), no sticker on the pole
     siCursor,
+    siTelegram,
+    siGmail,
     siClaude,
   ].map((i) => [i.slug, i]),
 );

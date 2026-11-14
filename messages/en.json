@@ -102,6 +102,7 @@
     "email": "Email",
     "message": "Message",
     "send": "Send",
+    "sendHint": "Fill in all three fields and the sign lights up.",
     "sending": "Sending…",
     "sent": "Sent. Thanks, I’ll reply to the email you left.",
     "invalid": "Check the highlighted fields.",
