@@ -2,6 +2,7 @@ import { afterEach, expect, it } from 'vitest';
 import {
   DEFAULT_SVH,
   holdWindow,
+  lengthsFromLayout,
   PIECE_IDS,
   resetJourneyLengths,
   scrollFromStory,
@@ -85,4 +86,13 @@ it('rejects a wrong count or a non-positive length', () => {
   expect(() => setJourneyLengths([1, 2])).toThrow();
   expect(() => setJourneyLengths([180, 400, 75, 0, 50, 160, 50, 175])).toThrow();
   expect(() => setJourneyLengths([180, 400, 75, Number.NaN, 50, 160, 50, 175])).toThrow();
+});
+
+it('reads the lengths off the layout, and gives up on a layout that measured nothing', () => {
+  const heights = [1440, 3200, 600, 1600, 400, 1400, 400, 1300];
+  const track = heights.reduce((a, b) => a + b, 0);
+  // the last piece is what the trigger can still scroll: the track minus one screen minus the others
+  expect(lengthsFromLayout(heights, track, 800)).toEqual([1440, 3200, 600, 1600, 400, 1400, 400, 500]);
+  expect(lengthsFromLayout([0, 0, 0, 0, 0, 0, 0, 0], 0, 0)).toBeNull();
+  expect(lengthsFromLayout([1440, 3200, 600, Number.NaN, 400, 1400, 400, 1300], track, 800)).toBeNull();
 });

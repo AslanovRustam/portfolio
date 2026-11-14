@@ -3,7 +3,7 @@
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { type ReactNode, useEffect, useRef } from 'react';
 import { registerProbe } from '@/dev/sceneProbe';
-import { DEFAULT_SVH, journeyLengths, PIECE_IDS, type PieceId, setJourneyLengths } from '@/experience/journey';
+import { DEFAULT_SVH, journeyLengths, lengthsFromLayout, PIECE_IDS, type PieceId, setJourneyLengths } from '@/experience/journey';
 
 const spacer = (id: PieceId) => (
   <div key={id} data-piece={id} aria-hidden="true" style={{ height: `${DEFAULT_SVH[id]}svh` }} />
@@ -24,11 +24,14 @@ export default function JourneyTrack({ about, stack, contact }: { about: ReactNo
     const measure = () => {
       const pieces = PIECE_IDS.map((id) => el.querySelector<HTMLElement>(`:scope > [data-piece="${id}"]`));
       if (pieces.some((p) => !p)) return;
-      const heights = pieces.map((p) => p!.offsetHeight);
-      // the trigger runs from the track's top at the top of the screen to its bottom at the bottom
-      const before = heights.slice(0, -1).reduce((a, b) => a + b, 0);
-      heights[heights.length - 1] = Math.max(1, el.offsetHeight - innerHeight - before);
-      setJourneyLengths(heights);
+      // the trigger runs from the track's top at the top of the screen to its bottom at the bottom; a
+      // layout that measured nothing keeps the lengths in use (a throw here would wedge ScrollTrigger)
+      const lengths = lengthsFromLayout(
+        pieces.map((p) => p!.offsetHeight),
+        el.offsetHeight,
+        innerHeight,
+      );
+      if (lengths) setJourneyLengths(lengths);
     };
     const remeasure = () => {
       measure();

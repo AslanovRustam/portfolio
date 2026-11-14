@@ -46,6 +46,19 @@ export function setJourneyLengths(next: readonly number[]): void {
   total = lengths.reduce((a, b) => a + b, 0);
 }
 
+/**
+ * The pieces' lengths from the page's layout: each piece's height, except the last, which is what the
+ * trigger can still scroll (the track's height minus one screen minus the other pieces). Null when the
+ * layout measured nothing usable (a zero-height window, a piece not laid out yet): keep the lengths in use.
+ */
+export function lengthsFromLayout(heights: readonly number[], track: number, viewport: number): number[] | null {
+  if (heights.length !== PIECE_IDS.length) return null;
+  const firsts = heights.slice(0, -1);
+  if (!firsts.every((h) => Number.isFinite(h) && h > 0) || !(viewport > 0)) return null;
+  const last = track - viewport - firsts.reduce((a, b) => a + b, 0);
+  return [...firsts, Math.max(1, last)];
+}
+
 /** Back to the unmeasured defaults. */
 export function resetJourneyLengths(): void {
   setJourneyLengths(defaults());
