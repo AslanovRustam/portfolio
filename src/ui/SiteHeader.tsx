@@ -9,6 +9,7 @@ import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { scrollToProgress, scrollToSection } from '@/scroll/SmoothScroll';
 import LanguageSwitch from './LanguageSwitch';
 import { flicker, neonStyle } from './neon';
+import NameTubes from './NameTubes';
 import NeonText from './NeonText';
 
 const NAV: readonly SectionId[] = ['work', 'about', 'stack', 'contact'];
@@ -64,7 +65,7 @@ export default function SiteHeader({ name, labels }: { name: string; labels: Lab
           className="neon col-start-1 row-start-1 justify-self-start text-lg font-semibold sm:text-xl lg:text-2xl"
           style={neonStyle('name')}
         >
-          <NeonText text={name} dead={3} />
+          <NameTubes name={name} />
         </Link>
         <nav className="col-span-2 row-start-2 md:order-2 md:ml-auto">
           <ul className="flex flex-wrap items-center">

@@ -129,6 +129,31 @@ html {
     animation: none;
     opacity: 1;
   }
+  /* the name: a whole word dips now and then, RUSTAM and ASLANOV in turn; single letters tire slower */
+  /* inline, not inline-block: a block would split the accessible name into "Rus t am" */
+  .neon-word {
+    animation: neon-word 8s steps(1, end) var(--word-delay, 0s) infinite;
+  }
+  .neon-word-2 {
+    --word-delay: -4s;
+  }
+  .neon-letter {
+    animation: neon-letter 11s steps(1, end) infinite;
+  }
+  .neon-letter.b {
+    animation-duration: 13s;
+    animation-delay: -6s;
+  }
+  .neon-letter.c {
+    animation-duration: 17s;
+    animation-delay: -2s;
+  }
+  .neon:hover :is(.neon-word, .neon-letter),
+  .neon:focus-visible :is(.neon-word, .neon-letter),
+  .neon[aria-current] :is(.neon-word, .neon-letter) {
+    animation: none;
+    opacity: 1;
+  }
   .neon-dot {
     width: 5px;
     height: 5px;
@@ -699,6 +724,40 @@ html:not([data-tier='low']) :is(.nbox, .blade) {
   }
 }
 
+/* a word's dip: two quick drops */
+@keyframes neon-word {
+  0%,
+  88%,
+  88.7%,
+  90%,
+  100% {
+    opacity: 1;
+  }
+  88.3% {
+    opacity: 0.28;
+  }
+  89.4% {
+    opacity: 0.22;
+  }
+}
+
+/* a single letter tiring: two short drops in the middle of its beat */
+@keyframes neon-letter {
+  0%,
+  50%,
+  51.2%,
+  53%,
+  100% {
+    opacity: 1;
+  }
+  50.4% {
+    opacity: 0.15;
+  }
+  51.8% {
+    opacity: 0.2;
+  }
+}
+
 @keyframes neon-dead {
   0%,
   31.6%,
@@ -714,7 +773,9 @@ html:not([data-tier='low']) :is(.nbox, .blade) {
 
 @media (prefers-reduced-motion: reduce) {
   .neon-flicker,
-  .neon-dead {
+  .neon-dead,
+  .neon-word,
+  .neon-letter {
     animation: none;
     opacity: 1;
   }

@@ -72,3 +72,19 @@ test('focus never hides under the header: the page keeps room for it when it scr
   const pad = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop));
   expect(pad).toBeGreaterThanOrEqual(120);
 });
+
+test('the name flickers by words and letters', async ({ page }) => {
+  await gotoScene(page);
+  const name = page.locator('header[data-ui]').getByRole('link', { name: 'Rustam Aslanov', exact: true });
+  await expect(name).toBeVisible();
+  const words = name.locator('.neon-word');
+  await expect(words).toHaveCount(2);
+  const delays = await words.evaluateAll((els) =>
+    els.map((el) => ({ running: el.getAnimations().filter((a) => a instanceof CSSAnimation).length, delay: getComputedStyle(el).animationDelay })),
+  );
+  expect(delays.every((d) => d.running > 0)).toBe(true);
+  expect(delays[0].delay).not.toBe(delays[1].delay);
+  await expect(name.locator('.neon-letter')).toHaveCount(3);
+  await name.hover();
+  await expect.poll(() => flickers(name)).toBe(0);
+});

@@ -33,3 +33,12 @@ it('a flicker burst drops at most three times', () => {
   expect(block).not.toBeNull();
   expect((block![1].match(/opacity:\s*0?\.\d/g) ?? []).length).toBeLessThanOrEqual(3);
 });
+
+it('the name dips a word or a letter at most twice at a time', () => {
+  const css = readFileSync('src/app/globals.css', 'utf8');
+  for (const name of ['neon-word', 'neon-letter']) {
+    const block = new RegExp(String.raw`@keyframes ${name}\s*{([\s\S]*?)\n {0,2}}`).exec(css);
+    expect(block, name).not.toBeNull();
+    expect((block![1].match(/opacity:\s*0?\.\d/g) ?? []).length, name).toBeLessThanOrEqual(2);
+  }
+});
