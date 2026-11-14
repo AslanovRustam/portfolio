@@ -6,6 +6,7 @@ import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 import { useEffect } from 'react';
 import { scrollFromStory, storyFromScroll } from '@/experience/journey';
+import { takePlace } from '@/experience/place';
 import type { SectionId } from '@/experience/signs';
 import { experienceStore } from '@/experience/store';
 import { parseHash, sectionTarget, snapTarget } from '@/experience/workStops';
@@ -182,7 +183,9 @@ export default function SmoothScroll() {
 
     // A deep link (/en#stack, /en#work-5) opens its place once there is something to look at: when the
     // scene is ready, or straight away on the no-WebGL fallback, which never becomes ready.
-    const target = parseHash(location.hash.slice(1));
+    // after a language switch, the exact place inside that section (the text is longer or shorter now)
+    const hashed = parseHash(location.hash.slice(1));
+    const target = hashed === null ? null : (takePlace(hashed) ?? hashed);
     let stopDeepLink = () => {};
     if (target !== null) {
       const go = (s: { ready: boolean; webgl: boolean }) => {

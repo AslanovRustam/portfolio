@@ -136,14 +136,14 @@ test('a resize inside About keeps the place', async ({ page }) => {
   expect(await page.evaluate(() => window.__portfolio.section())).toBe('about');
 });
 
-// Review Focus 5
-test('the language switch keeps the section', async ({ page }) => {
+// Review Focus 5 (spec §6.1: the language switch keeps the place inside the section)
+test('the language switch keeps the place inside the section', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
   await scrollTo(page, 0.48);
   await page.getByRole('link', { name: 'RU', exact: true }).click();
   await expect(page).toHaveURL(/\/ru#about$/);
-  await expect.poll(() => progress(page), { timeout: 30_000 }).toBeCloseTo(HOLD.about[0], 2);
+  await expect.poll(() => progress(page), { timeout: 30_000 }).toBeCloseTo(0.48, 2);
 });
 
 test('without WebGL every section is still there', async ({ page }) => {
