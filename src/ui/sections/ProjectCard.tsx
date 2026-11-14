@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import type { Project } from '@/content/projects';
 import { Link } from '@/i18n/navigation';
+import { neonStyle } from '../neon';
 
 export interface CardCopy {
   title: string;
@@ -36,7 +37,8 @@ export default function ProjectCard({ project, copy }: { project: Project; copy:
       scroll={false}
       prefetch
       data-ui
-      className="group relative block h-full overflow-hidden rounded-[8px] bg-[#0b1f38] shadow-[0_0_0_1px_rgb(0_0_0/0.6)] outline-2 outline-offset-[-5px] outline-[#f4f4f4] outline-solid transition-[outline-color] hover:outline-[#ff7a1a] focus-visible:outline-[#ffffff] focus-visible:shadow-[0_0_0_2px_#050507,0_0_0_4px_#ffffff]"
+      className="ncard group relative block h-full overflow-hidden bg-[#0b1f38]"
+      style={neonStyle('work')}
     >
       {project.poster ? (
         <Image

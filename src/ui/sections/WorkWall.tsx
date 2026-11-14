@@ -7,13 +7,14 @@ import { experienceStore } from '@/experience/store';
 import { stopAt, stopProgress } from '@/experience/workStops';
 import { Link, useRouter } from '@/i18n/navigation';
 import { scrollToProgress } from '@/scroll/SmoothScroll';
+import { neonStyle } from '../neon';
 import { PanelTitle } from './SectionPanel';
 
 const two = (n: number) => String(n).padStart(2, '0');
 
 /**
  * The caption beside the TV wall: which project the camera stands in front of, what it is, and the way
- * into its case; numbered plates below jump straight to any project (and walk them from the keyboard).
+ * into its case; numbered neon tubes below jump straight to any project (and walk them from the keyboard).
  * It re-renders only when the stop changes. A click on a lit TV in the scene arrives here as a request
  * to open that project's case.
  */
@@ -41,10 +42,10 @@ export default function WorkWall() {
   return (
     <div>
       <PanelTitle id="work-title">{t('work.title')}</PanelTitle>
-      <div aria-live="polite" className="min-h-[9.5rem]">
+      <div aria-live="polite" className="min-h-[8.5rem]">
         {project ? (
           <>
-            <p className="board-label">
+            <p className="flow-label">
               {two(stop + 1)} / {two(PROJECTS.length)}
             </p>
             <h3 className="mt-1 font-plate text-[clamp(1.6rem,2.4vw,2.2rem)] font-bold leading-none">
@@ -60,14 +61,20 @@ export default function WorkWall() {
             <p className="mt-2 line-clamp-2 max-w-[56ch] text-sm leading-snug text-[#e8f7ff]/85 sm:line-clamp-none">
               {t(`projects.${project.slug}.summary`)}
             </p>
-            <Link href={`/work/${project.slug}`} scroll={false} prefetch className="plate plate-on mt-3 px-5 text-sm">
+            <Link
+              href={`/work/${project.slug}`}
+              scroll={false}
+              prefetch
+              className="neon -ml-1.5 mt-1 text-[15px] sm:text-base"
+              style={neonStyle('work')}
+            >
               {t('work.open')}
             </Link>
           </>
         ) : (
           <>
             <h3 className="font-plate text-xl font-bold leading-tight">{t('work.more')}</h3>
-            <p className="board-label mt-3">{t('work.ndaTitle')}</p>
+            <p className="flow-label mt-3">{t('work.ndaTitle')}</p>
             <ul className="mt-1 space-y-0.5 text-sm text-[#e8f7ff]/80">
               {NDA_KEYS.map((k) => (
                 <li key={k}>{t(`work.nda.${k}`)}</li>
@@ -76,8 +83,8 @@ export default function WorkWall() {
           </>
         )}
       </div>
-      <nav aria-label={t('work.pager')} className="mt-4 border-t border-[#f4f4f4]/20 pt-3">
-        <ul className="flex flex-wrap gap-1 sm:gap-1.5">
+      <nav aria-label={t('work.pager')} className="flow-rule mt-2 border-t pt-1">
+        <ul className="flex flex-wrap">
           {PROJECTS.map((p, i) => (
             <li key={p.slug}>
               <button
@@ -85,7 +92,8 @@ export default function WorkWall() {
                 onClick={() => go(i)}
                 aria-label={t(`projects.${p.slug}.title`)}
                 aria-current={i === stop ? 'true' : undefined}
-                className="plate plate-sm plate-sign min-w-8 px-1.5 sm:min-w-9 sm:px-2.5"
+                className="neon min-w-[2.05rem] px-0.5 text-[13px] sm:min-w-11 sm:px-1 sm:text-[15px]"
+                style={neonStyle('work')}
               >
                 {two(i + 1)}
               </button>

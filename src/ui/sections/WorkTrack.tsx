@@ -99,10 +99,10 @@ export default function WorkTrack() {
               />
             </li>
           ))}
-          <li className="flex h-full w-[clamp(15rem,24vw,22rem)] shrink-0 flex-col justify-between rounded-[8px] border border-dashed border-[#f4f4f4]/40 p-4">
+          <li className="flex h-full w-[clamp(15rem,24vw,22rem)] shrink-0 flex-col justify-between rounded-[8px] border border-dashed border-[#ff8a2a]/50 p-4">
             <p className="text-base font-bold leading-snug sm:text-lg">{t('work.more')}</p>
             <div>
-              <p className="board-label">{t('work.ndaTitle')}</p>
+              <p className="flow-label">{t('work.ndaTitle')}</p>
               <ul className="mt-1 space-y-0.5 text-xs text-[#e8f7ff]/70">
                 {NDA_KEYS.map((k) => (
                   <li key={k}>{t(`work.nda.${k}`)}</li>

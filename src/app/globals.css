@@ -711,6 +711,25 @@ html::-webkit-scrollbar-thumb {
   }
 }
 
+/* a project card on the no-WebGL strip: its poster in a neon frame of Work's colour */
+@layer components {
+  .ncard {
+    border-radius: 8px;
+    border: 2px solid color-mix(in srgb, var(--c) 55%, #fff);
+    box-shadow:
+      0 0 4px var(--c),
+      0 0 12px color-mix(in srgb, var(--c) 45%, transparent);
+    transition: box-shadow 0.2s;
+  }
+  .ncard:hover,
+  .ncard:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 6px var(--c),
+      0 0 26px var(--c);
+  }
+}
+
 /* one burst of two quick drops per period: never more than three flashes a second */
 @keyframes neon-buzz {
   0%,

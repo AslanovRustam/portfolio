@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoScene, progress, scrollTo, stop, waitReady } from './helpers';
+import { gotoScene, innerScrollers, progress, scrollTo, stop, waitReady } from './helpers';
 
 interface Wall {
   loaded: boolean;
@@ -115,4 +115,24 @@ test('every case is linked from the Work board, for screen readers and crawlers'
   const hrefs = await page.locator('section#work a[href*="/work/"]').evaluateAll((as) => [...new Set(as.map((a) => a.getAttribute('href')))]);
   for (const slug of ['gipper', 'aslanair', 'gengo', 'moto', 'altus', 'aslan-can', 'kolir', 'tuti', 'devdigest'])
     expect(hrefs, slug).toContain(`/en/work/${slug}`);
+});
+
+test('the Work caption is a neon box that never scrolls inside', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await expect(page.locator('section#work')).toHaveClass(/(^| )nbox( |$)/);
+  for (let i = 0; i < 10; i++) {
+    await scrollTo(page, stop(i));
+    expect(await innerScrollers(page), `stop ${i}`).toEqual([]);
+  }
+});
+
+test('the pager underlines the current project', async ({ page }) => {
+  await gotoScene(page);
+  await page.addStyleTag({ content: '*, *::after { transition: none !important; }' });
+  await scrollTo(page, stop(4));
+  const five = page.locator('section#work nav button', { hasText: '05' });
+  await expect(five).toHaveAttribute('aria-current', 'true');
+  await expect(five).toHaveClass(/(^| )neon( |$)/);
+  expect(await five.evaluate((el) => getComputedStyle(el, '::after').opacity)).toBe('1');
 });

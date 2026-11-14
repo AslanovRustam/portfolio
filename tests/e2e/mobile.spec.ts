@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoScene, innerScrollers, progress, scrollTo } from './helpers';
+import { gotoScene, innerScrollers, progress, scrollTo, stop } from './helpers';
 
 // Review Focus 4
 test('touch swipe advances progress on a phone, low tier, no errors', async ({ page }) => {
@@ -114,4 +114,21 @@ test('a phone shows the progress tube and a centred Next from the first screen, 
   const nb = (await nextBtn.boundingBox())!;
   const caption = (await page.locator('section#work').boundingBox())!;
   expect(nb.y + nb.height <= caption.y || caption.y + caption.height <= nb.y).toBe(true);
+});
+
+test('the Work caption fits a phone without scrolling', async ({ page }) => {
+  await gotoScene(page);
+  for (let i = 0; i < 10; i++) {
+    await scrollTo(page, stop(i));
+    expect(await innerScrollers(page), `stop ${i}`).toEqual([]);
+  }
+});
+
+test('the Work pager keeps its nine numbers on one row, down to a 390 px phone', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await gotoScene(page);
+  await scrollTo(page, stop(0));
+  const ys = await page.locator('section#work nav button').evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
+  expect(ys).toHaveLength(9);
+  expect(new Set(ys).size).toBe(1);
 });
