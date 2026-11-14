@@ -9,7 +9,8 @@ const smoothstep = (a: number, b: number, v: number) => {
 
 /** Fade margins (in progress) around a section's window: the panel stays out of the pole's turns. */
 const FADE_FROM = 0.01;
-const FADE_TO = 0.035;
+/** = TURN / 2: a section is fully present the moment the pole has turned its sign to the camera */
+const FADE_TO = 0.025;
 
 /**
  * How present a section's HTML panel is at progress p (0..1). It fades in once the pole has finished

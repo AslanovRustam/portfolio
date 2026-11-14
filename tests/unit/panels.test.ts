@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+import { holdWindow } from '@/experience/journey';
 import { frameShift, progressForTrack, sectionPresence, trackProgress } from '@/experience/panels';
 
 const close = (a: number, b: number) => expect(a).toBeCloseTo(b, 6);
@@ -38,4 +39,8 @@ it('a track position maps back to the scroll progress that shows it (keyboard fo
   close(progressForTrack(1), 0.32);
   close(trackProgress(progressForTrack(0.4)), 0.4);
   close(progressForTrack(7), 0.32);
+});
+
+it('a section is fully there the moment its text begins (the turn is done)', () => {
+  for (const id of ['about', 'stack', 'contact'] as const) close(sectionPresence(holdWindow(id)[0], id), 1);
 });

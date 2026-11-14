@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoScene, progress, scrollTo, waitReady } from './helpers';
+import { gotoScene, HOLD, progress, scrollTo, waitReady } from './helpers';
 
 test('scrolling to the end reaches progress 1 and green', async ({ page }) => {
   await gotoScene(page);
@@ -65,9 +65,9 @@ test('a header jump across Work is not bent by the snap', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
   await page.getByRole('button', { name: 'About', exact: true }).click();
-  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(0.48, 2);
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(HOLD.about[0], 2);
   await page.waitForTimeout(800);
-  expect(await progress(page)).toBeCloseTo(0.48, 2);
+  expect(await progress(page)).toBeCloseTo(HOLD.about[0], 2);
 });
 
 test('Work in the header lands on the first project', async ({ page }) => {

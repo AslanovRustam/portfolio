@@ -1,5 +1,5 @@
 import { PROJECTS } from '@/content/projects';
-import { activeSection, SECTIONS, sectionCenter } from './choreography';
+import { activeSection, holdWindow, SECTIONS } from './choreography';
 import { progressForTrack, TRACK_FROM, TRACK_TO, trackProgress } from './panels';
 import type { SectionId } from './signs';
 
@@ -57,9 +57,9 @@ export function snapTarget(q: number, from?: number): number | null {
   return Math.abs(q - target) < 1e-6 ? null : target;
 }
 
-/** Where a link to a section lands: Work opens on its first project, the others on their centre. */
+/** Where a link to a section lands: Work opens on its first project, the others where their text begins. */
 export function sectionTarget(id: SectionId): number {
-  return id === 'work' ? stopProgress(0) : sectionCenter(id);
+  return id === 'work' ? stopProgress(0) : holdWindow(id)[0];
 }
 
 /** The hash that brings a visitor back to q: the section, and for Work the project (work-1…). */

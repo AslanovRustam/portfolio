@@ -25,3 +25,9 @@ export async function waitReady(page: Page): Promise<void> {
 export function stop(i: number): number {
   return 0.18 + (0.14 / 9) * i;
 }
+
+/**
+ * Where each section's text rides past while the pole holds its sign (story progress): a mirror of
+ * holdWindow() in src/experience/journey.ts, pinned by tests/unit/journey.test.ts.
+ */
+export const HOLD = { about: [0.395, 0.565], stack: [0.615, 0.775], contact: [0.825, 1] } as const;

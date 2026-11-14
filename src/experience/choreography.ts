@@ -22,6 +22,15 @@ const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 const smoothstep = (t: number) => t * t * (3 - 2 * t);
 
+export type HoldId = 'about' | 'stack' | 'contact';
+
+/** The story stretch where a section's text is on screen: from the end of the turn onto its sign to the start of the next. */
+export function holdWindow(id: HoldId): [number, number] {
+  const s = SECTIONS.find((x) => x.id === id);
+  if (!s) throw new Error(`unknown section ${id}`);
+  return [s.start + TURN / 2, s.end >= 1 ? 1 : s.end - TURN / 2];
+}
+
 export function activeSection(p: number): SectionId | null {
   if (p < INTRO_END) return null;
   for (const s of SECTIONS) if (p < s.end) return s.id;

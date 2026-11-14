@@ -41,13 +41,15 @@ it('snap pulls a resting scroll onto the nearest stop, only inside Work', () => 
 
 it('Work links land on the first project; hashes carry the stop', () => {
   expect(sectionTarget('work')).toBeCloseTo(0.18, 9);
-  expect(sectionTarget('about')).toBeCloseTo(0.48, 9);
+  expect(sectionTarget('about')).toBeCloseTo(0.395, 9); // where About's text begins, the turn just done
+  expect(sectionTarget('contact')).toBeCloseTo(0.825, 9);
   expect(hashFor(stopProgress(4))).toBe('work-5');
   expect(hashFor(0.48)).toBe('about');
   expect(hashFor(0.05)).toBeNull();
   expect(parseHash('work-5')).toBeCloseTo(stopProgress(4), 9);
   expect(parseHash('work')).toBeCloseTo(0.18, 9);
-  expect(parseHash('stack')).toBeCloseTo(0.695, 9);
+  expect(parseHash('stack')).toBeCloseTo(0.615, 9);
+  expect(parseHash('contact')).toBeCloseTo(0.825, 9);
   expect(parseHash('work-99')).toBeNull();
   expect(parseHash('nope')).toBeNull();
 });

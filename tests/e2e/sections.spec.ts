@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import en from '../../messages/en.json';
-import { gotoScene, progress, scrollTo, waitReady } from './helpers';
+import { gotoScene, HOLD, progress, scrollTo, waitReady } from './helpers';
 
 test('a case URL renders inside the same experience', async ({ page }) => {
   // canvas persistence across client navigation is pinned in work.spec, once cards exist to click
@@ -17,7 +17,7 @@ test('each locale names its siblings for search engines', async ({ page }) => {
 test('header nav scrolls to a section and the language switch keeps the path', async ({ page }) => {
   await gotoScene(page);
   await page.getByRole('button', { name: 'About' }).click();
-  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(0.48, 1);
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(HOLD.about[0], 2);
   await page.getByRole('link', { name: 'RU', exact: true }).click();
   await expect(page).toHaveURL(/\/ru(#about)?$/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
@@ -79,7 +79,7 @@ test('HTML over a sign swallows the pointer: no sign hover, no sign click', asyn
 test('a hash deep link opens its section, also without WebGL', async ({ page }) => {
   await page.goto('/en?webgl=0#stack');
   await page.waitForFunction(() => !!window.__portfolio);
-  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(0.695, 1);
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(HOLD.stack[0], 2);
   await expect(page.locator('section#stack')).toBeVisible();
 });
 
@@ -146,13 +146,13 @@ test('switching language keeps the visitor at the same section', async ({ page }
   await gotoScene(page);
   await waitReady(page);
   await page.getByRole('button', { name: 'About' }).click();
-  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(0.48, 1);
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(HOLD.about[0], 2);
   await page.getByRole('link', { name: 'RU', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
   await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 30_000 }).toBeGreaterThan(2000);
   await page.mouse.wheel(0, 100);
   await page.waitForTimeout(800);
-  expect(await progress(page)).toBeCloseTo(0.48, 1);
+  expect(await progress(page)).toBeCloseTo(HOLD.about[0], 1);
 });
 
 // final review: a panel taller than its sheet must not trap the wheel
