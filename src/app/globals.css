@@ -317,6 +317,103 @@ html {
   }
 }
 
+/*
+ * A section's text in the page flow (src/ui/flow/SectionFlow.tsx). The first box sits --entry below the
+ * top of the screen when the section begins; the piece ends once the last box is --exit from the top
+ * (under the header's dark band), so the pole turns only when no text is on screen.
+ */
+@layer components {
+  .flow-piece {
+    --entry: 70svh;
+    --exit: 12svh;
+    /* its own formatting context: the column's negative bottom margin shortens this piece instead of
+       collapsing through it and pulling the next piece up unmeasured */
+    display: flow-root;
+    position: relative;
+    z-index: 10;
+    min-height: 170svh;
+    padding-top: var(--entry);
+    @variant wide {
+      --entry: 42svh;
+    }
+  }
+  .flow-piece > [data-flow] {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin-bottom: calc(-1 * var(--exit));
+    padding: 0 1rem;
+    @variant wide {
+      width: min(30rem, 40vw);
+      margin-left: 1.5rem;
+      padding: 0;
+    }
+  }
+  .flow-piece > [data-flow].flow-wide {
+    @variant wide {
+      width: min(36rem, 48vw);
+    }
+  }
+  /* Contact ends the page: its last box rests low on the screen instead of leaving (min-height only
+     guards a very short text; it must not lift the last box off the bottom) */
+  .flow-piece[data-last] {
+    min-height: 130svh;
+    padding-bottom: 8svh;
+  }
+  .flow-piece[data-last] > [data-flow] {
+    margin-bottom: 0;
+  }
+  /* boxes hang one under the other on two thin posts */
+  [data-flow] > .nbox + .nbox::before,
+  [data-flow] > .nbox + .nbox::after {
+    content: '';
+    position: absolute;
+    top: -32px;
+    width: 2px;
+    height: 30px;
+    background: #3a3f48;
+  }
+  [data-flow] > .nbox + .nbox::before {
+    left: 40px;
+  }
+  [data-flow] > .nbox + .nbox::after {
+    right: 40px;
+  }
+
+  /* the section's name, lit in its colour */
+  .flow-title {
+    font-family: var(--font-oswald), 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    font-size: clamp(2.4rem, 4vw, 3.5rem);
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #f2fdff;
+    text-shadow:
+      0 0 4px #fff,
+      0 0 12px var(--c),
+      0 0 28px var(--c);
+  }
+  /* a heading inside a box */
+  .flow-label {
+    font-family: var(--font-oswald), 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.1;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--c) 45%, #fff);
+    text-shadow: 0 0 8px var(--c);
+  }
+  /* years and other small accents */
+  .flow-accent {
+    color: color-mix(in srgb, var(--c) 75%, #fff);
+  }
+  .flow-rule {
+    border-color: color-mix(in srgb, var(--c) 22%, transparent);
+  }
+}
+
 /* one burst of two quick drops per period: never more than three flashes a second */
 @keyframes neon-buzz {
   0%,

@@ -1,5 +1,5 @@
 import { useTranslations } from 'next-intl';
-import { PanelTitle } from './SectionPanel';
+import NeonBox from '../flow/NeonBox';
 
 /** Rustam's order (gate round 1): Clickable Agency, GoIT mentoring, then sales. */
 const PATH = ['lead', 'clickable', 'mentor', 'sales'] as const;
@@ -8,57 +8,60 @@ const EDUCATION = ['goit', 'onat'] as const;
 /** A dated list: the years on the left, what happened on the right. */
 function Dated({ title, items, kind }: { title: string; items: readonly { years: string; what: string }[]; kind: 'path' | 'education' }) {
   return (
-    <div>
-      <h3 className="board-label">{title}</h3>
+    <>
+      <h3 className="flow-label">{title}</h3>
       <ol
         data-path={kind === 'path' ? '' : undefined}
         data-education={kind === 'education' ? '' : undefined}
-        className="mt-2 divide-y divide-[#f4f4f4]/15 border-y border-[#f4f4f4]/15 text-sm"
+        className="mt-3 divide-y text-sm"
       >
         {items.map((i) => (
-          <li key={i.years + i.what} className="grid grid-cols-[6.5rem_1fr] gap-3 py-1">
-            <span className="text-[#7fe3ff]">{i.years}</span>
+          <li key={i.years + i.what} className="flow-rule grid grid-cols-[6.5rem_1fr] gap-3 py-2">
+            <span className="flow-accent">{i.years}</span>
             <span className="text-[#e8f7ff]/90">{i.what}</span>
           </li>
         ))}
       </ol>
-    </div>
+    </>
   );
 }
 
-/** The About panel: from 14 years in sales to code, as a short story, the dated path and the education. */
+/**
+ * About, as neon boxes that ride the page scroll: who he is in a line, the story from 14 years in sales to
+ * code, the dated path, the education, and the languages. The portrait joins with the assets (Plan 3).
+ */
 export default function AboutSection() {
   const t = useTranslations('about');
   return (
-    <div className="space-y-4">
-      <PanelTitle id="about-title">{t('title')}</PanelTitle>
-      <p className="text-base leading-snug sm:text-lg">{t('lead')}</p>
-      <div className="flex gap-4">
-        {/* the poster photo arrives with the assets (plan 3); until then, an empty drawing frame */}
-        <div
-          data-portrait
-          aria-hidden="true"
-          className="hidden aspect-[4/5] w-20 shrink-0 self-start border border-dashed border-[#7fe3ff]/50 bg-[#0b1f38]/60 [background-image:linear-gradient(#7fe3ff1a_1px,transparent_1px),linear-gradient(90deg,#7fe3ff1a_1px,transparent_1px)] [background-size:12px_12px] sm:block"
+    <>
+      <NeonBox id="about">
+        <h2 id="about-title" className="flow-title">
+          {t('title')}
+        </h2>
+        <p className="mt-4 text-base leading-snug sm:text-lg">{t('lead')}</p>
+      </NeonBox>
+      <NeonBox id="about">
+        <p className="text-sm leading-relaxed text-[#e8f7ff]/85">{t('story')}</p>
+      </NeonBox>
+      <NeonBox id="about">
+        <Dated
+          kind="path"
+          title={t('timelineTitle')}
+          items={PATH.map((k) => ({ years: t(`timeline.${k}.years`), what: t(`timeline.${k}.what`) }))}
         />
-        <p className="max-w-[62ch] text-sm leading-normal text-[#e8f7ff]/85">{t('story')}</p>
-      </div>
-      <Dated
-        kind="path"
-        title={t('timelineTitle')}
-        items={PATH.map((k) => ({ years: t(`timeline.${k}.years`), what: t(`timeline.${k}.what`) }))}
-      />
-      <Dated
-        kind="education"
-        title={t('educationTitle')}
-        items={EDUCATION.map((k) => ({ years: t(`education.${k}.years`), what: t(`education.${k}.what`) }))}
-      />
-      <div className="grid gap-4 text-sm sm:grid-cols-2">
-        <div>
-          <h3 className="board-label">{t('langsTitle')}</h3>
-          <p className="mt-1 text-[#e8f7ff]/85">{t('langs')}</p>
-        </div>
-        <p className="text-[#e8f7ff]/85 sm:pt-5">{t('how')}</p>
-      </div>
-    </div>
+      </NeonBox>
+      <NeonBox id="about">
+        <Dated
+          kind="education"
+          title={t('educationTitle')}
+          items={EDUCATION.map((k) => ({ years: t(`education.${k}.years`), what: t(`education.${k}.what`) }))}
+        />
+      </NeonBox>
+      <NeonBox id="about">
+        <h3 className="flow-label">{t('langsTitle')}</h3>
+        <p className="mt-2 text-sm text-[#e8f7ff]/85">{t('langs')}</p>
+        <p className="mt-3 text-sm text-[#e8f7ff]/85">{t('how')}</p>
+      </NeonBox>
+    </>
   );
 }

@@ -61,12 +61,12 @@ export default function SiteHeader({ name, labels }: { name: string; labels: Lab
           href="/"
           scroll={false}
           onClick={() => scrollToProgress(0)}
-          className="neon justify-self-start text-lg font-semibold sm:text-xl lg:text-2xl"
+          className="neon col-start-1 row-start-1 justify-self-start text-lg font-semibold sm:text-xl lg:text-2xl"
           style={neonStyle('name')}
         >
           <NeonText text={name} dead={3} />
         </Link>
-        <nav className="col-span-2 md:order-2 md:col-span-1 md:ml-auto">
+        <nav className="col-span-2 row-start-2 md:order-2 md:ml-auto">
           <ul className="flex flex-wrap items-center">
             {NAV.map((id, i) => (
               <li key={id} className="flex items-center">
@@ -90,7 +90,7 @@ export default function SiteHeader({ name, labels }: { name: string; labels: Lab
             </li>
           </ul>
         </nav>
-        <div className="row-start-1 md:order-3 md:ml-3">
+        <div className="col-start-2 row-start-1 justify-self-end md:order-3 md:ml-3">
           <LanguageSwitch label={labels.language} />
         </div>
       </header>

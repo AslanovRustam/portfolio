@@ -12,10 +12,24 @@ async function wallReady(page: Page) {
   await page.waitForFunction(() => (window.__portfolio.probe('wall') as Wall | undefined)?.loaded, undefined, { timeout: 30_000 });
 }
 
-/** Viewport pixel of stop i's screen centre. */
+/** Viewport pixel of stop i's screen centre, once the camera has come to rest in front of it. */
 async function screenAt(page: Page, i: number) {
-  const { stops } = (await page.evaluate(() => window.__portfolio.probe('wall'))) as Wall;
-  const [x, y] = stops[i].ndc;
+  const ndc = async () => ((await page.evaluate(() => window.__portfolio.probe('wall'))) as Wall).stops[i].ndc;
+  let last = await ndc();
+  // the camera eases; on a busy GPU it can still be gliding after a fixed wait
+  await expect
+    .poll(
+      async () => {
+        await page.waitForTimeout(300);
+        const now = await ndc();
+        const moved = Math.hypot(now[0] - last[0], now[1] - last[1]);
+        last = now;
+        return moved;
+      },
+      { timeout: 15_000 },
+    )
+    .toBeLessThan(0.002);
+  const [x, y] = last;
   const vp = page.viewportSize()!;
   return { x: ((x + 1) / 2) * vp.width, y: ((1 - y) / 2) * vp.height };
 }

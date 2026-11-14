@@ -31,3 +31,12 @@ export function stop(i: number): number {
  * holdWindow() in src/experience/journey.ts, pinned by tests/unit/journey.test.ts.
  */
 export const HOLD = { about: [0.395, 0.565], stack: [0.615, 0.775], contact: [0.825, 1] } as const;
+
+/** Every element on the page that scrolls inside itself right now (overflow auto/scroll with more to show). */
+export async function innerScrollers(page: Page): Promise<string[]> {
+  return page.evaluate(() =>
+    [...document.querySelectorAll('body *')]
+      .filter((el) => /(auto|scroll)/.test(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight + 1)
+      .map((el) => `${el.tagName.toLowerCase()}#${el.id}.${String(el.className).slice(0, 40)}`),
+  );
+}

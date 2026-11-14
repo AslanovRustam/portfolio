@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { CONTACTS } from '@/content/contacts';
 import { plateStyle } from '../plates';
 import ContactForm from './ContactForm';
-import { PanelTitle } from './SectionPanel';
+import NeonBox from '../flow/NeonBox';
 
 const link = 'plate plate-sm plate-sign';
 
@@ -21,11 +21,17 @@ export default function ContactSection() {
   }, [copied]);
 
   return (
-    <div className="space-y-5">
-      <PanelTitle id="contact-title">{t('title')}</PanelTitle>
-      <p className="max-w-[60ch] text-sm text-[#e8f7ff]/80">{t('lead')}</p>
-      <ContactForm />
-      <div className="space-y-3 border-t border-[#f4f4f4]/20 pt-4 text-sm">
+    <>
+      <NeonBox id="contact">
+        <h2 id="contact-title" className="flow-title">
+          {t('title')}
+        </h2>
+        <p className="mt-4 max-w-[60ch] text-sm text-[#e8f7ff]/80">{t('lead')}</p>
+      </NeonBox>
+      <NeonBox id="contact">
+        <ContactForm />
+      </NeonBox>
+      <NeonBox id="contact" className="space-y-3 text-sm">
         <ul className="flex flex-wrap gap-2">
           {(['telegram', 'linkedin', 'github'] as const).map((k) => (
             <li key={k}>
@@ -55,7 +61,7 @@ export default function ContactSection() {
             {copied ? t('copied') : ''}
           </span>
         </p>
-      </div>
-    </div>
+      </NeonBox>
+    </>
   );
 }

@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { STACK } from '@/content/stack';
 import { experienceStore } from '@/experience/store';
-import { PanelTitle } from './SectionPanel';
+import NeonBox from '../flow/NeonBox';
 
 const light = (key: string | null) => experienceStore.getState().setHighlight(key);
 
@@ -14,10 +14,14 @@ const light = (key: string | null) => experienceStore.getState().setHighlight(ke
 export default function StackSection() {
   const t = useTranslations('stack');
   return (
-    <div className="space-y-5">
-      <PanelTitle id="stack-title">{t('title')}</PanelTitle>
-      <p className="max-w-[60ch] text-sm text-[#e8f7ff]/80">{t('lead')}</p>
-      <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+    <>
+      <NeonBox id="stack">
+        <h2 id="stack-title" className="flow-title">
+          {t('title')}
+        </h2>
+        <p className="mt-4 max-w-[60ch] text-sm text-[#e8f7ff]/80">{t('lead')}</p>
+      </NeonBox>
+      <NeonBox id="stack" className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
         {STACK.map((g) => (
           <div key={g.key}>
             <h3 className="board-label">{t(`groups.${g.key}`)}</h3>
@@ -42,7 +46,7 @@ export default function StackSection() {
             </ul>
           </div>
         ))}
-      </div>
-    </div>
+      </NeonBox>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import en from '../../messages/en.json';
-import { gotoScene, HOLD, progress, scrollTo, waitReady } from './helpers';
+import { gotoScene, HOLD, progress, scrollTo, stop, waitReady } from './helpers';
 
 test('a case URL renders inside the same experience', async ({ page }) => {
   // canvas persistence across client navigation is pinned in work.spec, once cards exist to click
@@ -23,26 +23,19 @@ test('header nav scrolls to a section and the language switch keeps the path', a
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
 });
 
-test('each section panel shows only inside its window, and the scene steps aside', async ({ page }) => {
+test('the Work caption shows only in Work, and the scene steps aside in About', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
-  for (const [p, id] of [
-    [0.26, 'work'],
-    [0.48, 'about'],
-    [0.695, 'stack'],
-    [0.9, 'contact'],
-  ] as const) {
-    await scrollTo(page, p);
-    await expect(page.locator(`section#${id}`)).toBeVisible();
-    await expect
-      .poll(() => page.evaluate((s) => window.__portfolio.probe(`panel:${s}`) as number, id))
-      .toBeGreaterThan(0.95);
-  }
+  await scrollTo(page, stop(0));
+  await expect(page.locator('section#work')).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => window.__portfolio.probe('panel:work') as number))
+    .toBeGreaterThan(0.95);
+  await scrollTo(page, 0.48);
+  await expect(page.locator('section#work')).toBeHidden();
   await expect
     .poll(() => page.evaluate(() => (window.__portfolio.probe('viewOffset') as { x: number }).x), { timeout: 8000 })
     .toBeGreaterThan(0.15);
-  await scrollTo(page, 0.37); // a turn: no panel
-  await expect(page.locator('section#about')).toBeHidden();
 });
 
 // Review Focus 1
@@ -155,13 +148,13 @@ test('switching language keeps the visitor at the same section', async ({ page }
   expect(await progress(page)).toBeCloseTo(HOLD.about[0], 1);
 });
 
-// final review: a panel taller than its sheet must not trap the wheel
-test('the wheel over a long panel scrolls it, then carries on along the street', async ({ page }) => {
+// the wheel over About's text is the page's wheel: it carries on along the street
+test("the wheel over a section's text carries on along the street", async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
   await scrollTo(page, 0.42);
-  const box = (await page.locator('section#about').boundingBox())!;
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  const box = (await page.locator('#about .nbox').first().boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, Math.max(box.y + 20, 120));
   for (let i = 0; i < 25; i++) {
     await page.mouse.wheel(0, 400);
     await page.waitForTimeout(60);

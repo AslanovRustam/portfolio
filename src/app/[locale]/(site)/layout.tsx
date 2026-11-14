@@ -1,11 +1,11 @@
 import { useTranslations } from 'next-intl';
 import HooksMount from '@/dev/HooksMount';
-import { JOURNEY_HEIGHT } from '@/experience/journey';
 import SmoothScroll from '@/scroll/SmoothScroll';
 import ExperienceGate from '@/ui/ExperienceGate';
 import Hero from '@/ui/Hero';
 import SiteHeader from '@/ui/SiteHeader';
-import SectionPanel from '@/ui/sections/SectionPanel';
+import JourneyTrack from '@/ui/flow/JourneyTrack';
+import SectionFlow from '@/ui/flow/SectionFlow';
 import WorkPanel from '@/ui/sections/WorkPanel';
 import WorkSection from '@/ui/sections/WorkSection';
 import AboutSection from '@/ui/sections/AboutSection';
@@ -40,20 +40,27 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         <SmoothScroll />
         <HooksMount />
         <Hero name={t('hero.name')} role={t('hero.role')} line={t('hero.line')} cue={t('hero.cue')} />
-        {/* the scroll track the whole journey is measured against; clicks pass through to the scene */}
-        <div id="journey" className="pointer-events-none" style={{ height: JOURNEY_HEIGHT }} />
+        {/* the scroll track the whole journey is measured against; the sections' text rides along it */}
+        <JourneyTrack
+          about={
+            <SectionFlow id="about" labelledBy="about-title">
+              <AboutSection />
+            </SectionFlow>
+          }
+          stack={
+            <SectionFlow id="stack" labelledBy="stack-title" wide>
+              <StackSection />
+            </SectionFlow>
+          }
+          contact={
+            <SectionFlow id="contact" labelledBy="contact-title">
+              <ContactSection />
+            </SectionFlow>
+          }
+        />
         <WorkPanel>
           <WorkSection />
         </WorkPanel>
-        <SectionPanel id="about" layout="side" labelledBy="about-title">
-          <AboutSection />
-        </SectionPanel>
-        <SectionPanel id="stack" layout="side" labelledBy="stack-title">
-          <StackSection />
-        </SectionPanel>
-        <SectionPanel id="contact" layout="side" labelledBy="contact-title">
-          <ContactSection />
-        </SectionPanel>
       </main>
       {children}
     </>

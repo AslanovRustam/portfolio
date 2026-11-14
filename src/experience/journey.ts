@@ -51,8 +51,10 @@ export function resetJourneyLengths(): void {
   setJourneyLengths(defaults());
 }
 
-/** Height of #journey before the page has measured itself; the flow sections replace it (Task 3). */
-export const JOURNEY_HEIGHT = `${defaults().reduce((a, b) => a + b, 0) + 100}svh`;
+/** The lengths in use (measured, or the defaults). */
+export function journeyLengths(): readonly number[] {
+  return lengths;
+}
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
