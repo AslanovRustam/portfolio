@@ -12,6 +12,7 @@ import {
   InstancedBufferAttribute,
   type InstancedMesh,
   type Material,
+  type MeshStandardMaterial,
   Matrix4,
   type Mesh,
   MeshBasicMaterial,
@@ -182,12 +183,19 @@ export default function TvWall() {
   // the wall is part of the street: it renders out of the blueprint on the street's front
   const reveal = useMemo(() => revealUniforms('street'), []);
   const bodies = useMemo(() => {
+    // the colour map carries the badge and the knobs, seen at a slant down the wall: sharpen it with anisotropy
+    const aniso = curved ? gl.capabilities.getMaxAnisotropy() : Math.min(4, gl.capabilities.getMaxAnisotropy());
     const body = (root: Object3D) => {
       const mesh = firstMesh(root);
-      return { geometry: mesh.geometry, material: withScreenGlow(mesh.material as Material, glowUniforms, curved, reveal) };
+      const source = mesh.material as MeshStandardMaterial;
+      if (source.map && source.map.anisotropy !== aniso) {
+        source.map.anisotropy = aniso;
+        source.map.needsUpdate = true;
+      }
+      return { geometry: mesh.geometry, material: withScreenGlow(source, glowUniforms, curved, reveal) };
     };
     return { tv1: body(tv1.scene), tv2: body(tv2.scene) };
-  }, [tv1, tv2, glowUniforms, curved, reveal]);
+  }, [tv1, tv2, glowUniforms, curved, reveal, gl]);
   const screenGeo = useMemo(() => ({ tv1: screenGeometry('tv1'), tv2: screenGeometry('tv2') }), []);
   const pictures = useMemo(() => {
     const aniso = Math.min(4, gl.capabilities.getMaxAnisotropy());

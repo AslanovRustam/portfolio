@@ -15,7 +15,7 @@
     }
   ],
   "models": [
-    { "id": "Television_01", "res": "1k", "dir": "tv/television_01", "texture": 512, "use": "TV wall: wooden CRT set" },
-    { "id": "television_02", "res": "1k", "dir": "tv/television_02", "texture": 512, "use": "TV wall: boxy CRT monitor" }
+    { "id": "Television_01", "res": "2k", "dir": "tv/television_01", "maps": { "diff": 2048, "nor_gl": 1024, "arm": 1024 }, "use": "TV wall: wooden CRT set" },
+    { "id": "television_02", "res": "2k", "dir": "tv/television_02", "maps": { "diff": 2048, "nor_gl": 1024, "arm": 1024 }, "use": "TV wall: boxy CRT monitor" }
   ]
 }

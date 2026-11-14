@@ -17,12 +17,12 @@ export interface TvModelDef {
 /** Two CC0 Poly Haven sets (public/models/tv), mixed on the wall like the reference's stack. */
 export const TV_MODELS: Record<TvModel, TvModelDef> = {
   tv1: {
-    url: '/models/tv/television_01/Television_01_1k.gltf',
+    url: '/models/tv/television_01/Television_01_2k.gltf',
     size: [0.6, 0.457, 0.47],
     screen: { center: [-0.065, 0.255], size: [0.36, 0.25], z: 0.17, bulge: 0.016 },
   },
   tv2: {
-    url: '/models/tv/television_02/television_02_1k.gltf',
+    url: '/models/tv/television_02/television_02_2k.gltf',
     size: [0.4, 0.411, 0.35],
     screen: { center: [-0.005, 0.255], size: [0.315, 0.22], z: 0.1, bulge: 0.022 },
   },

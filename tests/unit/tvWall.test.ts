@@ -1,6 +1,8 @@
-import { PerspectiveCamera } from 'three';
+import { MeshLambertMaterial, MeshStandardMaterial, PerspectiveCamera, Texture } from 'three';
 import { expect, it } from 'vitest';
+import { makeRevealUniforms } from '@/scene/reveal/revealMaterial';
 import { projectScreen } from '@/scene/tvwall/screenRects';
+import { createGlowUniforms, withScreenGlow } from '@/scene/tvwall/screenGlow';
 import { WORK_STOPS } from '@/experience/workStops';
 import { screenRect, stopSlots, TV_MODELS, type TvSlot, WALL, wallLayout, wallStreaks } from '@/scene/tvwall/layout';
 
@@ -67,4 +69,10 @@ it("a TV straight ahead projects to a screen-shaped rect in the middle of the ca
   expect(Math.abs(r.y + r.height / 2 - 400)).toBeLessThan(2);
   expect(r.width).toBeGreaterThan(r.height);
   expect(r.height).toBeGreaterThan(0);
+});
+
+it('the lighter body keeps the relief of its normal map', () => {
+  const normalMap = new Texture();
+  const m = withScreenGlow(new MeshStandardMaterial({ normalMap }), createGlowUniforms(), false, makeRevealUniforms(0));
+  expect((m as MeshLambertMaterial).normalMap).toBe(normalMap);
 });

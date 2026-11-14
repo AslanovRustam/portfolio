@@ -1,6 +1,6 @@
 {
   "asset": {
-    "generator": "Khronos glTF Blender I/O v5.1.20",
+    "generator": "Khronos glTF Blender I/O v1.6.16",
     "version": "2.0"
   },
   "scene": 0,
@@ -15,13 +15,13 @@
   "nodes": [
     {
       "mesh": 0,
-      "name": "television_02"
+      "name": "Television_01"
     }
   ],
   "materials": [
     {
       "doubleSided": true,
-      "name": "television_02",
+      "name": "Television_01",
       "normalTexture": {
         "index": 0
       },
@@ -37,15 +37,16 @@
   ],
   "meshes": [
     {
-      "name": "Cube.001",
+      "name": "Cube.021",
       "primitives": [
         {
           "attributes": {
             "POSITION": 0,
             "NORMAL": 1,
-            "TEXCOORD_0": 2
+            "TEXCOORD_0": 2,
+            "COLOR_0": 3
           },
-          "indices": 3,
+          "indices": 4,
           "material": 0
         }
       ]
@@ -68,80 +69,88 @@
   "images": [
     {
       "mimeType": "image/jpeg",
-      "name": "television_02_nor_gl",
-      "uri": "textures/television_02_nor_gl_1k.jpg"
+      "name": "Television_01_nor_gl",
+      "uri": "textures/Television_01_nor_gl_2k.jpg"
     },
     {
       "mimeType": "image/jpeg",
-      "name": "television_02_diff",
-      "uri": "textures/television_02_diff_1k.jpg"
+      "name": "Television_01_diff",
+      "uri": "textures/Television_01_diff_2k.jpg"
     },
     {
       "mimeType": "image/jpeg",
-      "name": "television_02_metal-television_02_rough",
-      "uri": "textures/television_02_arm_1k.jpg"
+      "name": "Television_01_metallic-Television_01_roughness",
+      "uri": "textures/Television_01_arm_2k.jpg"
     }
   ],
   "accessors": [
     {
       "bufferView": 0,
       "componentType": 5126,
-      "count": 2119,
+      "count": 1976,
       "max": [
-        0.19803974032402039,
-        0.41141477227211,
-        0.12190267443656921
+        0.29999998211860657,
+        0.4568334221839905,
+        0.21244415640830994
       ],
       "min": [
-        -0.20170873403549194,
-        2.97835756057907e-9,
-        -0.22829124331474304
+        -0.29999998211860657,
+        -0.000015506739146076143,
+        -0.25836652517318726
       ],
       "type": "VEC3"
     },
     {
       "bufferView": 1,
       "componentType": 5126,
-      "count": 2119,
+      "count": 1976,
       "type": "VEC3"
     },
     {
       "bufferView": 2,
       "componentType": 5126,
-      "count": 2119,
+      "count": 1976,
       "type": "VEC2"
     },
     {
       "bufferView": 3,
       "componentType": 5123,
-      "count": 6930,
+      "count": 1976,
+      "normalized": true,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5123,
+      "count": 5754,
       "type": "SCALAR"
     }
   ],
   "bufferViews": [
     {
       "buffer": 0,
-      "byteLength": 25428,
-      "byteOffset": 0,
-      "target": 34962
+      "byteLength": 23712,
+      "byteOffset": 0
     },
     {
       "buffer": 0,
-      "byteLength": 25428,
-      "byteOffset": 25428,
-      "target": 34962
+      "byteLength": 23712,
+      "byteOffset": 23712
     },
     {
       "buffer": 0,
-      "byteLength": 16952,
-      "byteOffset": 50856,
-      "target": 34962
+      "byteLength": 15808,
+      "byteOffset": 47424
     },
     {
       "buffer": 0,
-      "byteLength": 13860,
-      "byteOffset": 67808,
-      "target": 34963
+      "byteLength": 15808,
+      "byteOffset": 63232
+    },
+    {
+      "buffer": 0,
+      "byteLength": 11508,
+      "byteOffset": 79040
     }
   ],
   "samplers": [
@@ -152,8 +161,8 @@
   ],
   "buffers": [
     {
-      "byteLength": 81668,
-      "uri": "television_02.bin"
+      "byteLength": 90548,
+      "uri": "Television_01.bin"
     }
   ]
 }

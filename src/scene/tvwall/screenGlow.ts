@@ -19,12 +19,20 @@ export function createGlowUniforms(): GlowUniforms {
 
 /**
  * The material for the TV bodies, taking the screen glow (as a Lambert point light): a copy of the set's
- * PBR material when `pbr`, otherwise a Lambert one with only its colour map. Close up the bodies fill most
- * of the frame, and on the lighter tiers PBR with normal and ARM maps there cost ~7 ms a frame.
+ * PBR material when `pbr`, otherwise a Lambert one with its colour and normal maps. Close up the bodies
+ * fill most of the frame, and on the lighter tiers PBR with ARM maps there cost ~7 ms a frame; the normal
+ * map stays, so the knobs and the badge keep their relief.
  */
 export function withScreenGlow(source: Material, glow: GlowUniforms, pbr: boolean, reveal: RevealUniforms): Material {
   const pbrSource = source as MeshStandardMaterial;
-  const m = pbr ? pbrSource.clone() : new MeshLambertMaterial({ map: pbrSource.map, color: pbrSource.color });
+  const m = pbr
+    ? pbrSource.clone()
+    : new MeshLambertMaterial({
+        map: pbrSource.map,
+        color: pbrSource.color,
+        normalMap: pbrSource.normalMap,
+        normalScale: pbrSource.normalScale,
+      });
   const renderOut = revealCompile(reveal);
   m.onBeforeCompile = (shader) => {
     // the sets render out of the blueprint with the street, then take the screen's glow

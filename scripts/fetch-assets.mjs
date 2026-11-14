@@ -64,11 +64,15 @@ for (const m of manifest.models ?? []) {
     if (await exists(out)) continue;
     await mkdir(dirname(out), { recursive: true });
     const data = await download(inc.url);
-    if (/\.jpe?g$/i.test(rel))
+    if (/\.jpe?g$/i.test(rel)) {
+      // each map at its own size: the colour map carries the badge and the knobs, the others only shading
+      const role = /_(diff|nor_gl|arm)_/i.exec(rel)?.[1]?.toLowerCase();
+      const size = (role && m.maps?.[role]) ?? m.texture ?? 1024;
       await sharp(data)
-        .resize(m.texture, m.texture, { fit: 'inside' })
-        .jpeg({ quality: rel.includes('nor') ? 90 : 80, mozjpeg: true })
+        .resize(size, size, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: rel.includes('nor') ? 90 : 82, mozjpeg: true })
         .toFile(out);
+    }
     else await writeFile(out, data);
     console.log('model file', out);
   }
