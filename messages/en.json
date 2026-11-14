@@ -21,6 +21,8 @@
     "stack": "Stack",
     "contact": "Contact",
     "next": "Next",
+    "menu": "Menu",
+    "closeMenu": "Close menu",
     "cv": "CV",
     "language": "Language"
   },

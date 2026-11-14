@@ -88,3 +88,11 @@ test('the name flickers by words and letters', async ({ page }) => {
   await name.hover();
   await expect.poll(() => flickers(name)).toBe(0);
 });
+
+test('on a laptop the sections and languages stay tubes in a row, with no menu', async ({ page }) => {
+  await gotoScene(page);
+  const header = page.locator('header[data-ui]');
+  for (const n of ['Work', 'About', 'Stack', 'Contact']) await expect(header.getByRole('button', { name: n, exact: true })).toBeVisible();
+  for (const l of ['EN', 'RU', 'UK']) await expect(header.getByRole('link', { name: l, exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Menu', exact: true })).toBeHidden();
+});

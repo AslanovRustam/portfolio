@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoScene, innerScrollers, progress, scrollTo, stop } from './helpers';
+import { gotoScene, HOLD, innerScrollers, progress, scrollTo, stop } from './helpers';
 
 // Review Focus 4
 test('touch swipe advances progress on a phone, low tier, no errors', async ({ page }) => {
@@ -32,23 +32,78 @@ test('portrait → landscape keeps progress and section', async ({ page }) => {
   expect(await page.evaluate(() => window.__portfolio.section())).toBe('stack');
 });
 
-test('the header on a phone: name and language above, sections below, every tube at least 44×44', async ({ page }) => {
+test('the phone header: the name on the left, one language tube and the menu on the right', async ({ page }) => {
   await gotoScene(page);
   const header = page.locator('header[data-ui]');
-  const name = await header.getByRole('link', { name: /Rustam Aslanov/i }).boundingBox();
-  const lang = await header.getByRole('link', { name: 'EN', exact: true }).boundingBox();
-  const work = await header.getByRole('button', { name: 'Work', exact: true }).boundingBox();
-  expect(name && lang && work).toBeTruthy();
-  expect(Math.abs(name!.y + name!.height / 2 - (lang!.y + lang!.height / 2))).toBeLessThan(8);
-  expect(name!.x).toBeLessThan(lang!.x); // the name on the left, the languages on the right
-  expect(work!.y).toBeGreaterThan(name!.y + name!.height / 2);
+  const name = (await header.getByRole('link', { name: 'Rustam Aslanov', exact: true }).boundingBox())!;
+  const lang = header.getByRole('button', { name: /^EN/ });
+  const menu = header.getByRole('button', { name: 'Menu', exact: true });
+  await expect(lang).toHaveAttribute('aria-haspopup', /.+/);
+  const l = (await lang.boundingBox())!;
+  const m = (await menu.boundingBox())!;
+  expect(name.x + name.width).toBeLessThanOrEqual(l.x);
+  expect(l.x + l.width).toBeLessThanOrEqual(m.x + 1);
+  await expect(header.getByRole('button', { name: 'Work', exact: true })).toBeHidden();
   const small = await header.locator('a, button').evaluateAll((els) =>
     els
+      .filter((el) => (el as HTMLElement).offsetParent !== null)
       .map((el) => ({ t: el.textContent, r: el.getBoundingClientRect() }))
       .filter(({ r }) => r.width < 44 || r.height < 44)
       .map(({ t, r }) => `${t} ${Math.round(r.width)}×${Math.round(r.height)}`),
   );
   expect(small).toEqual([]);
+});
+
+test('the language picker drops the three languages and switches', async ({ page }) => {
+  await gotoScene(page);
+  const header = page.locator('header[data-ui]');
+  await header.getByRole('button', { name: /^EN/ }).click();
+  const links = header.locator('.lang-drop a');
+  await expect(links).toHaveCount(3);
+  await expect(links.first()).toBeVisible();
+  await expect(header.locator('.lang-drop a[aria-current="true"]')).toHaveText('EN');
+  await header.locator('.lang-drop').getByRole('link', { name: 'RU', exact: true }).click();
+  await expect(page).toHaveURL(/\/ru/, { timeout: 15_000 });
+});
+
+test('the menu lights the sections and takes you there', async ({ page }) => {
+  await gotoScene(page);
+  await scrollTo(page, stop(0));
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  for (const n of ['Work', 'About', 'Stack', 'Contact']) await expect(dialog.getByRole('button', { name: n, exact: true })).toBeVisible();
+  await expect(dialog.getByRole('link', { name: 'CV', exact: true })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Work', exact: true })).toHaveAttribute('aria-current', 'true');
+  await dialog.getByRole('button', { name: 'About', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect.poll(() => progress(page), { timeout: 10_000 }).toBeCloseTo(HOLD.about[0], 2);
+});
+
+test('Esc closes the menu and the picker, and focus goes back to their buttons', async ({ page }) => {
+  await gotoScene(page);
+  const menuButton = page.getByRole('button', { name: 'Menu', exact: true });
+  await menuButton.click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(menuButton).toBeFocused();
+  const lang = page.locator('header[data-ui]').getByRole('button', { name: /^EN/ });
+  await lang.click();
+  await expect(page.locator('.lang-drop a').first()).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.lang-drop a')).toHaveCount(0);
+  await expect(lang).toBeFocused();
+});
+
+// Review Focus 2
+test('turning the phone with the menu open brings back the laptop header, nothing stuck open', async ({ page }) => {
+  await gotoScene(page);
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.setViewportSize({ width: 915, height: 412 });
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('header[data-ui]').getByRole('button', { name: 'Work', exact: true })).toBeVisible();
 });
 
 test('a phone has no inner scroll either', async ({ page }) => {

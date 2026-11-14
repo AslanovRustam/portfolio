@@ -707,6 +707,171 @@ html:not([data-tier='low']) :is(.nbox, .blade) {
   backdrop-filter: blur(5px);
 }
 
+/* phones: the language picker and the section menu (src/ui/LanguagePicker.tsx, src/ui/MobileMenu.tsx) */
+@layer components {
+  .lang-chevron {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: translateY(-2px) rotate(45deg);
+    filter: drop-shadow(0 0 4px var(--c));
+    transition: transform 0.2s;
+  }
+  [aria-expanded='true'] > .lang-chevron {
+    transform: translateY(2px) rotate(225deg);
+  }
+  /* a small blade sign swinging down from the language tube */
+  .lang-drop {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    z-index: 2;
+    padding: 6px 4px;
+    border-radius: 8px;
+    border: 2px solid color-mix(in srgb, var(--c) 70%, #fff);
+    background: rgb(4 8 14 / 0.94);
+    box-shadow:
+      0 0 4px var(--c),
+      0 0 14px color-mix(in srgb, var(--c) 50%, transparent),
+      inset 0 0 10px color-mix(in srgb, var(--c) 25%, transparent);
+    transform-origin: top center;
+    animation: lang-swing 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+  }
+  .lang-drop::before,
+  .lang-drop::after {
+    content: '';
+    position: absolute;
+    top: -14px;
+    width: 2px;
+    height: 12px;
+    background: #3a3f48;
+  }
+  .lang-drop::before {
+    left: 12px;
+  }
+  .lang-drop::after {
+    right: 12px;
+  }
+  /* three short tubes */
+  .burger {
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  .burger i {
+    display: block;
+    width: 22px;
+    height: 2.5px;
+    border-radius: 2px;
+    background: #fff;
+    box-shadow:
+      0 0 4px var(--c),
+      0 0 10px var(--c);
+  }
+  .burger i:nth-child(2) {
+    width: 16px;
+    margin-left: 6px;
+  }
+  /* the menu: the street goes dark and the sections light up one after another on a pole */
+  .mmenu {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 72px 26px 48px 48px;
+    background: rgb(3 5 9 / 0.88);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    touch-action: none;
+    overscroll-behavior: contain;
+  }
+  .mmenu::before {
+    content: '';
+    position: absolute;
+    left: 26px;
+    top: 72px;
+    bottom: 48px;
+    width: 4px;
+    border-radius: 2px;
+    background: linear-gradient(#4a505b, #23272e);
+  }
+  .mmenu-list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .mmenu-item {
+    justify-content: flex-start;
+    min-height: 58px;
+    padding: 0 8px;
+    font-size: 2.1rem;
+    font-weight: 600;
+    animation: mmenu-ignite 0.7s steps(1, end) both;
+    animation-delay: calc(var(--i, 0) * 90ms);
+  }
+  .mmenu-item::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    width: 18px;
+    height: 2px;
+    background: #3a3f48;
+  }
+  .mmenu-item::after {
+    bottom: 10px;
+  }
+  .mmenu-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 1.6rem;
+  }
+}
+
+@keyframes lang-swing {
+  0% {
+    transform: rotate(-8deg) scaleY(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: rotate(3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* a neon sign switching on: on, off, on, flicker, steady */
+@keyframes mmenu-ignite {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 0.2;
+  }
+  45%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lang-drop,
+  .mmenu-item {
+    animation: none;
+  }
+}
+
 /* one burst of two quick drops per period: never more than three flashes a second */
 @keyframes neon-buzz {
   0%,

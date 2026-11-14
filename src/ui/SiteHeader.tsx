@@ -7,7 +7,9 @@ import { CONTACTS } from '@/content/contacts';
 import { experienceStore, useExperience } from '@/experience/store';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { scrollToProgress, scrollToSection } from '@/scroll/SmoothScroll';
+import LanguagePicker from './LanguagePicker';
 import LanguageSwitch from './LanguageSwitch';
+import MobileMenu from './MobileMenu';
 import { flicker, neonStyle } from './neon';
 import NameTubes from './NameTubes';
 import NeonText from './NeonText';
@@ -21,6 +23,8 @@ interface Labels {
   contact: string;
   cv: string;
   language: string;
+  menu: string;
+  closeMenu: string;
 }
 
 const tube = 'neon neon-flicker text-[13px] sm:text-[15px] lg:text-[17px]';
@@ -28,8 +32,8 @@ const tube = 'neon neon-flicker text-[13px] sm:text-[15px] lg:text-[17px]';
 /**
  * The plain-HTML twin of the signpost: the same five destinations for keyboards, screen readers and
  * recruiters who would rather not play, as neon tubes in the colours of their signs. Now and then a tube
- * dips like tired neon; the open section's tube burns steady and underlined. On a phone the name and the
- * languages share the top row and the sections run below.
+ * dips like tired neon; the open section's tube burns steady and underlined. On a phone the name keeps the
+ * left, and a language picker and a section menu take the right.
  */
 export default function SiteHeader({ name, labels }: { name: string; labels: Labels }) {
   const active = useExperience((s) => activeSection(s.progress));
@@ -67,7 +71,12 @@ export default function SiteHeader({ name, labels }: { name: string; labels: Lab
         >
           <NameTubes name={name} />
         </Link>
-        <nav className="col-span-2 row-start-2 md:order-2 md:ml-auto">
+        {/* phones: one language tube and the section menu */}
+        <div className="col-start-2 row-start-1 flex items-center justify-self-end md:hidden">
+          <LanguagePicker label={labels.language} />
+          <MobileMenu labels={labels} active={active} go={go} />
+        </div>
+        <nav className="hidden md:order-2 md:ml-auto md:block">
           <ul className="flex flex-wrap items-center">
             {NAV.map((id, i) => (
               <li key={id} className="flex items-center">
@@ -91,7 +100,7 @@ export default function SiteHeader({ name, labels }: { name: string; labels: Lab
             </li>
           </ul>
         </nav>
-        <div className="col-start-2 row-start-1 justify-self-end md:order-3 md:ml-3">
+        <div className="hidden md:order-3 md:ml-3 md:block">
           <LanguageSwitch label={labels.language} />
         </div>
       </header>

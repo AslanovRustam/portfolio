@@ -37,6 +37,8 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           contact: t('nav.contact'),
           cv: t('nav.cv'),
           language: t('nav.language'),
+          menu: t('nav.menu'),
+          closeMenu: t('nav.closeMenu'),
         }}
       />
       <main className="relative z-10">
