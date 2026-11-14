@@ -4,6 +4,7 @@ import {
   siClaude,
   siContentful,
   siCss,
+  siCursor,
   siGit,
   siGithub,
   siGitlab,
@@ -58,6 +59,8 @@ const bySlug = new Map<string, SimpleIcon>(
     siGitlab,
     siBitbucket,
     siN8n,
+    // HTML only (Stack blades), no sticker on the pole
+    siCursor,
     siClaude,
   ].map((i) => [i.slug, i]),
 );

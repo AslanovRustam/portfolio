@@ -76,3 +76,21 @@ test('the end of the page on a phone', async ({ page }) => {
   const last = (await page.locator('#contact .nbox').last().boundingBox())!;
   expect(last.y + last.height).toBeLessThanOrEqual(vh + 1);
 });
+
+test('blades fit a phone: one line each and inside the screen', async ({ page }) => {
+  for (const l of ['en', 'ru', 'uk']) {
+    await gotoScene(page, `/${l}`);
+    await scrollTo(page, 0.695);
+    const { wrapped, overflow } = await page.evaluate(() => ({
+      wrapped: [...document.querySelectorAll('#stack .blade [data-line]')]
+        .filter((s) => s.getClientRects().length > 1)
+        .map((s) => s.textContent),
+      overflow: [...document.querySelectorAll('#stack .blade')]
+        .filter((b) => b.getBoundingClientRect().right > innerWidth + 1)
+        .map((b) => b.querySelector('h3')?.textContent),
+    }));
+    expect(wrapped, l).toEqual([]);
+    expect(overflow, l).toEqual([]);
+    expect(await page.locator('#stack .blade').count(), l).toBe(6);
+  }
+});

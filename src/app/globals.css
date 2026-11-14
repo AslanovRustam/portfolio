@@ -414,6 +414,111 @@ html {
   }
 }
 
+/*
+ * Stack: a row of vertical blade signs, each on its own wall bracket (src/ui/sections/StackSection.tsx).
+ * A blade is exactly as wide as its longest line: nothing in it ever wraps.
+ */
+@layer components {
+  .blades {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 46px 12px;
+    padding-top: 34px;
+  }
+  .blade {
+    position: relative;
+    flex: none;
+    width: max-content;
+    max-width: 100%;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 2px solid color-mix(in srgb, var(--c) 70%, #fff);
+    background: rgb(4 8 14 / 0.86);
+    box-shadow:
+      0 0 4px var(--c),
+      0 0 14px color-mix(in srgb, var(--c) 55%, transparent),
+      inset 0 0 10px color-mix(in srgb, var(--c) 30%, transparent);
+    white-space: nowrap;
+    pointer-events: auto;
+    transform: rotate(var(--sway, 0deg));
+    transform-origin: 50% -30px;
+  }
+  /* the bracket: a bar above the blade and two posts down to it */
+  .blade-arm {
+    position: absolute;
+    left: -6px;
+    right: -6px;
+    top: -32px;
+    height: 5px;
+    border-radius: 3px;
+    background: linear-gradient(#4a505b, #23272e);
+    box-shadow: 0 2px 4px rgb(0 0 0 / 0.6);
+  }
+  .blade-arm::before,
+  .blade-arm::after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    width: 2px;
+    height: 25px;
+    background: #3a3f48;
+  }
+  .blade-arm::before {
+    left: 18px;
+  }
+  .blade-arm::after {
+    right: 18px;
+  }
+  .blade-title {
+    padding-bottom: 8px;
+    border-bottom: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
+    font-family: var(--font-oswald), 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.1;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--c) 30%, #fff);
+    text-shadow: 0 0 8px var(--c);
+  }
+  .blade-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 4px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    color: #ffe9eb;
+  }
+  .blade-item[data-sticker] {
+    cursor: pointer;
+  }
+  .blade-item[data-sticker]:hover,
+  .blade-item[data-sticker]:focus-visible {
+    outline: none;
+    color: #fff;
+    background: color-mix(in srgb, var(--c) 16%, transparent);
+    text-shadow: 0 0 6px var(--c);
+  }
+  .blade-logo {
+    width: 15px;
+    height: 15px;
+    flex: none;
+    fill: currentColor;
+    filter: drop-shadow(0 0 4px var(--c));
+  }
+  .blade-dot {
+    width: 5px;
+    height: 5px;
+    margin: 0 5px;
+    flex: none;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.8;
+  }
+}
+
 /* one burst of two quick drops per period: never more than three flashes a second */
 @keyframes neon-buzz {
   0%,
