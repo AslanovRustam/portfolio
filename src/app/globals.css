@@ -742,6 +742,11 @@ html:not([data-tier='low']) :is(.nbox, .blade) {
     transform-origin: top center;
     animation: lang-swing 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) both;
   }
+  /* and back up the same way before it goes */
+  .lang-drop[data-state='closing'] {
+    pointer-events: none;
+    animation: lang-swing-out 0.32s cubic-bezier(0.5, 0, 0.7, 0.4) both;
+  }
   .lang-drop::before,
   .lang-drop::after {
     content: '';
@@ -851,6 +856,54 @@ html:not([data-tier='low']) :is(.nbox, .blade) {
   }
 }
 
+@keyframes lang-swing-out {
+  0% {
+    transform: none;
+    opacity: 1;
+  }
+  40% {
+    transform: rotate(3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(-8deg) scaleY(0.6);
+    opacity: 0;
+  }
+}
+
+/*
+ * About's boxes and Stack's blades swing in on their brackets as they reach the screen
+ * (data-swing, set by src/ui/flow/JourneyTrack.tsx). rotate/scale, not transform: a blade keeps its sway.
+ */
+@keyframes swing-in {
+  0% {
+    rotate: -8deg;
+    scale: 1 0.6;
+    opacity: 0;
+  }
+  60% {
+    rotate: 3deg;
+    scale: 1 1;
+    opacity: 1;
+  }
+  100% {
+    rotate: 0deg;
+    scale: 1 1;
+    opacity: 1;
+  }
+}
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-swing='out'] {
+    opacity: 0;
+  }
+  [data-swing='in'] {
+    animation: swing-in 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+  }
+  .nbox[data-swing] {
+    transform-origin: top center;
+  }
+}
+
 /* a neon sign switching on: on, off, on, flicker, steady */
 @keyframes mmenu-ignite {
   0% {
@@ -870,6 +923,7 @@ html:not([data-tier='low']) :is(.nbox, .blade) {
 
 @media (prefers-reduced-motion: reduce) {
   .lang-drop,
+  .lang-drop[data-state='closing'],
   .mmenu-item {
     animation: none;
   }

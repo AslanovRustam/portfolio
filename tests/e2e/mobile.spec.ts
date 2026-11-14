@@ -245,3 +245,13 @@ test('the page under the open menu stays put', async ({ page }) => {
   await page.waitForTimeout(800);
   expect(Math.abs((await progress(page)) - before)).toBeLessThan(0.002);
 });
+
+test('the language sign swings back up before it goes', async ({ page }) => {
+  await gotoScene(page);
+  const lang = page.locator('header[data-ui]').getByRole('button', { name: /^EN, / });
+  await lang.click();
+  await expect(page.locator('.lang-drop a').first()).toBeVisible();
+  await lang.click();
+  await expect(page.locator('.lang-drop')).toHaveAttribute('data-state', 'closing');
+  await expect(page.locator('.lang-drop')).toHaveCount(0);
+});

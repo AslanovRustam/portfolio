@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoScene, scrollTo } from './helpers';
+import { gotoScene, HOLD, progress, scrollTo } from './helpers';
 
 test('the form validates, then sends (json transport in tests)', async ({ page }) => {
   await gotoScene(page);
@@ -17,6 +17,8 @@ test('the form validates, then sends (json transport in tests)', async ({ page }
   await expect(form.getByLabel('Name')).toHaveValue('');
   // the emptied form's sign goes dark again
   await expect(form.getByRole('button', { name: 'Send' })).toHaveAttribute('data-ready', 'false');
+  // and the street goes up to the green light
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeGreaterThan(0.995);
 });
 
 // Review Focus 4 (final review): a failed request must not crash the site or lose the message
@@ -94,4 +96,17 @@ test('the message field keeps its size', async ({ page }) => {
   await page.goto('/en?webgl=0#contact');
   const message = page.locator('section#contact form').getByLabel('Message');
   await expect(message).toHaveCSS('resize', 'none');
+});
+
+test('a contact link or the CV takes the street up to the green light', async ({ page }) => {
+  await gotoScene(page);
+  await scrollTo(page, HOLD.contact[0]);
+  // clicked where it is (a real click would first scroll it into view, near the end of the page)
+  await page.locator('section#contact').getByRole('button', { name: 'Copy email' }).evaluate((el) => (el as HTMLElement).click());
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeGreaterThan(0.995);
+  await scrollTo(page, HOLD.contact[0]);
+  const popup = page.waitForEvent('popup');
+  await page.locator('section#contact').getByRole('link', { name: /Telegram/ }).evaluate((el) => (el as HTMLElement).click());
+  await (await popup).close();
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeGreaterThan(0.995);
 });

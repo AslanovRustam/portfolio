@@ -33,10 +33,9 @@ export default function JourneyTrack({ about, stack, contact }: { about: ReactNo
       );
       if (lengths) setJourneyLengths(lengths);
     };
-    const remeasure = () => {
-      measure();
-      ScrollTrigger.refresh();
-    };
+    // ScrollTrigger defers a refresh while the page is scrolling; the lengths are measured on its
+    // refreshInit, so they never run ahead of the trigger's range
+    const remeasure = () => ScrollTrigger.refresh();
     measure();
     const ro = new ResizeObserver(remeasure);
     for (const s of el.querySelectorAll(':scope > section[data-piece]')) ro.observe(s);
@@ -44,8 +43,19 @@ export default function JourneyTrack({ about, stack, contact }: { about: ReactNo
     document.fonts?.ready.then(() => alive && remeasure());
     ScrollTrigger.addEventListener('refreshInit', measure);
     const unprobe = registerProbe('journey', () => [...journeyLengths()]);
+
+    // About's boxes and Stack's blades swing in as they reach the screen (and again after leaving it)
+    const swing = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) (e.target as HTMLElement).dataset.swing = e.isIntersecting ? 'in' : 'out';
+      },
+      { rootMargin: '0px 0px -8% 0px' },
+    );
+    for (const t of el.querySelectorAll('#about [data-flow] > .nbox, #stack [data-flow] > .nbox, #stack .blade')) swing.observe(t);
+
     return () => {
       alive = false;
+      swing.disconnect();
       ro.disconnect();
       ScrollTrigger.removeEventListener('refreshInit', measure);
       unprobe();

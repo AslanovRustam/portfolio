@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoScene, HOLD, innerScrollers, progress, scrollTo, stop, waitReady } from './helpers';
+import { gotoScene, HOLD, innerScrollers, progress, scrollTo, stop, switchLanguage, waitReady } from './helpers';
 
 const firstBox = (page: Page, id: string) => page.locator(`#${id} [data-flow] > *`).first();
 const yaw = (page: Page) => page.evaluate(() => window.__portfolio.probe('poleYaw') as number);
@@ -141,7 +141,7 @@ test('the language switch keeps the place inside the section', async ({ page }) 
   await gotoScene(page);
   await waitReady(page);
   await scrollTo(page, 0.48);
-  await page.getByRole('link', { name: 'RU', exact: true }).click();
+  await switchLanguage(page, 'RU');
   await expect(page).toHaveURL(/\/ru#about$/);
   await expect.poll(() => progress(page), { timeout: 30_000 }).toBeCloseTo(0.48, 2);
 });
@@ -154,4 +154,32 @@ test('without WebGL every section is still there', async ({ page }) => {
     await box.scrollIntoViewIfNeeded();
     await expect(box).toBeInViewport();
   }
+});
+
+test('About boxes and Stack blades swing in as they reach the screen', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, HOLD.stack[0] + 0.005);
+  const vh = page.viewportSize()!.height;
+  const state = () =>
+    page.locator('#stack .blade').evaluateAll((els, h) => els.map((el) => ({ swing: (el as HTMLElement).dataset.swing, top: el.getBoundingClientRect().top, below: el.getBoundingClientRect().top > h })), vh);
+  await expect.poll(async () => (await state()).filter((b) => !b.below && b.top > 0).every((b) => b.swing === 'in')).toBe(true);
+  const hidden = (await state()).filter((b) => b.below);
+  expect(hidden.length).toBeGreaterThan(0);
+  expect(hidden.every((b) => b.swing === 'out')).toBe(true);
+  const name = await page.locator('#stack .blade[data-swing="in"]').first().evaluate((el) => getComputedStyle(el).animationName);
+  expect(name).toBe('swing-in');
+  // further down, the blades that were below have swung in too
+  await scrollTo(page, HOLD.stack[0] + 0.05);
+  await expect.poll(async () => (await state()).filter((b) => !b.below && b.top > 0).every((b) => b.swing === 'in')).toBe(true);
+  await scrollTo(page, 0.43);
+  await expect.poll(() => page.locator('#about .nbox[data-swing="in"]').count()).toBeGreaterThan(0);
+});
+
+test('reduced motion: section boxes are simply there', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await gotoScene(page);
+  await scrollTo(page, HOLD.stack[0] + 0.005);
+  const opacities = await page.locator('#stack .blade').evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity));
+  expect(opacities.every((o) => o === '1')).toBe(true);
 });

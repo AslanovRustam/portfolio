@@ -5,6 +5,7 @@ import { startTransition, useActionState, useEffect, useRef, useState } from 're
 import { submitContact } from '@/app/[locale]/(site)/actions';
 import { CONTACTS } from '@/content/contacts';
 import { experienceStore } from '@/experience/store';
+import { scrollToProgress } from '@/scroll/SmoothScroll';
 import { invalidFields, type ContactField, type ContactResult } from '@/server/contact';
 import { flicker, neonStyle } from '../neon';
 
@@ -53,6 +54,8 @@ export default function ContactForm() {
     if (state.status !== 'sent') return;
     form.current?.reset(); // only a sent message clears the form; any other answer keeps the text
     experienceStore.getState().setCelebrate(true);
+    // a sent message goes up the pole to the green light, as the contact links do
+    scrollToProgress(1, experienceStore.getState().reducedMotion);
     const stop = setTimeout(() => experienceStore.getState().setCelebrate(false), 2000);
     return () => clearTimeout(stop);
   }, [state]);

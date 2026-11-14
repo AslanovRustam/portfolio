@@ -2,43 +2,47 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Link } from '@/i18n/navigation';
-import { useLanguageLinks } from './LanguageSwitch';
 import { neonStyle } from './neon';
+import { useLanguageLinks } from './useLanguageLinks';
+
+type Phase = 'closed' | 'open' | 'closing';
 
 /**
- * The phone's language choice: one tube with the current language and a chevron. A tap swings a small blade
- * sign down from it with EN / RU / UK; a choice, a tap elsewhere or Esc puts it away.
+ * The language choice, on every screen: one tube with the current language and a chevron. A tap swings a
+ * small blade sign down from it with EN / RU / UK; a choice, a tap elsewhere or Esc swings it back up and
+ * away (at once under reduced motion).
  */
 export default function LanguagePicker({ label }: { label: string }) {
   const links = useLanguageLinks();
   const current = links.find((l) => l.current) ?? links[0];
-  const [open, setOpen] = useState(false);
+  const [phase, setPhase] = useState<Phase>('closed');
   const button = useRef<HTMLButtonElement>(null);
   const drop = useRef<HTMLDivElement>(null);
+  const open = phase === 'open';
+
+  const close = (refocus: boolean) => {
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setPhase((p) => (p === 'open' ? (still ? 'closed' : 'closing') : p));
+    if (refocus) button.current?.focus();
+  };
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
       const t = e.target as Node;
-      if (!drop.current?.contains(t) && !button.current?.contains(t)) setOpen(false);
+      if (!drop.current?.contains(t) && !button.current?.contains(t)) close(false);
     };
     // capture, so the picker answers first and a case under it never hears this Esc
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       e.stopPropagation();
-      setOpen(false);
-      button.current?.focus();
+      close(true);
     };
-    // turned to a laptop-wide screen: the row of tubes takes over
-    const wide = matchMedia('(min-width: 48rem)');
-    const onWide = () => wide.matches && setOpen(false);
     document.addEventListener('pointerdown', onDown);
     window.addEventListener('keydown', onKey, true);
-    wide.addEventListener('change', onWide);
     return () => {
       document.removeEventListener('pointerdown', onDown);
       window.removeEventListener('keydown', onKey, true);
-      wide.removeEventListener('change', onWide);
     };
   }, [open]);
 
@@ -50,15 +54,23 @@ export default function LanguagePicker({ label }: { label: string }) {
         aria-haspopup="true"
         aria-expanded={open}
         aria-label={`${current.locale.toUpperCase()}, ${label}`}
-        onClick={() => setOpen((v) => !v)}
-        className="neon gap-1.5 text-[15px]"
+        onClick={() => (open ? close(false) : setPhase('open'))}
+        className="neon gap-1.5 text-[15px] lg:text-[17px]"
         style={neonStyle('lang')}
       >
         {current.locale.toUpperCase()}
         <span aria-hidden="true" className="lang-chevron" />
       </button>
-      {open && (
-        <div ref={drop} className="lang-drop" style={neonStyle('lang')}>
+      {phase !== 'closed' && (
+        <div
+          ref={drop}
+          data-state={phase}
+          className="lang-drop"
+          style={neonStyle('lang')}
+          onAnimationEnd={(e) => {
+            if (e.animationName === 'lang-swing-out') setPhase('closed');
+          }}
+        >
           <ul aria-label={label}>
             {links.map((l) => (
               <li key={l.locale}>
@@ -71,7 +83,7 @@ export default function LanguagePicker({ label }: { label: string }) {
                   aria-current={l.current ? 'true' : undefined}
                   onClick={() => {
                     l.remember();
-                    setOpen(false);
+                    close(false);
                   }}
                   className="neon text-[17px]"
                   style={neonStyle('lang')}

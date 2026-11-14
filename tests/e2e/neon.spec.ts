@@ -89,10 +89,19 @@ test('the name flickers by words and letters', async ({ page }) => {
   await expect.poll(() => flickers(name)).toBe(0);
 });
 
-test('on a laptop the sections and languages stay tubes in a row, with no menu', async ({ page }) => {
+test('on a laptop the sections stay tubes in a row; the languages hide in one tube, as on a phone', async ({ page }) => {
   await gotoScene(page);
   const header = page.locator('header[data-ui]');
   for (const n of ['Work', 'About', 'Stack', 'Contact']) await expect(header.getByRole('button', { name: n, exact: true })).toBeVisible();
-  for (const l of ['EN', 'RU', 'UK']) await expect(header.getByRole('link', { name: l, exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Menu', exact: true })).toBeHidden();
+  const lang = header.getByRole('button', { name: /^EN, / });
+  await expect(lang).toBeVisible();
+  await expect(header.getByRole('link', { name: 'RU', exact: true })).toHaveCount(0);
+  await lang.click();
+  for (const l of ['EN', 'RU', 'UK']) await expect(header.locator('.lang-drop').getByRole('link', { name: l, exact: true })).toBeVisible();
+  // it swings back up before it goes
+  await page.keyboard.press('Escape');
+  await expect(header.locator('.lang-drop')).toHaveAttribute('data-state', 'closing');
+  await expect(header.locator('.lang-drop')).toHaveCount(0);
+  await expect(lang).toBeFocused();
 });

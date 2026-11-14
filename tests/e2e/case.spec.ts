@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoScene, progress, scrollTo, stop } from './helpers';
+import { gotoScene, progress, scrollTo, stop, switchLanguage } from './helpers';
 
 // Review Focus 2
 test('a case opens over the scene, locks scrolling, and closes back to the same spot', async ({ page }) => {
@@ -21,7 +21,7 @@ test('a case opens over the scene, locks scrolling, and closes back to the same 
 // Review Focus 3
 test('switching language on a case keeps the case', async ({ page }) => {
   await page.goto('/en/work/altus');
-  await page.getByRole('link', { name: 'RU', exact: true }).click();
+  await switchLanguage(page, 'RU');
   await expect(page).toHaveURL(/\/ru\/work\/altus$/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
   await expect(page.getByRole('dialog').getByRole('heading', { level: 2 })).toBeVisible();

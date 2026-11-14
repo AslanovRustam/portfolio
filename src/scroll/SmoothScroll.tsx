@@ -20,6 +20,8 @@ let locked = false;
 let pending: { p: number; immediate: boolean } | null = null;
 /** the page is moving because the site asked it to (a link, a jump, a snap): the snap leaves it alone */
 let programmatic = false;
+/** where a site-made glide is heading (story progress), while it is under way */
+let heading: number | null = null;
 /** story progress where the visitor's current scroll gesture began (the snap settles in its direction) */
 let gestureFrom: number | null = null;
 
@@ -39,11 +41,15 @@ export function scrollToProgress(q: number, immediate = false): void {
   if (!lenis || y === null) return;
   programmatic = true;
   gestureFrom = null;
+  heading = immediate ? null : q;
+  // the page may have just grown (a sent message, an error line): Lenis must not clamp to its old limit
+  lenis.resize();
   lenis.scrollTo(y, {
     immediate,
     force: true,
     onComplete: () => {
       programmatic = false;
+      heading = null;
     },
   });
 }
@@ -136,6 +142,14 @@ export default function SmoothScroll() {
       if (!holding) saved = experienceStore.getState().progress;
     };
     const onRefresh = () => {
+      // a site-made glide under way (a contact link heading for the green light) carries on to its end
+      if (programmatic && heading !== null) {
+        const to = heading;
+        holding = false;
+        clearTimeout(release);
+        scrollToProgress(to);
+        return;
+      }
       scrollToProgress(saved, true);
       experienceStore.getState().setProgress(saved);
       holding = false;

@@ -3,12 +3,17 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { CONTACTS } from '@/content/contacts';
+import { experienceStore } from '@/experience/store';
+import { scrollToProgress } from '@/scroll/SmoothScroll';
 import { getIcon } from '@/scene/stickers/icons';
 import { neonStyle } from '../neon';
 import ContactForm from './ContactForm';
 import NeonBox from '../flow/NeonBox';
 
 const tube = 'neon text-[15px] sm:text-base';
+
+/** Whoever reaches out goes up the pole to the green light: the end of the road. */
+export const toGreenLight = () => scrollToProgress(1, experienceStore.getState().reducedMotion);
 
 /** A contact's logo from simple-icons, glowing in the tube's colour. */
 function Logo({ slug }: { slug: string }) {
@@ -47,25 +52,28 @@ export default function ContactSection() {
         <ul className="-mx-1 flex flex-wrap items-center">
           {(['telegram', 'linkedin', 'github'] as const).map((k) => (
             <li key={k}>
-              <a href={CONTACTS[k]} target="_blank" rel="noopener" className={tube} style={neonStyle('contact')}>
+              <a href={CONTACTS[k]} target="_blank" rel="noopener" onClick={toGreenLight} className={tube} style={neonStyle('contact')}>
                 <Logo slug={k} />
                 {t(k)}
               </a>
             </li>
           ))}
           <li>
-            <a href={CONTACTS.cv} download className={tube} style={neonStyle('cv')}>
+            <a href={CONTACTS.cv} download onClick={toGreenLight} className={tube} style={neonStyle('cv')}>
               {t('cv')}
             </a>
           </li>
         </ul>
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <a href={`mailto:${CONTACTS.email}`} className="underline underline-offset-2">
+          <a href={`mailto:${CONTACTS.email}`} onClick={toGreenLight} className="underline underline-offset-2">
             {CONTACTS.email}
           </a>
           <button
             type="button"
-            onClick={() => navigator.clipboard?.writeText(CONTACTS.email).then(() => setCopied(true), () => {})}
+            onClick={() => {
+              toGreenLight();
+              navigator.clipboard?.writeText(CONTACTS.email).then(() => setCopied(true), () => {});
+            }}
             className={tube}
             style={neonStyle('contact')}
           >

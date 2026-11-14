@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoScene, innerScrollers, progress, scrollTo, stop, waitReady } from './helpers';
+import { gotoScene, innerScrollers, progress, scrollTo, stop, switchLanguage, waitReady } from './helpers';
 
 interface Wall {
   loaded: boolean;
@@ -99,7 +99,7 @@ test('HTML over a TV keeps the pointer: no hover, no case', async ({ page }) => 
 test('switching language at a stop keeps the stop', async ({ page }) => {
   await wallReady(page);
   await scrollTo(page, stop(4));
-  await page.getByRole('link', { name: 'RU', exact: true }).click();
+  await switchLanguage(page, 'RU');
   await expect(page).toHaveURL(/\/ru#work-5$/);
   await expect.poll(() => progress(page), { timeout: 10_000 }).toBeCloseTo(stop(4), 3);
 });

@@ -40,3 +40,10 @@ export async function innerScrollers(page: Page): Promise<string[]> {
       .map((el) => `${el.tagName.toLowerCase()}#${el.id}.${String(el.className).slice(0, 40)}`),
   );
 }
+
+/** Switches the language through the header's language tube and the sign it drops. */
+export async function switchLanguage(page: Page, to: 'EN' | 'RU' | 'UK'): Promise<void> {
+  const header = page.locator('header[data-ui]');
+  await header.getByRole('button', { name: /^(EN|RU|UK), / }).click();
+  await header.locator('.lang-drop').getByRole('link', { name: to, exact: true }).click();
+}

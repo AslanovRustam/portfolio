@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import en from '../../messages/en.json';
-import { gotoScene, HOLD, progress, scrollTo, stop, waitReady } from './helpers';
+import { gotoScene, HOLD, progress, scrollTo, stop, switchLanguage, waitReady } from './helpers';
 
 test('a case URL renders inside the same experience', async ({ page }) => {
   // canvas persistence across client navigation is pinned in work.spec, once cards exist to click
@@ -18,7 +18,7 @@ test('header nav scrolls to a section and the language switch keeps the path', a
   await gotoScene(page);
   await page.getByRole('button', { name: 'About' }).click();
   await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(HOLD.about[0], 2);
-  await page.getByRole('link', { name: 'RU', exact: true }).click();
+  await switchLanguage(page, 'RU');
   await expect(page).toHaveURL(/\/ru(#about)?$/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
 });
@@ -140,7 +140,7 @@ test('switching language keeps the visitor at the same section', async ({ page }
   await waitReady(page);
   await page.getByRole('button', { name: 'About' }).click();
   await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(HOLD.about[0], 2);
-  await page.getByRole('link', { name: 'RU', exact: true }).click();
+  await switchLanguage(page, 'RU');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
   await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 30_000 }).toBeGreaterThan(2000);
   await page.mouse.wheel(0, 100);
