@@ -8,7 +8,7 @@ import { activeSection } from '@/experience/choreography';
 import { experienceStore } from '@/experience/store';
 import { stopAt } from '@/experience/workStops';
 import { useRouter } from '@/i18n/navigation';
-import { screenRectFor } from '@/scene/tvwall/screenRects';
+import { type Rect, screenRectFor } from '@/scene/tvwall/screenRects';
 import { lockScroll } from '@/scroll/SmoothScroll';
 import { neonStyle } from '../neon';
 import { crtClose, crtOpen } from './crt';
@@ -36,6 +36,8 @@ export default function CaseOverlay({ slug }: { slug: ProjectSlug }) {
   const router = useRouter();
   const dialog = useRef<HTMLDivElement>(null);
   const closing = useRef(false);
+  // read once per case: React's development double-run of the effect must not lose the clicked TV
+  const from = useRef<Rect | null | undefined>(undefined);
   const project = projectBySlug(slug)!;
   const k = (key: string) => `projects.${slug}.${key}`;
 
@@ -58,9 +60,11 @@ export default function CaseOverlay({ slug }: { slug: ProjectSlug }) {
     main?.setAttribute('inert', '');
     el?.focus();
     let alive = true;
+    let running: Animation[] = [];
     if (el) {
+      if (from.current === undefined) from.current = origin();
       el.dataset.crt = 'opening';
-      const running = crtOpen(el, origin(), experienceStore.getState().reducedMotion);
+      running = crtOpen(el, from.current, experienceStore.getState().reducedMotion);
       Promise.all(running.map((a) => a.finished))
         .then(() => {
           if (alive && !closing.current) el.dataset.crt = 'open';
@@ -73,6 +77,8 @@ export default function CaseOverlay({ slug }: { slug: ProjectSlug }) {
     window.addEventListener('keydown', onKey);
     return () => {
       alive = false;
+      // a discarded run must leave nothing on the card for the next one to measure or fight
+      for (const a of running) a.cancel();
       window.removeEventListener('keydown', onKey);
       main?.removeAttribute('inert');
       lockScroll(false);
@@ -95,7 +101,7 @@ export default function CaseOverlay({ slug }: { slug: ProjectSlug }) {
         aria-labelledby="case-title"
         tabIndex={-1}
         data-lenis-prevent
-        data-crt="opening"
+        data-crt="pending"
         style={neonStyle('work')}
         className="crt-card flex max-h-full w-full max-w-6xl flex-col outline-none"
       >

@@ -22,8 +22,9 @@ export function originTransform(from: Rect, to: Rect): string {
  * a moment like a tuning signal. Reduced motion: a short fade.
  */
 export function crtOpen(el: HTMLElement, from: Rect | null, reduced: boolean): Animation[] {
-  if (reduced) return [el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: FADE_MS, easing: 'ease-out', fill: 'both' })];
+  if (reduced) return [el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: FADE_MS, easing: 'ease-out', fill: 'backwards' })];
   const start = from ? originTransform(from, el.getBoundingClientRect()) : 'none';
+  el.dataset.crtFrom = start;
   const line = `inset(49.5% 0% 49.5% 0% ${ROUND})`;
   const card = el.animate(
     [
@@ -32,7 +33,8 @@ export function crtOpen(el: HTMLElement, from: Rect | null, reduced: boolean): A
       { offset: 0.75, transform: 'none', clipPath: `inset(0% 0% 0% 0% ${ROUND})`, filter: 'brightness(1.5) saturate(1)' },
       { offset: 1, transform: 'none', clipPath: `inset(0% 0% 0% 0% ${ROUND})`, filter: 'none' },
     ],
-    { duration: CRT_OPEN_MS, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' },
+    // holds the line before it starts, then lets go: a clip left on afterwards would cut the card's glow
+    { duration: CRT_OPEN_MS, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' },
   );
   const content = el.querySelector<HTMLElement>('[data-crt-content]');
   const glitch = content?.animate(

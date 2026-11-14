@@ -628,6 +628,19 @@ html::-webkit-scrollbar-thumb {
   }
 }
 
+/* the server's markup of a case: a dark line until the page wakes up and switches it on (no full-card flash) */
+@media (scripting: enabled) {
+  .crt-card[data-crt='pending'] {
+    clip-path: inset(49.5% 50% 49.5% 50% round 26px);
+  }
+}
+@media (scripting: enabled) and (prefers-reduced-motion: reduce) {
+  .crt-card[data-crt='pending'] {
+    clip-path: none;
+    opacity: 0;
+  }
+}
+
 @keyframes crt-flick {
   0%,
   96%,

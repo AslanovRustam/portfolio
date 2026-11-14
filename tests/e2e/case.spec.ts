@@ -51,11 +51,15 @@ test('Speca.bike is marked as in development, Kolir tells a full case', async ({
   await expect(dialog.getByText('Private repo')).toBeVisible();
 });
 
-/** The dialog's first animation keyframe (the switch-on starts there). */
+/**
+ * The switch-on actually on screen: the card animations (those with a clip-path) still in effect, and the
+ * first keyframe of the newest one. A second one would mean a leftover from a discarded effect run.
+ */
 const firstFrame = (page: Page) =>
   page.getByRole('dialog').evaluate((el) => {
-    const k = (el.getAnimations()[0]?.effect as KeyframeEffect | null)?.getKeyframes()[0] as Record<string, string> | undefined;
-    return k ? { clip: k.clipPath ?? '', transform: k.transform ?? '' } : null;
+    const cards = el.getAnimations().filter((a) => (a.effect as KeyframeEffect | null)?.getKeyframes().some((k) => 'clipPath' in k));
+    const k = (cards.at(-1)?.effect as KeyframeEffect | null)?.getKeyframes()[0] as Record<string, string> | undefined;
+    return k ? { clip: k.clipPath ?? '', transform: k.transform ?? '', count: cards.length } : null;
   });
 const insetTop = (clip: string) => parseFloat(/inset\(\s*([\d.]+)%/.exec(clip)?.[1] ?? '0');
 
@@ -69,8 +73,11 @@ test('a case switches on like a TV and switches off on close', async ({ page }) 
   const first = await firstFrame(page);
   expect(first).not.toBeNull();
   expect(insetTop(first!.clip)).toBeGreaterThanOrEqual(45);
+  expect(first!.count).toBe(1);
   // the duration is pinned in crt.test; a busy GPU can only delay the first frame of the animation
   await expect(dialog).toHaveAttribute('data-crt', 'open', { timeout: 6000 });
+  // switched on, the card keeps its whole neon glow: nothing clips it any more
+  await expect.poll(() => dialog.evaluate((el) => getComputedStyle(el).clipPath)).toBe('none');
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveAttribute('data-crt', 'closing');
   await expect(page).toHaveURL(/\/en$/, { timeout: 15_000 });
@@ -103,4 +110,22 @@ test("the case's tubes burn in Work's orange", async ({ page }) => {
   const dialog = page.getByRole('dialog');
   for (const tube of [dialog.getByRole('button', { name: 'Close' }), dialog.getByRole('link', { name: 'Source' })])
     expect(await tube.evaluate((el) => getComputedStyle(el).getPropertyValue('--c').trim())).toBe('#ff8a2a');
+});
+
+test('before the page wakes up, a case in the server markup is still a dark line, not a full card', async ({ page }) => {
+  await gotoScene(page);
+  const probe = (reduced: boolean) =>
+    page.evaluate(async (r) => {
+      const el = document.createElement('div');
+      el.className = 'crt-card';
+      el.dataset.crt = 'pending';
+      document.body.appendChild(el);
+      const s = getComputedStyle(el);
+      const out = r ? s.opacity : s.clipPath;
+      el.remove();
+      return out;
+    }, reduced);
+  expect(await probe(false)).toMatch(/^inset\(49\.5%/);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(await probe(true)).toBe('0');
 });

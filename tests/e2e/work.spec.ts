@@ -65,10 +65,8 @@ test('clicking the lit TV opens its case; closing returns to the same stop', asy
   await page.mouse.click(x, y);
   await expect(page).toHaveURL(/\/en\/work\/gengo$/, { timeout: 15_000 });
   await expect(page.getByRole('dialog').getByRole('heading', { level: 2 })).toHaveText('gen-go', { timeout: 15_000 });
-  // the case grew out of that very TV: its switch-on starts scaled down to the screen's size
-  const t = await page.getByRole('dialog').evaluate(
-    (el) => ((el.getAnimations()[0]?.effect as KeyframeEffect | null)?.getKeyframes()[0] as Record<string, string> | undefined)?.transform ?? '',
-  );
+  // the case grew out of that very TV: the switch-on on screen started scaled down to the screen's size
+  const t = (await page.getByRole('dialog').getAttribute('data-crt-from')) ?? '';
   expect(Number(/scale\(([\d.]+)/.exec(t)?.[1] ?? 1)).toBeLessThan(0.8);
   await page.keyboard.press('Escape');
   await expect(page).toHaveURL(/\/en$/, { timeout: 15_000 });
