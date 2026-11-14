@@ -45,3 +45,10 @@ test('tubes are set in Oswald, with Cyrillic on /ru', async ({ page }) => {
   });
   expect(cyrillic).toBe(true);
 });
+
+test('the boxes blur the street behind them on a laptop', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.44);
+  expect(await page.locator('#about .nbox').first().evaluate((el) => getComputedStyle(el).backdropFilter)).toContain('blur');
+});

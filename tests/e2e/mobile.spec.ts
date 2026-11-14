@@ -132,3 +132,9 @@ test('the Work pager keeps its nine numbers on one row, down to a 390 px phone',
   expect(ys).toHaveLength(9);
   expect(new Set(ys).size).toBe(1);
 });
+
+test('a phone (low tier) keeps the boxes unblurred', async ({ page }) => {
+  await gotoScene(page);
+  await expect.poll(() => page.evaluate(() => window.__portfolio.state().tier), { timeout: 30_000 }).toBe('low');
+  expect(await page.locator('#about .nbox').first().evaluate((el) => getComputedStyle(el).backdropFilter)).toBe('none');
+});
