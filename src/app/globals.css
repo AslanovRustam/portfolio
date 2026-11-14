@@ -615,6 +615,102 @@ html {
   }
 }
 
+/*
+ * Where you are and where to go: the page scrollbar, the phone's progress tube and the Next button.
+ * --accent (the open section's colour) is written on <html> by src/ui/ScrollAccent.tsx.
+ */
+html {
+  --accent: var(--blueprint-line);
+}
+html::-webkit-scrollbar {
+  width: 12px;
+}
+html::-webkit-scrollbar-track {
+  background: #07090e;
+  border-left: 1px solid #161a22;
+}
+html::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border: 3px solid #07090e;
+  border-radius: 8px;
+  box-shadow: inset 0 0 6px rgb(255 255 255 / 0.55);
+}
+/* Firefox has no webkit pseudo-elements; Chrome would ignore them if scrollbar-color were set */
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-color: var(--accent) #07090e;
+    scrollbar-width: thin;
+  }
+}
+
+@layer components {
+  .progress-tube {
+    display: none;
+    position: fixed;
+    top: 0;
+    right: 3px;
+    z-index: 30;
+    width: 3px;
+    height: 100svh;
+    border-radius: 3px;
+    background: var(--accent);
+    box-shadow:
+      0 0 6px var(--accent),
+      0 0 14px var(--accent);
+    transform-origin: top;
+    pointer-events: none;
+  }
+  @media (pointer: coarse) {
+    .progress-tube {
+      display: block;
+    }
+  }
+
+  .next-button {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    z-index: 30;
+    translate: -50% 0;
+    gap: 0.45em;
+    @variant wide {
+      left: 72%;
+    }
+  }
+  .next-arrow {
+    display: inline-block;
+    animation: next-bob 1.8s ease-in-out infinite;
+  }
+  /* on a phone the text rides under the button: a dark band keeps it legible */
+  .next-fade {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 25;
+    height: 96px;
+    pointer-events: none;
+    background: linear-gradient(to top, rgb(3 5 9 / 0.85), rgb(3 5 9 / 0));
+    @variant wide {
+      display: none;
+    }
+  }
+}
+
+@keyframes next-bob {
+  0%,
+  100% {
+    transform: translateY(-2px);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .next-arrow {
+    animation: none;
+  }
+}
+
 /* one burst of two quick drops per period: never more than three flashes a second */
 @keyframes neon-buzz {
   0%,

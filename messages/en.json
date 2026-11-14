@@ -6,7 +6,6 @@
   "hero": {
     "name": "Rustam Aslanov",
     "role": "Front-end engineer",
-    "cue": "Scroll",
     "line": "Five years of React and Next.js. I lead a front-end team and teach React at GoIT."
   },
   "loader": {
@@ -21,6 +20,7 @@
     "about": "About",
     "stack": "Stack",
     "contact": "Contact",
+    "next": "Next",
     "cv": "CV",
     "language": "Language"
   },

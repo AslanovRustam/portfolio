@@ -6,7 +6,6 @@
   "hero": {
     "name": "Rustam Aslanov",
     "role": "Front-end разработчик",
-    "cue": "Скролль",
     "line": "Пять лет пишу на React и Next.js. Веду команду фронтенда и преподаю React в GoIT."
   },
   "loader": {
@@ -21,6 +20,7 @@
     "about": "Обо мне",
     "stack": "Стек",
     "contact": "Контакты",
+    "next": "Дальше",
     "cv": "CV",
     "language": "Язык"
   },

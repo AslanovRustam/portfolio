@@ -94,3 +94,24 @@ test('blades fit a phone: one line each and inside the screen', async ({ page })
     expect(await page.locator('#stack .blade').count(), l).toBe(6);
   }
 });
+
+test('a phone shows the progress tube and a centred Next from the first screen, clear of the title block and the Work caption', async ({ page }) => {
+  await gotoScene(page);
+  const tube = page.locator('.progress-tube');
+  await expect(tube).toBeVisible();
+  const h0 = (await tube.boundingBox())!.height;
+  const nextBtn = page.getByRole('button', { name: /^Next: / });
+  const b = (await nextBtn.boundingBox())!;
+  const vw = await page.evaluate(() => innerWidth);
+  expect(Math.abs(b.x + b.width / 2 - vw / 2)).toBeLessThan(vw * 0.1);
+  expect(b.width).toBeGreaterThanOrEqual(44);
+  expect(b.height).toBeGreaterThanOrEqual(44);
+  const hero = (await page.locator('header[data-hero]').boundingBox())!;
+  expect(b.y + b.height <= hero.y || hero.y + hero.height <= b.y).toBe(true);
+  await scrollTo(page, 0.18);
+  await expect.poll(async () => (await tube.boundingBox())!.height).toBeGreaterThan(h0);
+  await page.waitForTimeout(800);
+  const nb = (await nextBtn.boundingBox())!;
+  const caption = (await page.locator('section#work').boundingBox())!;
+  expect(nb.y + nb.height <= caption.y || caption.y + caption.height <= nb.y).toBe(true);
+});

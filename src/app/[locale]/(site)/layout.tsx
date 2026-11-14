@@ -3,6 +3,9 @@ import HooksMount from '@/dev/HooksMount';
 import SmoothScroll from '@/scroll/SmoothScroll';
 import ExperienceGate from '@/ui/ExperienceGate';
 import Hero from '@/ui/Hero';
+import NextButton from '@/ui/NextButton';
+import ProgressTube from '@/ui/ProgressTube';
+import ScrollAccent from '@/ui/ScrollAccent';
 import SiteHeader from '@/ui/SiteHeader';
 import JourneyTrack from '@/ui/flow/JourneyTrack';
 import SectionFlow from '@/ui/flow/SectionFlow';
@@ -39,7 +42,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <main className="relative z-10">
         <SmoothScroll />
         <HooksMount />
-        <Hero name={t('hero.name')} role={t('hero.role')} line={t('hero.line')} cue={t('hero.cue')} />
+        <Hero name={t('hero.name')} role={t('hero.role')} line={t('hero.line')} />
         {/* the scroll track the whole journey is measured against; the sections' text rides along it */}
         <JourneyTrack
           about={
@@ -62,6 +65,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           <WorkSection />
         </WorkPanel>
       </main>
+      <ScrollAccent />
+      <ProgressTube />
+      <NextButton
+        prefix={t('nav.next')}
+        labels={{ work: t('nav.work'), about: t('nav.about'), stack: t('nav.stack'), contact: t('nav.contact') }}
+      />
       {children}
     </>
   );
