@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoScene, progress, scrollTo, stop, switchLanguage } from './helpers';
+import { gotoScene, progress, scrollTo, stop, switchLanguage, waitReady } from './helpers';
 
 // Review Focus 2
 test('a case opens over the scene, locks scrolling, and closes back to the same spot', async ({ page }) => {
@@ -20,7 +20,10 @@ test('a case opens over the scene, locks scrolling, and closes back to the same 
 
 // Review Focus 3
 test('switching language on a case keeps the case', async ({ page }) => {
-  await page.goto('/en/work/altus');
+  await gotoScene(page, '/en/work/altus');
+  // the street's first frames compile its shaders and hold the page for seconds in dev; a click that lands
+  // in them is answered only afterwards, so the switch is tried once the scene is up, as a visitor would
+  await waitReady(page);
   await switchLanguage(page, 'RU');
   await expect(page).toHaveURL(/\/ru\/work\/altus$/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');

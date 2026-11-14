@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /** Opens the page and waits until the test hooks are installed. */
 export async function gotoScene(page: Page, path = '/en'): Promise<void> {
@@ -39,6 +39,25 @@ export async function innerScrollers(page: Page): Promise<string[]> {
       .filter((el) => /(auto|scroll)/.test(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight + 1)
       .map((el) => `${el.tagName.toLowerCase()}#${el.id}.${String(el.className).slice(0, 40)}`),
   );
+}
+
+/**
+ * Waits until the About box or Stack blade holding `target` has swung in and come to rest: while it swings
+ * its items move under a still pointer, so a hover aimed at one item can land on its neighbour.
+ */
+export async function swungIn(target: Locator): Promise<void> {
+  await expect
+    .poll(() =>
+      target.evaluate((el) => {
+        const holder = el.closest<HTMLElement>('[data-swing]');
+        if (!holder) return true;
+        return (
+          holder.dataset.swing === 'in' &&
+          holder.getAnimations().every((a) => (a as CSSAnimation).animationName !== 'swing-in' || a.playState === 'finished')
+        );
+      }),
+    )
+    .toBe(true);
 }
 
 /** Switches the language through the header's language tube and the sign it drops. */

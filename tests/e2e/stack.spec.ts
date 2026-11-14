@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoScene, scrollTo, waitReady } from './helpers';
+import { gotoScene, scrollTo, swungIn, waitReady } from './helpers';
 
 /** Labels (blade headings and items) that broke onto a second line. */
 const multiLine = (page: Page) =>
@@ -32,6 +32,7 @@ test('a blade item with a sticker lights it on the pole', async ({ page }) => {
   await scrollTo(page, 0.695);
   const react = page.locator('#stack .blade').getByText('React', { exact: true });
   await react.scrollIntoViewIfNeeded();
+  await swungIn(react);
   await react.hover();
   await expect.poll(() => page.evaluate(() => window.__portfolio.state().highlight)).toBe('react');
 });

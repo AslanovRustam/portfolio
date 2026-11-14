@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import en from '../../messages/en.json';
-import { gotoScene, HOLD, progress, scrollTo, stop, switchLanguage, waitReady } from './helpers';
+import { gotoScene, HOLD, progress, scrollTo, stop, swungIn, switchLanguage, waitReady } from './helpers';
 
 test('a case URL renders inside the same experience', async ({ page }) => {
   // canvas persistence across client navigation is pinned in work.spec, once cards exist to click
@@ -16,6 +16,7 @@ test('each locale names its siblings for search engines', async ({ page }) => {
 
 test('header nav scrolls to a section and the language switch keeps the path', async ({ page }) => {
   await gotoScene(page);
+  await waitReady(page); // a click inside the scene's first, shader-compiling frames is answered seconds late
   await page.getByRole('button', { name: 'About' }).click();
   await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(HOLD.about[0], 2);
   await switchLanguage(page, 'RU');
@@ -128,7 +129,9 @@ test('hovering a stack chip lights its sticker on the pole', async ({ page }) =>
   await gotoScene(page);
   await waitReady(page);
   await scrollTo(page, 0.695);
-  await page.locator('section#stack').getByText('React', { exact: true }).hover();
+  const react = page.locator('section#stack').getByText('React', { exact: true });
+  await swungIn(react);
+  await react.hover();
   await expect.poll(() => page.evaluate(() => window.__portfolio.probe('stickerGlow'))).toBe('react');
   await page.mouse.move(5, 5);
   await expect.poll(() => page.evaluate(() => window.__portfolio.probe('stickerGlow'))).toBeNull();
@@ -142,7 +145,9 @@ test('switching language keeps the visitor at the same section', async ({ page }
   await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(HOLD.about[0], 2);
   await switchLanguage(page, 'RU');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
-  await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 30_000 }).toBeGreaterThan(2000);
+  // the new page glides back to the place; a wheel during that glide would take over from it, so the
+  // visitor's own scroll comes once the page has landed
+  await expect.poll(() => progress(page), { timeout: 30_000 }).toBeCloseTo(HOLD.about[0], 2);
   await page.mouse.wheel(0, 100);
   await page.waitForTimeout(800);
   expect(await progress(page)).toBeCloseTo(HOLD.about[0], 1);
