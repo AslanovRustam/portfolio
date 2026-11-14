@@ -29,6 +29,10 @@
 
 html {
   color-scheme: dark;
+  /* a focused element scrolled into view stays clear of the fixed header and its dark band (and of the
+     Next button at the bottom) */
+  scroll-padding-top: 160px;
+  scroll-padding-bottom: 110px;
   /* locking scroll under a case must not change the viewport width (and re-measure the journey) */
   scrollbar-gutter: stable;
 }
@@ -87,7 +91,6 @@ html {
   .neon:hover,
   .neon:focus-visible,
   .neon[aria-current] {
-    outline: none;
     text-shadow:
       0 0 3px #fff,
       0 0 12px var(--c),
@@ -98,6 +101,15 @@ html {
   .neon:focus-visible::after,
   .neon[aria-current]::after {
     opacity: 1;
+  }
+  /* keyboard focus gets its own mark, so it shows on the open section's tube too */
+  .neon:focus {
+    outline: none;
+  }
+  .neon:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--c) 70%, #fff);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
   /* now and then a tube dips, each on its own beat (flicker() in src/ui/neon.ts) */
   .neon-flicker {
@@ -555,10 +567,13 @@ html::-webkit-scrollbar-thumb {
   }
   .ncard:hover,
   .ncard:focus-visible {
-    outline: none;
     box-shadow:
       0 0 6px var(--c),
       0 0 26px var(--c);
+  }
+  .ncard:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
   }
 }
 

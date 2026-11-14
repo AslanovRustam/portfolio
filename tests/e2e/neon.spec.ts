@@ -52,3 +52,23 @@ test('the boxes blur the street behind them on a laptop', async ({ page }) => {
   await scrollTo(page, 0.44);
   expect(await page.locator('#about .nbox').first().evaluate((el) => getComputedStyle(el).backdropFilter)).toContain('blur');
 });
+
+test('keyboard focus shows on a tube even when it is the open section', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.48);
+  const about = page.getByRole('button', { name: 'About', exact: true });
+  await expect(about).toHaveAttribute('aria-current', 'true');
+  const unfocused = await about.evaluate((el) => getComputedStyle(el).outlineStyle);
+  for (let i = 0; i < 8 && !(await about.evaluate((el) => el === document.activeElement)); i++) await page.keyboard.press('Tab');
+  await expect(about).toBeFocused();
+  const focused = await about.evaluate((el) => getComputedStyle(el).outlineStyle);
+  expect(unfocused).toBe('none');
+  expect(focused).not.toBe('none');
+});
+
+test('focus never hides under the header: the page keeps room for it when it scrolls to a focused element', async ({ page }) => {
+  await gotoScene(page);
+  const pad = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop));
+  expect(pad).toBeGreaterThanOrEqual(120);
+});
