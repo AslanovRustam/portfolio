@@ -209,6 +209,152 @@ html {
   }
 }
 
+/*
+ * Neon (Plan 2c). Everything reads one colour, --c, set inline from src/ui/neon.ts.
+ */
+@layer components {
+  /* a bare neon tube: the letters glow; a lit tube underlines the active one, the hovered one, the focused one */
+  .neon {
+    --c: var(--blueprint-line);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    padding: 0 0.35rem;
+    font-family: var(--font-oswald), 'Arial Narrow', sans-serif;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: #fff;
+    text-shadow:
+      0 0 2px #fff,
+      0 0 8px var(--c),
+      0 0 18px var(--c),
+      0 0 38px var(--c);
+    transition: text-shadow 0.2s;
+  }
+  .neon::after {
+    content: '';
+    position: absolute;
+    left: 0.35rem;
+    right: 0.35rem;
+    bottom: 0.45rem;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--c);
+    box-shadow:
+      0 0 6px var(--c),
+      0 0 14px var(--c);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .neon:hover,
+  .neon:focus-visible,
+  .neon[aria-current] {
+    outline: none;
+    text-shadow:
+      0 0 3px #fff,
+      0 0 12px var(--c),
+      0 0 28px var(--c),
+      0 0 60px var(--c);
+  }
+  .neon:hover::after,
+  .neon:focus-visible::after,
+  .neon[aria-current]::after {
+    opacity: 1;
+  }
+  /* now and then a tube dips, each on its own beat (flicker() in src/ui/neon.ts) */
+  .neon-flicker {
+    animation: neon-buzz var(--flicker-period, 12s) steps(1, end) var(--flicker-delay, 0s) infinite;
+  }
+  /* a tired letter: dim, catching now and then */
+  .neon-dead {
+    animation: neon-dead 11s steps(1, end) infinite;
+  }
+  /* steady under the pointer, under focus and for the open section */
+  .neon:hover,
+  .neon:focus-visible,
+  .neon[aria-current],
+  .neon:hover .neon-dead,
+  .neon:focus-visible .neon-dead,
+  .neon[aria-current] .neon-dead {
+    animation: none;
+    opacity: 1;
+  }
+  .neon-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #3a3f48;
+  }
+
+  /* a neon box: dark glass ringed by a tube of --c */
+  .nbox {
+    --c: var(--blueprint-line);
+    position: relative;
+    border-radius: 10px;
+    border: 2px solid color-mix(in srgb, var(--c) 70%, #fff);
+    background: rgb(4 8 14 / 0.8);
+    color: var(--fg);
+    box-shadow:
+      0 0 4px var(--c),
+      0 0 16px color-mix(in srgb, var(--c) 60%, transparent),
+      inset 0 0 12px color-mix(in srgb, var(--c) 32%, transparent);
+  }
+
+  /* the dark band the header reads against while text passes under it */
+  .top-fade {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 20;
+    height: 150px;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgb(3 5 9 / 0.96) 0, rgb(3 5 9 / 0.9) 70px, rgb(3 5 9 / 0) 150px);
+  }
+}
+
+/* one burst of two quick drops per period: never more than three flashes a second */
+@keyframes neon-buzz {
+  0%,
+  90%,
+  90.8%,
+  92.2%,
+  100% {
+    opacity: 1;
+  }
+  90.4% {
+    opacity: 0.3;
+  }
+  91.6% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes neon-dead {
+  0%,
+  31.6%,
+  63.8%,
+  100% {
+    opacity: 0.18;
+  }
+  31%,
+  63.2% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neon-flicker,
+  .neon-dead {
+    animation: none;
+    opacity: 1;
+  }
+}
+
 body {
   background: var(--bg);
   color: var(--fg);

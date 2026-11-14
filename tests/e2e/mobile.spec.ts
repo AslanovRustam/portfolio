@@ -31,3 +31,21 @@ test('portrait → landscape keeps progress and section', async ({ page }) => {
   expect(Math.abs((await progress(page)) - before)).toBeLessThan(0.02);
   expect(await page.evaluate(() => window.__portfolio.section())).toBe('stack');
 });
+
+test('the header on a phone: name and language above, sections below, every tube at least 44×44', async ({ page }) => {
+  await gotoScene(page);
+  const header = page.locator('header[data-ui]');
+  const name = await header.getByRole('link', { name: /Rustam Aslanov/i }).boundingBox();
+  const lang = await header.getByRole('link', { name: 'EN', exact: true }).boundingBox();
+  const work = await header.getByRole('button', { name: 'Work', exact: true }).boundingBox();
+  expect(name && lang && work).toBeTruthy();
+  expect(Math.abs(name!.y + name!.height / 2 - (lang!.y + lang!.height / 2))).toBeLessThan(8);
+  expect(work!.y).toBeGreaterThan(name!.y + name!.height / 2);
+  const small = await header.locator('a, button').evaluateAll((els) =>
+    els
+      .map((el) => ({ t: el.textContent, r: el.getBoundingClientRect() }))
+      .filter(({ r }) => r.width < 44 || r.height < 44)
+      .map(({ t, r }) => `${t} ${Math.round(r.width)}×${Math.round(r.height)}`),
+  );
+  expect(small).toEqual([]);
+});
