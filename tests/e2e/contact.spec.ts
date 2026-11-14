@@ -89,3 +89,9 @@ test('keyboard focus reaches the contact links', async ({ page }) => {
   await expect(telegram).toHaveClass(/(^| )neon( |$)/);
   await expect.poll(() => telegram.evaluate((el) => getComputedStyle(el, '::after').opacity)).toBe('1');
 });
+
+test('the message field keeps its size', async ({ page }) => {
+  await page.goto('/en?webgl=0#contact');
+  const message = page.locator('section#contact form').getByLabel('Message');
+  await expect(message).toHaveCSS('resize', 'none');
+});

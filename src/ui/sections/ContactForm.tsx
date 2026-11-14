@@ -95,7 +95,7 @@ export default function ContactForm() {
               {t(f.name)}
             </label>
             {f.type === 'textarea' ? (
-              <textarea {...common} rows={4} className={`${input} resize-y`} />
+              <textarea {...common} rows={4} className={`${input} resize-none`} />
             ) : (
               <input {...common} type={f.type} />
             )}

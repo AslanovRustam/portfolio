@@ -415,6 +415,9 @@ html {
       border-color 0.2s,
       box-shadow 0.2s;
   }
+  textarea.nfield {
+    resize: none;
+  }
   .nfield:focus {
     border-color: var(--c);
     box-shadow:
