@@ -255,3 +255,10 @@ test('the language sign swings back up before it goes', async ({ page }) => {
   await expect(page.locator('.lang-drop')).toHaveAttribute('data-state', 'closing');
   await expect(page.locator('.lang-drop')).toHaveCount(0);
 });
+
+test('a case plays its live loop on a phone too (the wall keeps stills on the low tier)', async ({ page }) => {
+  await gotoScene(page, '/en/work/altus');
+  const video = page.getByRole('dialog').locator('video');
+  await expect(video).toHaveCount(1, { timeout: 15_000 });
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime), { timeout: 10_000 }).toBeGreaterThan(0.5);
+});

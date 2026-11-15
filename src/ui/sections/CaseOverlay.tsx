@@ -1,7 +1,6 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
 import { useCallback, useEffect, useRef } from 'react';
 import { projectBySlug, repoIsPrivate, type ProjectSlug } from '@/content/projects';
 import { activeSection } from '@/experience/choreography';
@@ -12,7 +11,7 @@ import { type Rect, screenRectFor } from '@/scene/tvwall/screenRects';
 import { lockScroll } from '@/scroll/SmoothScroll';
 import { neonStyle } from '../neon';
 import { crtClose, crtOpen } from './crt';
-import { BlueprintPoster } from './ProjectCard';
+import ProjectMedia from './ProjectMedia';
 
 const LINK_KEYS = ['live', 'site', 'repo'] as const;
 
@@ -126,18 +125,7 @@ export default function CaseOverlay({ slug }: { slug: ProjectSlug }) {
             <div className="grid gap-6 p-5 pt-3 sm:p-8 sm:pt-4 wide:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] wide:gap-10">
               <div className="space-y-4">
                 <div className="relative aspect-[16/10] overflow-hidden rounded-[6px] shadow-[0_0_0_1px_rgb(0_0_0/0.6)]">
-                  {project.poster ? (
-                    <Image
-                      src={project.poster}
-                      alt=""
-                      fill
-                      loading="eager"
-                      sizes="(min-width: 1024px) 50vw, 100vw"
-                      className="object-cover object-top"
-                    />
-                  ) : (
-                    <BlueprintPoster title={t(k('title'))} />
-                  )}
+                  <ProjectMedia project={project} title={t(k('title'))} />
                 </div>
                 <div>
                   <h3 className="flow-label">{t('case.links')}</h3>
