@@ -8,5 +8,65 @@
     "webmBytes": 835175,
     "mp4Bytes": 1111902,
     "mode": "realtime"
+  },
+  "aslan-can": {
+    "seconds": 10,
+    "width": 1200,
+    "height": 750,
+    "fps": 30,
+    "audio": false,
+    "webmBytes": 1464549,
+    "mp4Bytes": 1292127,
+    "mode": "realtime"
+  },
+  "aslanair": {
+    "seconds": 11,
+    "width": 1200,
+    "height": 750,
+    "fps": 30,
+    "audio": false,
+    "webmBytes": 916097,
+    "mp4Bytes": 806314,
+    "mode": "frames"
+  },
+  "gengo": {
+    "seconds": 10,
+    "width": 1200,
+    "height": 750,
+    "fps": 30,
+    "audio": false,
+    "webmBytes": 869719,
+    "mp4Bytes": 1394439,
+    "mode": "realtime"
+  },
+  "kolir": {
+    "seconds": 10,
+    "width": 1200,
+    "height": 750,
+    "fps": 30,
+    "audio": false,
+    "webmBytes": 1349505,
+    "mp4Bytes": 1325797,
+    "mode": "frames"
+  },
+  "moto": {
+    "seconds": 10,
+    "width": 1200,
+    "height": 750,
+    "fps": 30,
+    "audio": false,
+    "webmBytes": 1084961,
+    "mp4Bytes": 1287327,
+    "mode": "realtime"
+  },
+  "tuti": {
+    "seconds": 10,
+    "width": 1200,
+    "height": 750,
+    "fps": 30,
+    "audio": false,
+    "webmBytes": 803401,
+    "mp4Bytes": 1330186,
+    "mode": "realtime"
   }
 }

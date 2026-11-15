@@ -44,6 +44,7 @@ export const PROJECTS: readonly Project[] = [
     stack: ['React Three Fiber', 'drei', 'GSAP', 'Lenis', 'Blender', 'Playwright', 'Vitest'],
     links: { live: 'https://aslanair.vercel.app', repo: 'https://github.com/AslanovRustam/aslanair' },
     poster: '/projects/aslanair.webp',
+    loop: true,
   },
   {
     slug: 'gengo',
@@ -53,6 +54,7 @@ export const PROJECTS: readonly Project[] = [
     // the repository is private
     links: { live: 'https://gen-go.ai/' },
     poster: '/projects/gengo.webp',
+    loop: true,
     badge: 'commercial',
   },
   {
@@ -63,6 +65,7 @@ export const PROJECTS: readonly Project[] = [
     // preview deploy; the repository is private
     links: { live: 'https://motoagregtor-motoaggregator-tlvw65-032779-2-24-123-177.sslip.io/' },
     poster: '/projects/moto.webp',
+    loop: true,
     badge: 'commercial',
     status: 'in-development',
   },
@@ -82,6 +85,7 @@ export const PROJECTS: readonly Project[] = [
     stack: ['React Three Fiber', 'drei', 'GSAP', 'Prismic'],
     links: { live: 'https://aslan-can.vercel.app' },
     poster: '/projects/aslan-can.webp',
+    loop: true,
   },
   {
     slug: 'kolir',
@@ -91,6 +95,7 @@ export const PROJECTS: readonly Project[] = [
     // the repository is private
     links: { live: 'https://www.kolir.agency' },
     poster: '/projects/kolir.webp',
+    loop: true,
     badge: 'commercial',
     detailed: true,
   },
@@ -101,6 +106,7 @@ export const PROJECTS: readonly Project[] = [
     stack: ['Next.js 15', 'Tailwind 4', 'GitHub API', 'Python + Pillow'],
     links: { live: 'https://tuti-tau.vercel.app/' },
     poster: '/projects/tuti.webp',
+    loop: true,
     badge: 'commercial',
     detailed: true,
   },
