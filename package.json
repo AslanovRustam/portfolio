@@ -16,7 +16,8 @@
     "prod": "next build && playwright test --project=prod",
     "assets": "node scripts/fetch-assets.mjs",
     "posters": "node scripts/capture-posters.mjs",
-    "loops": "node scripts/capture-loops.mjs"
+    "loops": "node scripts/capture-loops.mjs",
+    "poster": "node scripts/about-poster.mjs"
   },
   "dependencies": {
     "@gsap/react": "2.1.2",
