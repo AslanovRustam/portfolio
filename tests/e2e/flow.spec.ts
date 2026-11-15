@@ -183,3 +183,41 @@ test('reduced motion: section boxes are simply there', async ({ page }) => {
   const opacities = await page.locator('#stack .blade').evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity));
   expect(opacities.every((o) => o === '1')).toBe(true);
 });
+
+// ── the About poster (Plan 3, Task 6) ─────────────────────────────────────────────────────────
+
+test("About opens with Rustam's poster, named in the page's language", async ({ page }) => {
+  for (const [path, alt] of [
+    ['/en', 'Rustam Aslanov'],
+    ['/ru', 'Рустам Асланов'],
+    ['/uk', 'Рустам Асланов'],
+  ] as const) {
+    await page.goto(path);
+    const first = page.locator('#about [data-flow] > *').first();
+    await expect(first).toHaveClass(/paper-poster/);
+    await expect(first.locator('img')).toHaveAttribute('alt', alt);
+  }
+  // the layout width: the tilt widens the bounding box on purpose
+  const width = await page.locator('#about .paper-poster').evaluate((el) => (el as HTMLElement).offsetWidth);
+  expect(width).toBeLessThanOrEqual(300);
+  expect(width).toBeGreaterThan(150);
+});
+
+test('the poster swings in like the boxes', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  const poster = page.locator('#about .paper-poster');
+  await expect(poster).toHaveAttribute('data-swing', 'out');
+  await page.getByRole('button', { name: 'About', exact: true }).click();
+  await expect.poll(() => poster.getAttribute('data-swing'), { timeout: 8000 }).toBe('in');
+});
+
+test('reduced motion: the poster is simply there', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, HOLD.about[0] + 0.01);
+  const poster = page.locator('#about .paper-poster');
+  await expect(poster).toBeVisible();
+  expect(await poster.evaluate((el) => [getComputedStyle(el).opacity, getComputedStyle(el).animationName])).toEqual(['1', 'none']);
+});

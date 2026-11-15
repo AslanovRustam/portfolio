@@ -48,6 +48,7 @@
     "pager": "Projects"
   },
   "about": {
+    "posterAlt": "Rustam Aslanov",
     "title": "About",
     "lead": "Front-end developer for five years, team lead since 2023, React mentor at GoIT since 2022. Before code, 14 years in sales.",
     "story": "I spent 14 years in sales, from consultant to Senior Key Account Manager at Henkel, Colgate-Palmolive and Shabo. In 2020 I started the Full Stack course at GoIT, and in 2021 I joined Clickable Agency as a front-end developer. Two years later I was leading the team: estimates, code review, a development plan for each developer, calls with clients. From sales I kept the habit of asking what the client needs before I write any code.",

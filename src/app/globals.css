@@ -899,9 +899,42 @@ html:not([data-tier='low']) :is(.nbox, .blade) {
   [data-swing='in'] {
     animation: swing-in 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both;
   }
-  .nbox[data-swing] {
+  .nbox[data-swing],
+  .paper-poster[data-swing] {
     transform-origin: top center;
   }
+}
+
+/*
+ * About's photo poster (src/ui/flow/PaperPoster.tsx): a print pasted up on the street, torn at the top and
+ * the bottom (clip-path), held by two strips of tape, tilted a little. The tilt is a transform, so the
+ * swing-in (rotate/scale) adds to it.
+ */
+.paper-poster {
+  position: relative;
+  width: min(300px, 70%);
+  margin: 0.5rem 0 1.75rem;
+  transform: rotate(-2.5deg);
+  filter: drop-shadow(0 12px 20px rgb(0 0 0 / 0.6));
+}
+.paper-poster-sheet {
+  background: #0b0716;
+}
+.paper-tape {
+  position: absolute;
+  top: -9px;
+  width: 64px;
+  height: 20px;
+  background: linear-gradient(180deg, rgb(232 247 255 / 0.3), rgb(232 247 255 / 0.18));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+}
+.paper-tape-left {
+  left: 10%;
+  transform: rotate(-9deg);
+}
+.paper-tape-right {
+  right: 10%;
+  transform: rotate(7deg);
 }
 
 /* a neon sign switching on: on, off, on, flicker, steady */

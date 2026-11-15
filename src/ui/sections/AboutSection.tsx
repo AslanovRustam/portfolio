@@ -1,5 +1,6 @@
 import { useTranslations } from 'next-intl';
 import NeonBox from '../flow/NeonBox';
+import PaperPoster from '../flow/PaperPoster';
 
 /** Rustam's order (gate round 1): Clickable Agency, GoIT mentoring, then sales. */
 const PATH = ['lead', 'clickable', 'mentor', 'sales'] as const;
@@ -28,12 +29,13 @@ function Dated({ title, items, kind }: { title: string; items: readonly { years:
 
 /**
  * About, as neon boxes that ride the page scroll: who he is in a line, the story from 14 years in sales to
- * code, the dated path, the education, and the languages. The portrait joins with the assets (Plan 3).
+ * code, the dated path, the education, and the languages; it opens with his portrait as a street poster.
  */
 export default function AboutSection() {
   const t = useTranslations('about');
   return (
     <>
+      <PaperPoster src="/about/poster.webp" alt={t('posterAlt')} />
       <NeonBox id="about">
         <h2 id="about-title" className="flow-title">
           {t('title')}
