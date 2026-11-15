@@ -27,9 +27,11 @@ async function startAt(page, y, settle = 2500) {
 export const SCENARIOS = {
   // Gipper's editor, recorded by hand from Rustam's own logged-in Chrome (spec §6.4, his choice at the
   // session): his demo layout, 20 s of the screen (ffmpeg -f gdigrab -framerate 30 -i desktop), then the
-  // athletes grid → "Gregory 1" → a font change, cut to 9.8–20 s and cropped to the whole editor (its left panel included) without the
-  // browser's tabs, address and bookmarks or the taskbar (crop=1579:987:341:153 on 1920×1200), scaled to
-  // 1440×900 at 30 fps, seamed with seamFilter(9.7, 0.5) into .capture/gipper/loop.mp4.
+  // athletes grid → "Gregory 1" → a font change, cut to 9.8–20 s and cropped to the whole editor, its left
+  // panel included, without the browser's tabs, address and bookmarks or the taskbar (crop=1920:987:0:153 on
+  // 1920×1200); scaled to 1440×740 and set on 1440×900 with the editor's own colours above (white, as its
+  // header) and below (white under the panel, #dfe3e5 under the canvas); 30 fps; seamed with
+  // seamFilter(9.7, 0.5) into .capture/gipper/loop.mp4.
   // `npm run loops -- --only=gipper --reencode` delivers it; the runner never records it itself.
   gipper: {
     manual: true,
