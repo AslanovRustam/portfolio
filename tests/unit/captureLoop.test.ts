@@ -39,6 +39,15 @@ it('encodings carry no audio and the right codec, size and rate', () => {
   expect(mp4.join(' ')).toContain('+faststart');
 });
 
+it('both files are limited-range BT.709 (a full-range VP9 from JPEG frames fails in Chrome)', () => {
+  for (const kind of ['webm', 'mp4'] as const) {
+    const a = encodeArgs(kind, 'in.mkv', `out.${kind}`).join(' ');
+    expect(a).toContain('out_range=tv');
+    expect(a).toContain('-color_range tv');
+    expect(a).toContain('-colorspace bt709');
+  }
+});
+
 it('loop metadata outside the constraints is reported', () => {
   const ok = { seconds: 10, width: 1200, height: 750, fps: 30, audio: false, webmBytes: 1e6, mp4Bytes: 1.2e6, mode: 'realtime' } as const;
   expect(checkLoopMeta(ok)).toEqual([]);

@@ -71,9 +71,17 @@ export function seamFilter(seconds: number, fade: number): string {
   ].join(';');
 }
 
-/** ffmpeg arguments for one of the two delivered files: 1200×750, 30 fps, no audio. */
+/**
+ * ffmpeg arguments for one of the two delivered files: 1200×750, 30 fps, no audio, limited-range BT.709.
+ * The frames come in as full-range JPEG; a full-range VP9 makes Chrome's decoder fail after its first frame
+ * (PIPELINE_ERROR_DECODE), so the range is converted and tagged.
+ */
 export function encodeArgs(kind: 'webm' | 'mp4', input: string, output: string, crf?: number): string[] {
-  const common = ['-y', '-i', input, '-an', '-vf', `scale=${LOOP.width}:${LOOP.height}:flags=lanczos`, '-r', String(LOOP.fps)];
+  const common = [
+    ...['-y', '-i', input, '-an'],
+    ...['-vf', `scale=${LOOP.width}:${LOOP.height}:flags=lanczos:out_range=tv,format=yuv420p`, '-r', String(LOOP.fps)],
+    ...['-color_range', 'tv', '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709'],
+  ];
   if (kind === 'webm') {
     return [
       ...common,

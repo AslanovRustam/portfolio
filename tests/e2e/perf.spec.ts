@@ -57,9 +57,9 @@ test('scrolling the whole journey keeps at least 30 fps', async ({ page }) => {
   expect(medianMs).toBeLessThanOrEqual(33.4);
 });
 
-test('standing at a Work stop keeps at least 30 fps', async ({ page }) => {
-  test.setTimeout(120_000);
-  await gotoScene(page);
+/** Median and 95th-percentile frame time at a Work stop, after the camera and the loop have settled. */
+async function workStop(page: Page, path: string) {
+  await gotoScene(page, path);
   await waitReady(page);
   await page.waitForFunction(() => (window.__portfolio.probe('wall') as { loaded?: boolean } | undefined)?.loaded, undefined, {
     timeout: 30_000,
@@ -82,17 +82,28 @@ test('standing at a Work stop keeps at least 30 fps', async ({ page }) => {
       }),
   );
   const sorted = [...frames].sort((a, b) => a - b);
-  const medianMs = sorted[Math.floor(sorted.length / 2)];
-  const report = {
+  return {
     tier: await page.evaluate(() => window.__portfolio.state().tier),
-    medianMs: +medianMs.toFixed(2),
+    loop: await page.evaluate(() => (window.__portfolio.probe('wall') as { loop: { stop: number } | null }).loop?.stop ?? null),
+    medianMs: +sorted[Math.floor(sorted.length / 2)].toFixed(2),
     p95Ms: +sorted[Math.floor(sorted.length * 0.95)].toFixed(2),
     frames: frames.length,
   };
+}
+
+// Moto's stop (3): measured with its live loop and, as the baseline, with loops off (?loops=0)
+test('standing at a Work stop keeps at least 30 fps, and its live loop costs at most 3 ms', async ({ page }) => {
+  test.setTimeout(180_000);
+  const noLoop = await workStop(page, '/en?loops=0');
+  const withLoop = await workStop(page, '/en');
+  const report = { noLoop, withLoop };
   mkdirSync('test-results', { recursive: true });
   writeFileSync('test-results/perf-work.json', JSON.stringify(report, null, 2));
   console.log('perf-work', JSON.stringify(report));
-  expect(medianMs).toBeLessThanOrEqual(33.4);
+  expect(noLoop.loop).toBeNull();
+  expect(withLoop.loop).toBe(3);
+  expect(withLoop.medianMs).toBeLessThanOrEqual(33.4);
+  expect(withLoop.medianMs).toBeLessThanOrEqual(noLoop.medianMs + 3);
 });
 
 test('reading About with its boxes on screen keeps at least 30 fps', async ({ page }) => {

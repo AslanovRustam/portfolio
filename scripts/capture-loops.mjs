@@ -4,8 +4,9 @@
 // loop seamless and writes public/projects/<slug>.webm + .mp4, the still <slug>.webp (its first frame) and
 // its entry in public/projects/loops.json. Intermediate frames live in .capture/ (git-ignored).
 //
-// Usage: npm run loops -- --only=<slug>[,<slug>] [--frames] [--headed] [--url=<override>] [--profile=<dir>]
+// Usage: npm run loops -- --only=<slug>[,<slug>] [--frames] [--headed] [--url=<override>] [--profile=<dir>] [--reencode]
 //   --frames   skip real time, record frame by frame
+//   --reencode no recording: encode again from the last take's seamed loop (.capture/<slug>/loop.mp4)
 //   --headed   show the browser
 //   --url      record another address than the scenario's (e.g. a logged-in page)
 //   --profile  a persistent, visible browser profile (a session someone logs into by hand); keep it
@@ -223,7 +224,7 @@ async function take(context, slug, sc, mode) {
   }
 }
 
-/** Frames → a seamless loop → the two delivered files, the still and the manifest entry. */
+/** Frames → a seamless loop (.capture/<slug>/loop.mp4) → the delivered files. */
 async function produce(slug, sc, t) {
   const work = join(root, '.capture', slug);
   const seq = join(work, 'seq');
@@ -238,7 +239,13 @@ async function produce(slug, sc, t) {
   } else {
     ffmpeg(['-y', '-i', clip, '-filter_complex', seamFilter(sc.seconds, FADE), '-map', '[v]', '-c:v', 'libx264', '-crf', '10', '-preset', 'fast', '-pix_fmt', 'yuv420p', loop], 'seam');
   }
+  return deliver(slug, t.mode);
+}
 
+/** The seamed loop → the two delivered files, the still and the manifest entry; returns the problems found. */
+async function deliver(slug, mode) {
+  const work = join(root, '.capture', slug);
+  const loop = join(work, 'loop.mp4');
   const out = (ext) => join(root, 'public', 'projects', `${slug}.${ext}`);
   const steps = { webm: [40, 44, 48, 52], mp4: [27, 30, 33, 36] };
   const bytes = {};
@@ -253,7 +260,7 @@ async function produce(slug, sc, t) {
   ffmpeg(['-y', '-i', loop, '-frames:v', '1', still], 'still');
   await sharp(still).resize(LOOP.width, LOOP.height, { kernel: 'lanczos3' }).webp({ quality: 82 }).toFile(out('webp'));
 
-  const meta = { ...probe(out('mp4')), webmBytes: bytes.webm, mp4Bytes: bytes.mp4, mode: t.mode };
+  const meta = { ...probe(out('mp4')), webmBytes: bytes.webm, mp4Bytes: bytes.mp4, mode };
   const webmProbe = probe(out('webm'));
   const problems = [...checkLoopMeta(meta), ...checkLoopMeta({ ...meta, ...webmProbe }).map((p) => `webm: ${p}`)];
   const manifestPath = join(root, 'public', 'projects', 'loops.json');
@@ -261,7 +268,7 @@ async function produce(slug, sc, t) {
   manifest[slug] = meta;
   const sorted = Object.fromEntries(Object.keys(manifest).sort().map((k) => [k, manifest[k]]));
   await writeFile(manifestPath, `${JSON.stringify(sorted, null, 2)}\n`);
-  console.log(`  ${slug}: ${meta.seconds} s, webm ${(bytes.webm / 1024).toFixed(0)} KB, mp4 ${(bytes.mp4 / 1024).toFixed(0)} KB, ${t.mode}`);
+  console.log(`  ${slug}: ${meta.seconds} s, webm ${(bytes.webm / 1024).toFixed(0)} KB, mp4 ${(bytes.mp4 / 1024).toFixed(0)} KB, ${mode}`);
   return problems;
 }
 
@@ -269,6 +276,20 @@ const targets = PROJECTS.filter((p) => SCENARIOS[p.slug] && (!only || only.inclu
 if (!targets.length) {
   console.error('no scenario matches', only ?? '(all)');
   process.exit(1);
+}
+
+if (flag('reencode')) {
+  const manifest = JSON.parse(await readFile(join(root, 'public', 'projects', 'loops.json'), 'utf8'));
+  let bad = 0;
+  for (const p of targets) {
+    console.log(`${p.slug} (re-encode)`);
+    const problems = await deliver(p.slug, manifest[p.slug]?.mode ?? 'realtime');
+    if (problems.length) {
+      bad++;
+      console.error(`  ${p.slug}: ${problems.join('; ')}`);
+    }
+  }
+  process.exit(bad ? 1 : 0);
 }
 
 const profile = arg('profile');

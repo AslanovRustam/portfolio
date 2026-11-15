@@ -28,17 +28,18 @@ it.skipIf(!hasFfprobe || withLoop.length === 0)('the manifest tells the truth (f
     for (const ext of ['webm', 'mp4']) {
       const out = spawnSync(
         'ffprobe',
-        ['-v', 'error', '-show_entries', 'stream=codec_type,width,height,avg_frame_rate:format=duration', '-of', 'json', `public/projects/${p.slug}.${ext}`],
+        ['-v', 'error', '-show_entries', 'stream=codec_type,width,height,avg_frame_rate,color_range:format=duration', '-of', 'json', `public/projects/${p.slug}.${ext}`],
         { encoding: 'utf8', shell: process.platform === 'win32' },
       );
       const info = JSON.parse(out.stdout) as {
-        streams: { codec_type: string; width?: number; height?: number; avg_frame_rate?: string }[];
+        streams: { codec_type: string; width?: number; height?: number; avg_frame_rate?: string; color_range?: string }[];
         format: { duration: string };
       };
       const video = info.streams.filter((s) => s.codec_type === 'video');
       expect(video, `${p.slug}.${ext}`).toHaveLength(1);
       expect(info.streams.some((s) => s.codec_type === 'audio'), `${p.slug}.${ext} audio`).toBe(false);
       expect([video[0].width, video[0].height]).toEqual([1200, 750]);
+      expect(video[0].color_range, `${p.slug}.${ext} range`).toBe('tv'); // full range fails Chrome's VP9 decoder
       const [n, d] = video[0].avg_frame_rate!.split('/').map(Number);
       expect(n / d).toBeCloseTo(30, 1);
       expect(Number(info.format.duration)).toBeCloseTo(manifest[p.slug].seconds, 1);

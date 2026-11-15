@@ -25,6 +25,7 @@ import {
 import { PROJECTS } from '@/content/projects';
 import { registerProbe } from '@/dev/sceneProbe';
 import { activeSection } from '@/experience/choreography';
+import { loopAllowed, loopSources, loopsDisabled, saveDataOn } from '@/experience/loops';
 import { experienceStore, useExperience } from '@/experience/store';
 import { stopAt, wallPosition } from '@/experience/workStops';
 import { revealUniforms } from '../reveal/registry';
@@ -35,6 +36,7 @@ import { screenRect, stopSlots, TV_MODELS, type TvModel, type TvSlot, wallLayout
 import { projectScreen, setScreenRectSource } from './screenRects';
 import { screenAge, screenLevel } from './power';
 import { createGlowUniforms, withScreenGlow } from './screenGlow';
+import { loopTarget, StopLoopPlayer } from './stopLoop';
 import WallStreaks from './WallStreaks';
 
 const LAYOUT = wallLayout();
@@ -275,10 +277,27 @@ export default function TvWall() {
   const levels = useRef<number[]>(STOPS.map(() => 0));
   const streaks = useRef<number[]>(STOPS.map(() => 0));
   // what the frame loop writes to each frame (uniforms, instance attributes), kept current with the memos
-  const live = useRef({ stopMats, fillerMats, fillerGeo, glow, glowUniforms });
+  const live = useRef({ stopMats, fillerMats, fillerGeo, glow, glowUniforms, pictures });
   useEffect(() => {
-    live.current = { stopMats, fillerMats, fillerGeo, glow, glowUniforms };
-  }, [stopMats, fillerMats, fillerGeo, glow, glowUniforms]);
+    live.current = { stopMats, fillerMats, fillerGeo, glow, glowUniforms, pictures };
+  }, [stopMats, fillerMats, fillerGeo, glow, glowUniforms, pictures]);
+
+  // the current stop's live loop: one video for the whole wall, its texture in place of that screen's still
+  const player = useRef<StopLoopPlayer | null>(null);
+  const loopEnv = useRef({ saveData: false, disabled: false });
+  useEffect(() => {
+    loopEnv.current = { saveData: saveDataOn(), disabled: loopsDisabled(location.search) };
+    const p = new StopLoopPlayer((stop, texture) => {
+      const { stopMats, pictures } = live.current;
+      const u = stopMats[stop]?.uniforms;
+      if (u) u.uMap.value = texture ?? pictures[Math.min(stop, pictures.length - 1)];
+    });
+    player.current = p;
+    return () => {
+      p.dispose();
+      player.current = null;
+    };
+  }, []);
   const glowAt = useMemo(() => new Vector3(), []);
 
   useEffect(() => {
@@ -288,6 +307,8 @@ export default function TvWall() {
       loaded: true,
       levels: [...levels.current],
       streaks: [...streaks.current],
+      loop: player.current?.state ?? null,
+      videos: player.current?.elements ?? 0,
       stops: STOPS.map((s, i) => {
         v.set(...screenRect(s).center).project(camera);
         return { stop: i, ndc: [v.x, v.y] as [number, number] };
@@ -318,6 +339,19 @@ export default function TvWall() {
     const sinceOn = onAt.current === null ? null : t - onAt.current;
     const current = stopAt(progress);
     const { stopMats, fillerMats, fillerGeo, glow, glowUniforms } = live.current;
+
+    const loops = player.current;
+    if (loops) {
+      const { tier, caseOpen } = experienceStore.getState();
+      const allowed = loopAllowed({ place: 'wall', tier, reducedMotion, ...loopEnv.current });
+      const target = loopTarget({ current, inWork, allowed, caseOpen, projects: PROJECTS });
+      loops.update(target, target === null ? null : loopSources(PROJECTS[target]));
+      // rebuilt materials (a tier change) start from the still: keep the playing video on its screen
+      const shown = loops.shown;
+      if (shown && stopMats[shown.stop] && stopMats[shown.stop].uniforms.uMap.value !== shown.texture) {
+        stopMats[shown.stop].uniforms.uMap.value = shown.texture;
+      }
+    }
 
     STOPS.forEach((s, i) => {
       const st = { order: s.order, sinceOn, active: i === current, hovered: hoveredScreen === i, reduced: reducedMotion };
