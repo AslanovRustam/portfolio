@@ -128,11 +128,17 @@ it('the seam fades the last half second into the first frame', () => {
   expect(seamFilter(10, 0.5)).toMatch(/xfade=transition=fade:duration=0\.5:offset=9\.5/);
 });
 it('encodings carry no audio and the right codec, size and rate', () => {
-  const webm = encodeArgs('webm', 'in.mkv', 'out.webm').join(' ');
-  const mp4 = encodeArgs('mp4', 'in.mkv', 'out.mp4').join(' ');
-  for (const a of [webm, mp4]) expect(a).toMatch(/-an\b.*|.*-an\b/), expect(a).toContain('scale=1200:750'), expect(a).toContain('-r 30');
-  expect(webm).toContain('libvpx-vp9');
-  expect(mp4).toMatch(/libx264.*yuv420p.*\+faststart|\+faststart.*yuv420p/);
+  const webm = encodeArgs('webm', 'in.mkv', 'out.webm');
+  const mp4 = encodeArgs('mp4', 'in.mkv', 'out.mp4');
+  for (const a of [webm, mp4]) {
+    expect(a).toContain('-an');
+    expect(a.join(' ')).toContain('scale=1200:750');
+    expect(a.join(' ')).toContain('-r 30');
+  }
+  expect(webm.join(' ')).toContain('libvpx-vp9');
+  expect(mp4.join(' ')).toContain('libx264');
+  expect(mp4.join(' ')).toContain('yuv420p');
+  expect(mp4.join(' ')).toContain('+faststart');
 });
 it('loop metadata outside the constraints is reported', () => {
   const ok = { seconds: 10, width: 1200, height: 750, fps: 30, audio: false, webmBytes: 1e6, mp4Bytes: 1.2e6, mode: 'realtime' } as const;
@@ -202,7 +208,7 @@ it.skipIf(!hasFfprobe)('the manifest tells the truth (ffprobe, local only)', () 
   - `class StopLoopPlayer { constructor(show: (stop: number, texture: VideoTexture | null) => void); update(stop: number | null, src: LoopSources | null): void; readonly state: { stop: number; time: number } | null; readonly elements: number; dispose(): void }` — one `<video>` at most; `show(stop, texture)` only after the first frame is decoded; `show(stop, null)` puts the still back; errors and a rejected `play()` keep the still
   - probe `wall` gains `loop: { stop: number; time: number } | null` and `videos: number`
 
-- [ ] **Step 1: Write the failing unit tests** (`tests/unit/stopLoop.test.ts`):
+- [ ] **Step 1: Write the failing unit tests** (`tests/unit/stopLoop.test.ts`; `withLoops(...slugs)` is a test-local fixture: `PROJECTS` with `loop: true` on those slugs only):
 
 ```ts
 it('plays the current stop only in Work, when allowed, with no case open, and never on the NDA stop', () => {
@@ -271,7 +277,7 @@ it('plays the current stop only in Work, when allowed, with no case open, and ne
   - `tornEdge(seed: number, teeth: number): string` — a CSS `polygon(...)` with jagged top and bottom edges, deterministic per seed
   - `PaperPoster({ src, alt }: { src: string; alt: string })` — a `<figure class="paper-poster">` with the image, two tape strips (`aria-hidden`) and the torn clip
 
-- [ ] **Step 1: Write the failing unit tests:**
+- [ ] **Step 1: Write the failing unit tests** (`points(polygon)` is a test-local parser of the `polygon(x% y%, …)` string):
 
 ```ts
 it('the duotone runs from the shadow colour to the highlight colour', () => {
