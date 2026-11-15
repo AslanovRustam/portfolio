@@ -37,6 +37,8 @@ const vertex = (instanced: boolean) => /* glsl */ `
 const fragment = /* glsl */ `
   uniform sampler2D uMap;
   uniform float uHasMap;
+  /** 1 while uMap is a video: three uploads videos linear, so the sRGB decode happens here */
+  uniform float uVideo;
   uniform float uTime;
   uniform float uCurve;
   uniform float uMask;
@@ -90,6 +92,7 @@ const fragment = /* glsl */ `
     vec3 glass = vec3(0.012, 0.014, 0.018) + 0.035 * smoothstep(0.35, 0.0, abs(vUv.x - vUv.y * 0.6 - 0.15));
 
     vec3 col = uHasMap > 0.5 ? texture2D(uMap, (uv - 0.5) * uCover + 0.5).rgb : pattern(uv);
+    if (uVideo > 0.5) col = sRGBTransferEOTF(vec4(col, 1.0)).rgb;
     // scanlines, aperture grille, vignette and a breathing flicker
     col *= 0.78 + 0.22 * sin(vUv.y * 900.0);
     col *= mix(1.0, 0.82 + 0.18 * sin(gl_FragCoord.x * 2.094), uMask);
@@ -138,6 +141,7 @@ export function createCrtMaterial(o: CrtOptions): ShaderMaterial {
       ...o.reveal,
       uMap: { value: o.map },
       uHasMap: { value: o.map ? 1 : 0 },
+      uVideo: { value: 0 },
       uTime: { value: 0 },
       uCurve: { value: o.curved ? 0.18 : 0 },
       uMask: { value: o.curved ? 1 : 0 },

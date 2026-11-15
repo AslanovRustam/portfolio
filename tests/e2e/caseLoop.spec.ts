@@ -52,3 +52,18 @@ test('the no-WebGL card strip shows stills only', async ({ page }) => {
   await expect(page.locator('section#work img').first()).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('section#work video')).toHaveCount(0);
 });
+
+// Review Focus 3, in the case: autoplay refused (iOS Low Power Mode) must not leave a paused video with a
+// play button over the still
+test('refused autoplay leaves the still in the case', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.addInitScript(() => {
+    HTMLMediaElement.prototype.play = () => Promise.reject(new DOMException('autoplay refused', 'NotAllowedError'));
+  });
+  await openAltusCase(page);
+  await page.waitForTimeout(2000);
+  await expect(caseVideo(page)).toHaveCount(0);
+  await expect(page.getByRole('dialog').locator('img').first()).toBeVisible();
+  expect(errors).toEqual([]);
+});

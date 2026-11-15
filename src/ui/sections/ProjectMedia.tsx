@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { Project } from '@/content/projects';
 import { loopAllowed, loopSources, loopsDisabled, saveDataOn } from '@/experience/loops';
 import { useExperience } from '@/experience/store';
@@ -21,11 +21,19 @@ export default function ProjectMedia({ project, title }: { project: Project; tit
   // false on the server and in the first client render, so hydration matches; true once the page runs
   const client = useSyncExternalStore(noSubscribe, () => true, () => false);
   const [failed, setFailed] = useState(false);
+  const video = useRef<HTMLVideoElement>(null);
   const play =
     client &&
     src !== null &&
     !failed &&
     loopAllowed({ place: 'case', tier: 'high', reducedMotion, saveData: saveDataOn(), disabled: loopsDisabled(location.search) });
+
+  // started from here, not by the autoplay attribute: a refused autoplay (iOS Low Power Mode) rejects this
+  // promise, and the still stays instead of a paused video with the browser's play button over it
+  useEffect(() => {
+    if (!play) return;
+    video.current?.play().catch(() => setFailed(true));
+  }, [play]);
 
   return (
     <>
@@ -37,9 +45,9 @@ export default function ProjectMedia({ project, title }: { project: Project; tit
       {play && (
         <video
           key={src.webm}
+          ref={video}
           src={document.createElement('video').canPlayType('video/webm; codecs="vp9"') ? src.webm : src.mp4}
           poster={src.still}
-          autoPlay
           muted
           loop
           playsInline

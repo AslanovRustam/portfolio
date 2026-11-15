@@ -7,6 +7,8 @@ interface WallLoop {
   loop: { stop: number; time: number } | null;
   /** live video elements behind the wall */
   videos: number;
+  /** each stop screen's video decode switch (uVideo): 1 only while a video is on it */
+  decode: number[];
 }
 const wall = (page: Page) => page.evaluate(() => window.__portfolio.probe('wall') as WallLoop | undefined);
 const ALTUS = 4;
@@ -43,6 +45,8 @@ test('the current stop plays its loop and its neighbours keep their stills', asy
   expect(w.loop!.stop).toBe(ALTUS);
   expect(w.loop!.time).not.toBeCloseTo(t0, 1); // the picture moves
   expect(w.videos).toBe(1); // one video for the whole wall
+  // the screen decodes the video's sRGB itself; the stills around it are decoded by the GPU
+  expect(w.decode.map((d, i) => (i === ALTUS ? d === 1 : d === 0)).every(Boolean)).toBe(true);
 });
 
 test('leaving Work stops the loop', async ({ page }) => {
@@ -51,6 +55,7 @@ test('leaving Work stops the loop', async ({ page }) => {
   await scrollTo(page, 0.48);
   await expect.poll(async () => (await wall(page))!.loop).toBeNull();
   expect((await wall(page))!.videos).toBe(0);
+  expect((await wall(page))!.decode.every((d) => d === 0)).toBe(true);
 });
 
 // Review Focus 1

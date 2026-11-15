@@ -68,6 +68,8 @@ const insetTop = (clip: string) => parseFloat(/inset\(\s*([\d.]+)%/.exec(clip)?.
 
 test('a case switches on like a TV and switches off on close', async ({ page }) => {
   await gotoScene(page);
+  // a click inside the scene's first, shader-compiling frames would let the switch-on's first frames pass unseen
+  await waitReady(page);
   await scrollTo(page, stop(0));
   const open = page.locator('section#work').getByRole('link', { name: 'Open case' });
   await open.click();

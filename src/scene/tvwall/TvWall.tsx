@@ -290,7 +290,9 @@ export default function TvWall() {
     const p = new StopLoopPlayer((stop, texture) => {
       const { stopMats, pictures } = live.current;
       const u = stopMats[stop]?.uniforms;
-      if (u) u.uMap.value = texture ?? pictures[Math.min(stop, pictures.length - 1)];
+      if (!u) return;
+      u.uMap.value = texture ?? pictures[Math.min(stop, pictures.length - 1)];
+      u.uVideo.value = texture ? 1 : 0;
     });
     player.current = p;
     return () => {
@@ -309,6 +311,7 @@ export default function TvWall() {
       streaks: [...streaks.current],
       loop: player.current?.state ?? null,
       videos: player.current?.elements ?? 0,
+      decode: live.current.stopMats.map((m) => m.uniforms.uVideo.value as number),
       stops: STOPS.map((s, i) => {
         v.set(...screenRect(s).center).project(camera);
         return { stop: i, ndc: [v.x, v.y] as [number, number] };
@@ -350,6 +353,7 @@ export default function TvWall() {
       const shown = loops.shown;
       if (shown && stopMats[shown.stop] && stopMats[shown.stop].uniforms.uMap.value !== shown.texture) {
         stopMats[shown.stop].uniforms.uMap.value = shown.texture;
+        stopMats[shown.stop].uniforms.uVideo.value = 1;
       }
     }
 

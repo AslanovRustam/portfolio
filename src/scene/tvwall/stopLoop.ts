@@ -33,7 +33,11 @@ export class StopLoopPlayer {
   /** stops whose loop failed (a bad file, a refused autoplay): they keep their stills from now on */
   private readonly failed = new Set<number>();
 
-  constructor(private readonly show: (stop: number, texture: VideoTexture | null) => void) {}
+  constructor(
+    private readonly show: (stop: number, texture: VideoTexture | null) => void,
+    /** where video elements come from (a stand-in in the unit tests) */
+    private readonly createVideo: () => HTMLVideoElement = () => document.createElement('video'),
+  ) {}
 
   /** What is playing on the wall (for the test probe): the stop and the video's time, once it is shown. */
   get state(): { stop: number; time: number } | null {
@@ -61,7 +65,7 @@ export class StopLoopPlayer {
     this.release();
     if (stop === null || !src) return;
     this.stop = stop;
-    const video = document.createElement('video');
+    const video = this.createVideo();
     video.muted = true;
     video.defaultMuted = true;
     video.loop = true;
@@ -77,6 +81,9 @@ export class StopLoopPlayer {
       if (!mine() || this.isShown) return;
       const texture = new VideoTexture(video);
       texture.colorSpace = SRGBColorSpace;
+      // upload the frame on screen now: until its own frame callback fires, a fresh video texture is
+      // skipped by the renderer and the screen would sample an empty (black) one
+      texture.needsUpdate = true;
       this.texture = texture;
       this.isShown = true;
       this.show(stop, texture);
