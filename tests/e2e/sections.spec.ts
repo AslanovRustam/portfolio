@@ -101,7 +101,8 @@ test('the hero line sits on one line on a laptop and a desktop, in every locale'
 });
 
 test('header buttons show the hand cursor', async ({ page }) => {
-  await page.goto('/en');
+  await gotoScene(page);
+  await waitReady(page); // the header comes once the street is there
   for (const name of ['Work', 'About', 'Stack', 'Contact'])
     await expect(page.getByRole('button', { name, exact: true })).toHaveCSS('cursor', 'pointer');
 });

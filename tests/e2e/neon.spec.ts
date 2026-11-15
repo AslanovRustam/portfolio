@@ -35,6 +35,7 @@ test('reduced motion: nothing in the header flickers', async ({ page }) => {
 
 test('tubes are set in Oswald, with Cyrillic on /ru', async ({ page }) => {
   await gotoScene(page, '/ru');
+  await waitReady(page); // the header comes once the street is there
   await expect(page.getByRole('button', { name: 'Обо мне', exact: true })).toHaveCSS('font-family', /Oswald/);
   const cyrillic = await page.evaluate(async () => {
     await document.fonts.ready;
@@ -91,6 +92,7 @@ test('the name flickers by words and letters', async ({ page }) => {
 
 test('on a laptop the sections stay tubes in a row; the languages hide in one tube, as on a phone', async ({ page }) => {
   await gotoScene(page);
+  await waitReady(page); // the header comes once the street is there
   const header = page.locator('header[data-ui]');
   for (const n of ['Work', 'About', 'Stack', 'Contact']) await expect(header.getByRole('button', { name: n, exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Menu', exact: true })).toBeHidden();

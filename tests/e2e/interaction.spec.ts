@@ -59,3 +59,28 @@ test('a scene asset that fails to load swaps to the fallback, the page lives on'
   await expect(page.locator('[data-fallback]')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole('heading', { level: 1, name: 'Rustam Aslanov' })).toBeVisible();
 });
+
+// M3 gate: while the scene loads, the loader is all there is — nothing to press before the street is there
+test('while the scene loads only the loader shows, then the header, hero and Next button come', async ({ page }) => {
+  // hold the scene's environment back, so the loading lasts long enough to look at
+  await page.route('**/hdri/**', async (route) => {
+    await new Promise((r) => setTimeout(r, 4000));
+    await route.continue();
+  });
+  await page.goto('/en');
+  await expect(page.locator('[data-loader]')).toBeVisible();
+  for (const sel of ['header[data-ui]', '[data-hero]', '.next-button', '.progress-tube']) await expect(page.locator(sel), sel).toBeHidden();
+  await expect(page.locator('[data-loader]')).toBeHidden({ timeout: 30_000 });
+  await expect(page.locator('header[data-ui]')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Rustam Aslanov' })).toBeVisible();
+  await expect(page.locator('.next-button')).toBeVisible();
+});
+
+test.describe('without scripts', () => {
+  test.use({ javaScriptEnabled: false });
+  test('the header and the hero are simply there', async ({ page }) => {
+    await page.goto('/en');
+    await expect(page.locator('header[data-ui]')).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Rustam Aslanov' })).toBeVisible();
+  });
+});

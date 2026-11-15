@@ -906,6 +906,18 @@ html:not([data-tier='low']) :is(.nbox, .blade) {
 }
 
 /*
+ * While the scene loads, the loader is all there is: the header, the hero, the Next button and the progress
+ * tube wait until the street (or the fallback) is there (data-shown, set by src/ui/ExperienceGate.tsx).
+ * Without scripts nothing waits.
+ */
+@media (scripting: enabled) {
+  html:not([data-shown]) :is(header[data-ui], .top-fade, [data-hero], .next-button, .next-fade, .progress-tube) {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+/*
  * About's photo poster (src/ui/flow/PaperPoster.tsx): a print pasted up on the street, torn at the top and
  * the bottom (clip-path), held by two strips of tape, tilted a little. The tilt is a transform, so the
  * swing-in (rotate/scale) adds to it.

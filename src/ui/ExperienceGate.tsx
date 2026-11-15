@@ -38,6 +38,18 @@ export default function ExperienceGate({
     experienceStore.getState().setWebgl(canRender() && !lost);
   }, [lost]);
 
+  // the page's buttons and text come once there is a street to show them over (or the fallback): until then
+  // the loader is all there is, so nothing gets pressed half-loaded (globals.css, html:not([data-shown])).
+  // A store subscription, not a hook: re-rendering the gate on `ready` would re-render the Canvas and reset
+  // the pixel ratio the quality governor set.
+  useEffect(() => {
+    const show = () => {
+      document.documentElement.dataset.shown = '';
+    };
+    if (webgl === false || lost || experienceStore.getState().ready) return show();
+    return experienceStore.subscribe((s) => s.ready && show());
+  }, [webgl, lost]);
+
   const fallback = <Fallback title={fallbackTitle} body={fallbackBody} />;
   if (webgl === null) return <Loader label={loaderLabel} />;
   if (!webgl || lost) return fallback;
