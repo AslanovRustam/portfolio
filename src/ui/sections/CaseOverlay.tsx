@@ -57,6 +57,7 @@ export default function CaseOverlay({ slug }: { slug: ProjectSlug }) {
     const opener = document.activeElement as HTMLElement | null;
     const main = document.querySelector('main');
     lockScroll(true);
+    experienceStore.getState().setCaseOpen(true);
     main?.setAttribute('inert', '');
     el?.focus();
     let alive = true;
@@ -81,6 +82,7 @@ export default function CaseOverlay({ slug }: { slug: ProjectSlug }) {
       for (const a of running) a.cancel();
       window.removeEventListener('keydown', onKey);
       main?.removeAttribute('inert');
+      experienceStore.getState().setCaseOpen(false);
       lockScroll(false);
       opener?.focus?.({ preventScroll: true });
     };

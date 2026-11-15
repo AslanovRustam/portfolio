@@ -29,6 +29,8 @@ export interface ExperienceState {
   pendingCase: ProjectSlug | null;
   /** where on the page the clicked TV's screen was: the case switches on out of it */
   caseOrigin: Rect | null;
+  /** a project's case is open over the street (the wall's loop pauses under it) */
+  caseOpen: boolean;
   setProgress(p: number): void;
   setTier(t: Tier): void;
   setReducedMotion(v: boolean): void;
@@ -43,6 +45,7 @@ export interface ExperienceState {
   requestCase(slug: ProjectSlug | null, origin?: Rect | null): void;
   /** the origin for the case that is opening, once: it is cleared as it is read */
   takeCaseOrigin(): Rect | null;
+  setCaseOpen(on: boolean): void;
 }
 
 export const experienceStore = createStore<ExperienceState>()((set, get) => ({
@@ -58,12 +61,14 @@ export const experienceStore = createStore<ExperienceState>()((set, get) => ({
   hoveredScreen: null,
   pendingCase: null,
   caseOrigin: null,
+  caseOpen: false,
   setProgress: (p) => set({ progress: Math.min(1, Math.max(0, p)) }),
   setTier: (tier) => set({ tier }),
   setReducedMotion: (reducedMotion) => set({ reducedMotion }),
   setReady: (ready) => set({ ready }),
   setHoveredSign: (hoveredSign) => set({ hoveredSign }),
   setWebgl: (webgl) => set({ webgl }),
+  setCaseOpen: (caseOpen) => set({ caseOpen }),
   setLoadProgress: (loadProgress) => set({ loadProgress }),
   setHighlight: (highlight) => set({ highlight }),
   setCelebrate: (celebrate) => set({ celebrate }),

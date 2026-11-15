@@ -22,6 +22,8 @@ export interface Project {
   detailed?: boolean;
   /** shown on the card and the case while the product is not finished */
   status?: 'in-development';
+  /** a live loop of the product sits next to its still: /projects/<slug>.webm and .mp4 (npm run loops) */
+  loop?: true;
 }
 
 /** The work shown on the site, in the spec's order (§6.2): four featured cases, then compact cards. */
