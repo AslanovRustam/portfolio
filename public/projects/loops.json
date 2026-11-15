@@ -39,6 +39,16 @@
     "mp4Bytes": 1228075,
     "mode": "realtime"
   },
+  "gipper": {
+    "seconds": 9.7,
+    "width": 1200,
+    "height": 750,
+    "fps": 30,
+    "audio": false,
+    "webmBytes": 477486,
+    "mp4Bytes": 353859,
+    "mode": "realtime"
+  },
   "kolir": {
     "seconds": 10,
     "width": 1200,

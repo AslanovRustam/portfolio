@@ -301,6 +301,10 @@ let failed = 0;
 
 for (const p of targets) {
   const sc = SCENARIOS[p.slug];
+  if (sc.manual) {
+    console.log(`${p.slug}: recorded by hand (see its scenario); deliver it with --reencode`);
+    continue;
+  }
   console.log(`${p.slug} ← ${arg('url') ?? sc.url}`);
   try {
     let t = flag('frames') ? null : await take(context, p.slug, sc, 'realtime');

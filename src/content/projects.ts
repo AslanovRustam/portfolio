@@ -35,6 +35,7 @@ export const PROJECTS: readonly Project[] = [
     stack: ['React', 'MobX', 'Fabric.js', 'Skia / CanvasKit', 'HarfBuzz', 'Node.js', 'S3', 'Module Federation'],
     links: { site: 'https://www.gipper.com/' },
     poster: '/projects/gipper.webp',
+    loop: true,
     badge: 'commercial',
   },
   {

@@ -25,6 +25,16 @@ async function startAt(page, y, settle = 2500) {
 }
 
 export const SCENARIOS = {
+  // Gipper's editor, recorded by hand from Rustam's own logged-in Chrome (spec §6.4, his choice at the
+  // session): his demo layout, 20 s of the screen (ffmpeg -f gdigrab -framerate 30 -i desktop), then the
+  // athletes grid → "Gregory 1" → a font change, cut to 9.8–20 s and cropped to the editor without the
+  // browser's tabs, address and bookmarks or the taskbar (crop=1579:987:341:153 on 1920×1200), scaled to
+  // 1440×900 at 30 fps, seamed with seamFilter(9.7, 0.5) into .capture/gipper/loop.mp4.
+  // `npm run loops -- --only=gipper --reencode` delivers it; the runner never records it itself.
+  gipper: {
+    manual: true,
+    seconds: 9.7,
+  },
   // the night cabin: the plane comes to the door, the camera walks the aisle, a seat is picked
   aslanair: {
     url: 'https://aslanair.vercel.app',
