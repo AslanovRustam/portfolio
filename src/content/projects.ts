@@ -73,6 +73,7 @@ export const PROJECTS: readonly Project[] = [
     stack: ['Vite', 'React', 'GSAP', 'Lenis'],
     links: { live: 'https://altus-liard.vercel.app', repo: 'https://github.com/AslanovRustam/altus' },
     poster: '/projects/altus.webp',
+    loop: true,
   },
   {
     slug: 'aslan-can',

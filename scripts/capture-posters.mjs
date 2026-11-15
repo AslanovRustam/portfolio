@@ -1,6 +1,7 @@
 // Captures a poster for every project card from its live site: Chromium at 1440×900, a screenshot after
 // the page has settled, then 1200 px wide WebP. Idempotent: existing posters are kept unless --force.
 // Usage: npm run posters [-- --force] [-- --only=slug,slug]
+// A project with a live loop is skipped: its still is the loop's first frame (npm run loops).
 import { mkdir, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,7 +34,7 @@ const context = await browser.newContext({ viewport: { width: 1440, height: 900 
 let failed = 0;
 
 for (const p of PROJECTS) {
-  if (!p.poster || (only && !only.includes(p.slug))) continue;
+  if (!p.poster || p.loop || (only && !only.includes(p.slug))) continue;
   const out = join(root, 'public', p.poster);
   if (!force && (await exists(out))) {
     console.log(`skip ${p.slug} (exists)`);

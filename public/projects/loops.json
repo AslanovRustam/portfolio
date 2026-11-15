@@ -1,0 +1,12 @@
+{
+  "altus": {
+    "seconds": 10,
+    "width": 1200,
+    "height": 750,
+    "fps": 30,
+    "audio": false,
+    "webmBytes": 835175,
+    "mp4Bytes": 1111902,
+    "mode": "realtime"
+  }
+}

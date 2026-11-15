@@ -25,6 +25,9 @@ coverage/
 .DS_Store
 npm-debug.log*
 
+# loop capture frames (npm run loops)
+.capture/
+
 # local look-dev screenshots
 tests/e2e/_scratch/
 
