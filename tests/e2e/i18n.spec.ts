@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { gotoScene, waitReady } from './helpers';
 
 test('/ redirects to /en', async ({ page }) => {
   await page.goto('/');
@@ -10,8 +11,9 @@ for (const [loc, role] of [
   ['uk', 'Front-end розробник'],
 ] as const) {
   test(`/${loc} renders its language`, async ({ page }) => {
-    await page.goto(`/${loc}`);
+    await gotoScene(page, `/${loc}`);
     await expect(page.locator('html')).toHaveAttribute('lang', loc);
+    await waitReady(page); // the hero comes once the street is there
     await expect(page.getByText(role)).toBeVisible();
   });
 }

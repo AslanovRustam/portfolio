@@ -9,7 +9,7 @@ import type { Pose, Vec3 } from './choreography';
  * - billboard: the billboard at the end of the street, its centre height y
  */
 export const STATIONS = {
-  shop: { x: -6.6, z0: -14, z1: -26 },
+  shop: { x: -6.6, z0: 0, z1: -11.8 },
   pole: { x: 1.4, z: -30 },
   gantry: { z: -40 },
   billboard: { z: -62, y: 7 },
@@ -27,10 +27,10 @@ const INTRO: readonly { p: number; position: Vec3; target: Vec3 }[] = [
  */
 const RIDE: readonly { p: number; position: Vec3; target: Vec3 }[] = [
   { p: 0.15, position: [1.4, 3.0, 6.2], target: [0, 3.0, 0] },
-  { p: 0.19, position: [0.6, 2.6, 0.5], target: [0.2, 2.4, -20] },
-  { p: 0.26, position: [0.4, 2.4, -12], target: [-6, 2.2, -19] },
-  { p: 0.33, position: [0.4, 2.4, -19.5], target: [-6, 2.2, -23] },
-  { p: 0.37, position: [0.8, 2.3, -23.5], target: [1.4, 2.2, -30] },
+  { p: 0.19, position: [0.6, 2.6, 0.5], target: [-3, 2.4, -8] },
+  { p: 0.26, position: [0.4, 2.4, -6], target: [-6, 2.2, -8] },
+  { p: 0.33, position: [0.4, 2.4, -15], target: [-6, 2.2, -12] },
+  { p: 0.37, position: [0.8, 2.3, -22], target: [1.4, 2.2, -30] },
   { p: 0.4, position: [1.4, 2.0, -25.5], target: [1.4, 2.0, -30] },
   { p: 0.48, position: [1.4, 3.2, -25.6], target: [1.4, 3.2, -30] },
   { p: 0.565, position: [1.4, 4.4, -25.7], target: [1.4, 4.4, -30] },
@@ -107,7 +107,7 @@ export function ridePose(p: number): Pose {
 export function stationPose(id: 'work' | 'about' | 'stack' | 'contact'): Pose {
   switch (id) {
     case 'work':
-      return { position: [0.4, 2.4, -18], target: [-6, 2.2, -20] };
+      return { position: [0.4, 2.4, -8], target: [-6, 2.2, -9] };
     case 'about':
       return ridePose(0.48);
     case 'stack':

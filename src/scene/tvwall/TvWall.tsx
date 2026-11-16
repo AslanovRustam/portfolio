@@ -32,7 +32,7 @@ import { revealUniforms } from '../reveal/registry';
 import { applyReveal } from '../reveal/revealMaterial';
 import { overUi } from '../uiPointer';
 import { createCrtMaterial } from './crtMaterial';
-import { screenRect, stopSlots, TV_MODELS, type TvModel, type TvSlot, wallLayout } from './layout';
+import { screenRect, stopSlots, TV_MODELS, type TvModel, type TvSlot, WALL_FRAME, wallFrameTransform, wallLayout } from './layout';
 import { projectScreen, setScreenRectSource } from './screenRects';
 import { screenAge, screenLevel } from './power';
 import { createGlowUniforms, withScreenGlow } from './screenGlow';
@@ -41,6 +41,7 @@ import WallStreaks from './WallStreaks';
 
 const LAYOUT = wallLayout();
 const STOPS = stopSlots(LAYOUT);
+const FRAME = wallFrameTransform();
 const MODELS: readonly TvModel[] = ['tv1', 'tv2'];
 const FILLERS: Record<TvModel, TvSlot[]> = {
   tv1: LAYOUT.filter((s) => s.content.kind === 'filler' && s.model === 'tv1'),
@@ -386,7 +387,12 @@ export default function TvWall() {
     const f = s - i;
     const a = screenRect(STOPS[i]).center;
     const b = screenRect(STOPS[i + 1]).center;
-    glowAt.set(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f + 0.7);
+    // a little in front of the screens, out through the window
+    glowAt.set(
+      a[0] + (b[0] - a[0]) * f + 0.7 * Math.sin(WALL_FRAME.yaw),
+      a[1] + (b[1] - a[1]) * f,
+      a[2] + (b[2] - a[2]) * f + 0.7 * Math.cos(WALL_FRAME.yaw),
+    );
     glowUniforms.uGlowView.value.copy(glowAt).applyMatrix4(state.camera.matrixWorldInverse);
     glowUniforms.uGlowColor.value.copy(glow[current]);
     glowUniforms.uGlowPower.value = sinceOn === null ? 0 : 2.4 * Math.min(1, levels.current[current]);
@@ -440,7 +446,10 @@ export default function TvWall() {
           </group>
         );
       })}
-      <WallStreaks levels={levels} glow={glow} out={streaks} />
+      {/* the screens' light on the wet sidewalk, laid in the wall's own frame: out of the window, toward the road */}
+      <group position={FRAME.position} rotation-y={FRAME.yaw}>
+        <WallStreaks levels={levels} glow={glow} out={streaks} />
+      </group>
       {STOPS.map((s, i) => (
         <mesh
           key={i}

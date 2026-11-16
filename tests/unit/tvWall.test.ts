@@ -4,9 +4,10 @@ import { makeRevealUniforms } from '@/scene/reveal/revealMaterial';
 import { projectScreen } from '@/scene/tvwall/screenRects';
 import { createGlowUniforms, withScreenGlow } from '@/scene/tvwall/screenGlow';
 import { WORK_STOPS } from '@/experience/workStops';
-import { screenRect, stopSlots, TV_MODELS, type TvSlot, WALL, wallLayout, wallStreaks } from '@/scene/tvwall/layout';
+import { screenRect, stopSlots, TV_MODELS, type TvSlot, WALL, wallLayoutLocal, wallStreaks } from '@/scene/tvwall/layout';
 
-const layout = wallLayout(7);
+// the wall's arrangement, in its own frame (columns along +x, facing +z); shop.test.ts checks it in the street
+const layout = wallLayoutLocal(7);
 const stops = stopSlots(layout);
 
 it('one stop screen per Work stop, left to right at eye height', () => {
@@ -20,7 +21,7 @@ it('one stop screen per Work stop, left to right at eye height', () => {
   }
 });
 
-it('a stacked wall right of the pole: no overlaps, fillers around the stops', () => {
+it('a stacked wall: no overlaps, fillers around the stops', () => {
   expect(layout.filter((s) => s.content.kind === 'filler').length).toBeGreaterThanOrEqual(10);
   for (const s of layout) {
     expect(s.position[0]).toBeGreaterThanOrEqual(WALL.x0 - 0.01);
@@ -42,7 +43,7 @@ it('a stacked wall right of the pole: no overlaps, fillers around the stops', ()
 });
 
 it('the layout is deterministic', () => {
-  expect(wallLayout(7)).toEqual(layout);
+  expect(wallLayoutLocal(7)).toEqual(layout);
 });
 
 it('each lit screen throws one streak on the road, toward the viewer', () => {

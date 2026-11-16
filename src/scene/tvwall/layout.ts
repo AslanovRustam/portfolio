@@ -28,8 +28,14 @@ export const TV_MODELS: Record<TvModel, TvModelDef> = {
   },
 };
 
-/** Where the wall stands: right of the pole, where the WORK arrow points, facing the camera. */
+/**
+ * The wall in its own frame: the sets stand in columns from x0 along +x, facing +z (wallLayoutLocal).
+ * WALL_FRAME puts that frame in the street: inside the shop on the left (Plan 4, spec §7), the point
+ * (x0, 0, z) at (x, y, z) — y lifts the sets onto a display riser above the window's sill — and turned
+ * by yaw, so the columns run away down the street and the screens face the road (+x).
+ */
 export const WALL = { x0: 1.8, z: -1.5, scale: 1.6 } as const;
+export const WALL_FRAME = { x: -7.35, y: 0.45, z: -0.2, yaw: Math.PI / 2 } as const;
 
 export type ScreenContent = { kind: 'stop'; stop: number } | { kind: 'filler'; pattern: 0 | 1 | 2 | 3 };
 
@@ -52,7 +58,7 @@ const GAP = 0.06;
  * another set on top in most columns, and a filler column closing the wall on the right. Seeded, so the
  * wall is the same on every load and in every screenshot.
  */
-export function wallLayout(seed = 7): TvSlot[] {
+export function wallLayoutLocal(seed = 7): TvSlot[] {
   const rand = mulberry32(seed);
   const pick = (): TvModel => (rand() < 0.5 ? 'tv1' : 'tv2');
   const pattern = () => Math.floor(rand() * 4) as 0 | 1 | 2 | 3;
@@ -87,6 +93,30 @@ export function wallLayout(seed = 7): TvSlot[] {
   const byX = [...slots.keys()].sort((a, b) => slots[a].position[0] - slots[b].position[0] || slots[a].position[1] - slots[b].position[1]);
   const order = new Map(byX.map((i, rank) => [i, rank]));
   return slots.map((s, i) => ({ ...s, order: order.get(i)! }));
+}
+
+/** A point of the wall's own frame in the street. */
+export function wallToWorld(p: readonly [number, number, number]): [number, number, number] {
+  const c = Math.cos(WALL_FRAME.yaw);
+  const s = Math.sin(WALL_FRAME.yaw);
+  const x = p[0] - WALL.x0;
+  const z = p[2] - WALL.z;
+  return [WALL_FRAME.x + x * c + z * s, WALL_FRAME.y + p[1], WALL_FRAME.z - x * s + z * c];
+}
+
+/** The wall's frame as a group transform (for what is drawn in the wall's own frame, like its road streaks). */
+export function wallFrameTransform(): { position: [number, number, number]; yaw: number } {
+  return { position: wallToWorld([0, 0, 0]), yaw: WALL_FRAME.yaw };
+}
+
+/** The wall as it stands in the shop window: every set in street coordinates. */
+export function wallLayout(seed = 7): TvSlot[] {
+  return wallLayoutLocal(seed).map((s) => ({ ...s, position: wallToWorld(s.position), yaw: s.yaw + WALL_FRAME.yaw }));
+}
+
+/** Which way a set's screen faces (unit, flat on the street). */
+export function screenNormal(slot: TvSlot): [number, number, number] {
+  return [Math.sin(slot.yaw), 0, Math.cos(slot.yaw)];
 }
 
 /** The picture area of a set in world space: the centre at the front of the glass, and its size. */

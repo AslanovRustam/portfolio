@@ -5,9 +5,10 @@ import { type RefObject, useEffect, useMemo, useRef } from 'react';
 import { AdditiveBlending, Color, type InstancedMesh, Object3D } from 'three';
 import { streakPlacement } from '../street/layout';
 import { streakTexture } from '../street/Streaks';
-import { wallLayout, wallStreaks } from './layout';
+import { wallLayoutLocal, wallStreaks } from './layout';
 
-const STREAKS = wallStreaks(wallLayout());
+/** in the wall's own frame (TvWall sets it in the street) */
+const STREAKS = wallStreaks(wallLayoutLocal());
 /** How strongly a fully lit screen shows on the road. */
 const POWER = 1.1;
 

@@ -1,9 +1,9 @@
 import { activeSection, type Pose, type Vec3 } from '@/experience/choreography';
 import { stopAt, wallPosition } from '@/experience/workStops';
-import { screenRect, stopSlots, TV_MODELS, wallLayout } from './layout';
+import { screenRect, stopSlots, TV_MODELS, WALL_FRAME, wallLayout } from './layout';
 
 /** Story-progress windows where the camera leaves the WORK sign for the wall and comes back to the pole. */
-export const WALL_IN = [0.155, 0.18] as const;
+export const WALL_IN = [0.15, 0.18] as const;
 /** The way back is long (the wall is ~10 m wide), so it runs into the start of the turn to ABOUT. */
 export const WALL_OUT = [0.32, 0.36] as const;
 /** Vertical field of view of the scene camera (Experience.tsx). */
@@ -11,6 +11,8 @@ const FOV = 35;
 
 const STOPS = stopSlots(wallLayout());
 const RECTS = STOPS.map(screenRect);
+/** the wall's facing (its sets sit a little askew; the camera keeps to the wall's own normal) */
+const NORMAL: Vec3 = [Math.sin(WALL_FRAME.yaw), 0, Math.cos(WALL_FRAME.yaw)];
 const SET_WIDTH = STOPS.map((s) => TV_MODELS[s.model].size[0] * s.scale);
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -47,7 +49,9 @@ export function wallPose(s: number, aspect: number): Pose {
   const width = lerp(SET_WIDTH[i], SET_WIDTH[i + 1], f);
   const halfWidthTan = Math.tan(((FOV / 2) * Math.PI) / 180) * aspect;
   const distance = width / wallFill(aspect) / 2 / halfWidthTan;
-  return { position: [center[0], center[1], center[2] + distance], target: center };
+  // straight out from the screen, through the shop window onto the street
+  const n = NORMAL;
+  return { position: [center[0] + n[0] * distance, center[1], center[2] + n[2] * distance], target: center };
 }
 
 /** The camera pose for story progress q: the keyframed `base`, blended onto the wall while in Work. */
