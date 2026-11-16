@@ -1,4 +1,4 @@
-import { STATIONS } from '@/experience/route';
+import { ridePose, STATIONS } from '@/experience/route';
 import { mulberry32 } from './random';
 
 /** The road behind the pole: carriageway ±half, sidewalks beyond, running away from the camera. */
@@ -38,8 +38,10 @@ export function streetLayout(seed: number): { lamps: Lamp[] } {
   }
   // three failing lamps, spread along the street (not the nearest one: it would dominate the frame)
   for (const k of [2, 5, 7]) if (lamps[k]) lamps[k].flicker = true;
-  // none just before or behind the sign gantry: it would stand across a sign (the gantry lights itself)
-  return { lamps: lamps.filter((l) => Math.abs(l.z - STATIONS.gantry.z) > GANTRY_GAP) };
+  // none just before or behind the sign gantry: it would stand across a sign (the gantry lights itself);
+  // none past where the ride ends: they would stand in front of the billboard (and beyond it, in its building)
+  const end = ridePose(1).position[2] - 0.5;
+  return { lamps: lamps.filter((l) => Math.abs(l.z - STATIONS.gantry.z) > GANTRY_GAP && l.z > end) };
 }
 
 const hash = (n: number) => {

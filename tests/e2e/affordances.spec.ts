@@ -14,7 +14,7 @@ test('Next names the next section and takes you there, then leaves at Contact', 
     [en.nav.work, stop(0)],
     [en.nav.about, HOLD.about[0]],
     [en.nav.stack, stackStop(0)],
-    [en.nav.contact, HOLD.contact[0]],
+    [en.nav.contact, 1],
   ] as const) {
     await expect(next(page)).toHaveText(new RegExp(`^${en.nav.next}: ${label}`));
     await next(page).click();

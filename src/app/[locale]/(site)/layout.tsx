@@ -14,6 +14,7 @@ import WorkSection from '@/ui/sections/WorkSection';
 import AboutSection from '@/ui/sections/AboutSection';
 import StackSection from '@/ui/sections/StackSection';
 import ContactSection from '@/ui/sections/ContactSection';
+import ContactBillboard from '@/ui/sections/ContactBillboard';
 
 /**
  * The persistent experience: scene, scroll, header and sections. It wraps both the home page and the
@@ -62,6 +63,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           <WorkSection />
         </WorkPanel>
         <StackSection />
+        <ContactBillboard />
       </main>
       <ScrollAccent />
       <ProgressTube />

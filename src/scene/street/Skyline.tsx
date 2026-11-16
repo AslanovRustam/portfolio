@@ -29,8 +29,9 @@ const bokehVertex = /* glsl */ `
     float dist = -mv.z;
     gl_PointSize = uPixelRatio * aSize * 900.0 / dist;
     vColor = aColor;
-    // far lights fade into the night; a slow shimmer keeps the city alive
-    vAlpha = (0.55 + 0.45 * sin(uTime * 0.7 + aPhase)) * smoothstep(70.0, 22.0, dist) * uFade;
+    // far lights fade into the night; a slow shimmer keeps the city alive. The ride drives into their
+    // field: near ones fade out before they swell into discs across the frame
+    vAlpha = (0.55 + 0.45 * sin(uTime * 0.7 + aPhase)) * smoothstep(70.0, 22.0, dist) * smoothstep(6.0, 16.0, dist) * uFade;
   }
 `;
 

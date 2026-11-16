@@ -59,12 +59,13 @@ export function snapTarget(q: number, from?: number): number | null {
 }
 
 /**
- * Where a link to a section lands: Work opens on its first project, Stack on its first sign, the others where
- * their text begins.
+ * Where a link to a section lands: Work opens on its first project, Stack on its first sign, About where its
+ * text begins, Contact at the end of the road (the billboard with the form, the green light).
  */
 export function sectionTarget(id: SectionId): number {
   if (id === 'work') return stopProgress(0);
   if (id === 'stack') return stackStopProgress(0);
+  if (id === 'contact') return 1;
   return holdWindow(id)[0];
 }
 

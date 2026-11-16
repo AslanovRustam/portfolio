@@ -45,14 +45,15 @@ it('Work links land on the first project; hashes carry the stop', () => {
   expect(sectionTarget('about')).toBeCloseTo(0.395, 9); // where About's text begins, the turn just done
   // Stack opens on its first sign, as Work opens on its first project
   expect(sectionTarget('stack')).toBeCloseTo(stackStopProgress(0), 9);
-  expect(sectionTarget('contact')).toBeCloseTo(0.825, 9);
+  // Contact opens the end of the road: the billboard with the form, the green light
+  expect(sectionTarget('contact')).toBe(1);
   expect(hashFor(stopProgress(4))).toBe('work-5');
   expect(hashFor(0.48)).toBe('about');
   expect(hashFor(0.05)).toBeNull();
   expect(parseHash('work-5')).toBeCloseTo(stopProgress(4), 9);
   expect(parseHash('work')).toBeCloseTo(0.18, 9);
   expect(parseHash('stack')).toBeCloseTo(stackStopProgress(0), 9); // #stack opens on the first sign
-  expect(parseHash('contact')).toBeCloseTo(0.825, 9);
+  expect(parseHash('contact')).toBe(1);
   expect(parseHash('work-99')).toBeNull();
   expect(parseHash('nope')).toBeNull();
 });

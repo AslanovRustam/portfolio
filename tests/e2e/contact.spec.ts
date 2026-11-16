@@ -1,5 +1,25 @@
-import { expect, test } from '@playwright/test';
-import { gotoScene, HOLD, progress, scrollTo } from './helpers';
+import { expect, test, type Page } from '@playwright/test';
+import { billboard, gotoScene, progress, scrollTo, waitReady } from './helpers';
+
+type Box = { x: number; y: number; width: number; height: number };
+const inside = (a: Box, b: Box, slack = 1) =>
+  a.x >= b.x - slack && a.y >= b.y - slack && a.x + a.width <= b.x + b.width + slack && a.y + a.height <= b.y + b.height + slack;
+
+/** Until the camera has come to rest at the end (the panel stops moving on the screen). */
+async function atRest(page: Page) {
+  await expect
+    .poll(
+      async () => {
+        const a = (await billboard(page))!.rect;
+        await page.waitForTimeout(300);
+        const b = (await billboard(page))!.rect;
+        return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y), Math.abs(a.width - b.width)) < 0.5;
+      },
+      { timeout: 20_000 },
+    )
+    .toBe(true);
+}
+
 
 test('the form validates, then sends (json transport in tests)', async ({ page }) => {
   await gotoScene(page);
@@ -100,13 +120,62 @@ test('the message field keeps its size', async ({ page }) => {
 
 test('a contact link or the CV takes the street up to the green light', async ({ page }) => {
   await gotoScene(page);
-  await scrollTo(page, HOLD.contact[0]);
+  await scrollTo(page, 0.9);
   // clicked where it is (a real click would first scroll it into view, near the end of the page)
   await page.locator('section#contact').getByRole('button', { name: 'Copy email' }).evaluate((el) => (el as HTMLElement).click());
   await expect.poll(() => progress(page), { timeout: 8000 }).toBeGreaterThan(0.995);
-  await scrollTo(page, HOLD.contact[0]);
+  await scrollTo(page, 0.9);
   const popup = page.waitForEvent('popup');
   await page.locator('section#contact').getByRole('link', { name: /Telegram/ }).evaluate((el) => (el as HTMLElement).click());
   await (await popup).close();
   await expect.poll(() => progress(page), { timeout: 8000 }).toBeGreaterThan(0.995);
+});
+
+// ── the billboard at the end of the street (Plan 4, Task 6) ───────────────────────────────────
+
+test('at the end on a laptop the form is fitted into the billboard, the green light beside it', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 1);
+  await atRest(page);
+  const panel = (await billboard(page))!.rect;
+  const c = page.locator('section#contact');
+  for (const part of [c.locator('form'), c.getByText(/^Tell me about a role/), c.getByRole('link', { name: /Telegram/ })]) {
+    await expect(part).toBeVisible();
+    const box = (await part.boundingBox())!;
+    expect(inside(box, panel), `${JSON.stringify(box)} in ${JSON.stringify(panel)}`).toBe(true);
+  }
+  // the form is the billboard's, not a box riding the page
+  await expect(page.locator('#journey section#contact')).toHaveCount(0);
+  const pole = (await page.evaluate(() => window.__portfolio.probe('pole'))) as { lightNdc: [number, number]; light: string };
+  expect(pole.light).toBe('green');
+  expect(Math.abs(pole.lightNdc[0])).toBeLessThan(1);
+  expect(Math.abs(pole.lightNdc[1])).toBeLessThan(1);
+});
+
+test('the billboard says it in the page’s language', async ({ page }) => {
+  await gotoScene(page, '/ru');
+  await waitReady(page);
+  await expect.poll(async () => (await billboard(page))?.title).toBe('Поехали');
+});
+
+// Review Focus 5
+test('a resize at the end fits the form again, or puts it back in the page, with what was typed', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 1);
+  await atRest(page);
+  await page.locator('section#contact form').getByLabel('Message').fill('Hello from a big screen');
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await atRest(page);
+  const panel = (await billboard(page))!.rect;
+  const form = (await page.locator('section#contact form').boundingBox())!;
+  expect(inside(form, panel), `${JSON.stringify(form)} in ${JSON.stringify(panel)}`).toBe(true);
+  expect(await progress(page)).toBeGreaterThan(0.99);
+  // too small a window for the panel: the form is back in the page, still at the end, still holding the text
+  await page.setViewportSize({ width: 900, height: 700 });
+  const inPage = page.locator('#journey section#contact form');
+  await expect(inPage).toHaveCount(1);
+  await expect(inPage.getByLabel('Message')).toHaveValue('Hello from a big screen');
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeGreaterThan(0.99);
 });

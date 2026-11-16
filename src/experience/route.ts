@@ -7,13 +7,14 @@ import { STACK_FROM, STACK_STOPS, STACK_TO, stackPosition } from './stackStops';
  * - shop: the building on the left, its window between z0 and z1, its face at x
  * - pole: where the riding pole stops for About
  * - gantry: the sign gantry over the road
- * - billboard: the billboard at the end of the street, its centre height y
+ * - billboard: the billboard on the building across the end of the street: its panel's centre (x, y) and
+ *   face (z)
  */
 export const STATIONS = {
   shop: { x: -6.6, z0: 0, z1: -11.8 },
   pole: { x: 1.4, z: -30 },
   gantry: { z: -40, y: 5.6, signW: 2.4, signH: 1.92, gap: 0.25 },
-  billboard: { z: -62, y: 7 },
+  billboard: { x: -1.6, y: 6.3, z: -62 },
 } as const;
 
 /** The centre x of sign i (0..5) on the gantry, left to right across the road. */
@@ -44,6 +45,13 @@ export function stackSignPose(i: number): Pose {
   return stackPose(Math.min(STACK_STOPS - 1, Math.max(0, Math.round(i))));
 }
 
+/**
+ * The last frame: 16 m short of the billboard, looking a little up at it, its panel left of the middle
+ * and the pole's green light on the right (Contact, spec §10). The camera holds it from END_FROM on.
+ */
+const END: Pose = { position: [0, 4.2, -46], target: [0, 7.1, STATIONS.billboard.z] };
+export const END_FROM = 0.86;
+
 /** The intro's two keys: the blueprint from a raised three-quarter angle, then the pole (unchanged from the orbit). */
 const INTRO: readonly { p: number; position: Vec3; target: Vec3 }[] = [
   { p: 0, position: [2.2, 3.6, 9.2], target: [0, 2.7, 0] },
@@ -67,9 +75,9 @@ const RIDE: readonly { p: number; position: Vec3; target: Vec3 }[] = [
   // the first and the last sign (stackPose(0), stackPose(5)); in between, stackPose stops at every sign
   { p: STACK_FROM, ...stackPose(0) },
   { p: STACK_TO, ...stackPose(STACK_STOPS - 1) },
-  // past the gantry, the billboard far ahead: a big panel, read from under 20 m away
-  { p: 0.85, position: [0, 4.0, -42], target: [0, 6.6, -62] },
-  { p: 1, position: [0, 4.2, -44], target: [0, 6.8, -62] },
+  // under the gantry and on to the billboard, then still to the end: the form is fitted into its panel
+  { p: END_FROM, ...END },
+  { p: 1, ...END },
 ];
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));

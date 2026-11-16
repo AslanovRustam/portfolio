@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Locator } from '@playwright/test';
-import { gotoScene, HOLD, scrollTo, waitReady } from './helpers';
+import { gotoScene, scrollTo, stackStop, waitReady } from './helpers';
 
 /** Running CSS animations (the flicker) in and under an element; transitions don't count. */
 const flickers = (l: Locator, subtree = true) =>
@@ -50,9 +50,9 @@ test('tubes are set in Oswald, with Cyrillic on /ru', async ({ page }) => {
 test('the boxes blur the street behind them on a laptop', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
-  // About is paper bills now; Contact's boxes are the glass ones
-  await scrollTo(page, HOLD.contact[0] + 0.02);
-  expect(await page.locator('#contact .nbox').first().evaluate((el) => getComputedStyle(el).backdropFilter)).toContain('blur');
+  // About is paper bills and Contact is on the billboard now: Stack's caption is a glass box
+  await scrollTo(page, stackStop(0));
+  expect(await page.locator('section#stack.nbox').evaluate((el) => getComputedStyle(el).backdropFilter)).toContain('blur');
 });
 
 test('keyboard focus shows on a tube even when it is the open section', async ({ page }) => {

@@ -183,3 +183,37 @@ test('standing under a Stack sign keeps at least 30 fps', async ({ page }) => {
   console.log('perf-stack', JSON.stringify(report));
   expect(report.medianMs).toBeLessThanOrEqual(33.4);
 });
+
+test('standing at the billboard keeps at least 30 fps', async ({ page }) => {
+  test.setTimeout(120_000);
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 1);
+  await page.waitForTimeout(6000);
+  const frames = await page.evaluate(
+    () =>
+      new Promise<number[]>((resolve) => {
+        const out: number[] = [];
+        let last = performance.now();
+        const end = last + 3000;
+        const tick = (t: number) => {
+          out.push(t - last);
+          last = t;
+          if (t < end) requestAnimationFrame(tick);
+          else resolve(out.slice(3));
+        };
+        requestAnimationFrame(tick);
+      }),
+  );
+  const sorted = [...frames].sort((a, b) => a - b);
+  const report = {
+    tier: await page.evaluate(() => window.__portfolio.state().tier),
+    medianMs: +sorted[Math.floor(sorted.length / 2)].toFixed(2),
+    p95Ms: +sorted[Math.floor(sorted.length * 0.95)].toFixed(2),
+    frames: frames.length,
+  };
+  mkdirSync('test-results', { recursive: true });
+  writeFileSync('test-results/perf-contact.json', JSON.stringify(report, null, 2));
+  console.log('perf-contact', JSON.stringify(report));
+  expect(report.medianMs).toBeLessThanOrEqual(33.4);
+});

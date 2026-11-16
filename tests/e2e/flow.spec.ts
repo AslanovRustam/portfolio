@@ -52,10 +52,11 @@ test('the last box has left before the pole turns', async ({ page }) => {
   for (const b of bottoms) expect(b).toBeLessThan(0.2 * vh);
 });
 
-test("the page ends with Contact's last box resting low on the screen", async ({ page }) => {
+test("where Contact rides the page, it ends with its last box resting low on the screen", async ({ page }) => {
+  // a window too small for the form on the billboard (a laptop puts it there: contact.spec)
   for (const size of [
-    { width: 1440, height: 800 },
-    { width: 1440, height: 900 },
+    { width: 1000, height: 700 },
+    { width: 1000, height: 900 },
   ]) {
     await page.setViewportSize(size);
     await gotoScene(page);

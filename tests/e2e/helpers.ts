@@ -60,6 +60,14 @@ export async function underSign(page: Page, i: number): Promise<void> {
     .toBe(true);
 }
 
+export interface BillboardProbe {
+  /** the billboard's panel on the page now (CSS px), as the live camera sees it */
+  rect: { x: number; y: number; width: number; height: number };
+  /** the neon title as painted */
+  title: string;
+}
+export const billboard = (page: Page) => page.evaluate(() => window.__portfolio.probe('billboard') as BillboardProbe | undefined);
+
 /**
  * Where each section's text rides past while the pole holds its sign (story progress): a mirror of
  * holdWindow() in src/experience/journey.ts, pinned by tests/unit/journey.test.ts.

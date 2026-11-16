@@ -18,12 +18,18 @@ const FIELDS: readonly { name: ContactField; type: string; autoComplete: string 
 const input = 'nfield';
 
 /**
+ * What has been typed, kept outside the form: the form moves between the billboard and the page when the
+ * window is resized, and a move must not lose the message. A sent message clears it.
+ */
+const draft: Partial<Record<ContactField, string>> = {};
+
+/**
  * Name, email, message. The browser checks the fields first (same zod schema as the server), the
  * server action checks again and mails it. The Send sign stays dark until all three fields would pass,
  * then lights up; a press on the dark sign still shows what is missing (it is never `disabled`, so a
  * keyboard or a screen reader learns why). A sent message makes the traffic light pulse green.
  */
-export default function ContactForm() {
+export default function ContactForm({ compact = false }: { compact?: boolean }) {
   const t = useTranslations('contact');
   // a request that never reaches the action (offline, a redeploy, a timeout) rejects; that must show
   // the email/Telegram fallback, not take the whole page down
@@ -35,7 +41,7 @@ export default function ContactForm() {
     }
   }, { status: 'idle' });
   const [local, setLocal] = useState<Partial<Record<ContactField, true>> | null>(null);
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(() => invalidFields({ ...draft }) === null);
   // a sent message empties the form, so the sign goes dark again (adjusted while rendering the new answer)
   const [answered, setAnswered] = useState(state);
   if (state !== answered) {
@@ -45,14 +51,22 @@ export default function ContactForm() {
   const form = useRef<HTMLFormElement>(null);
   const mounted = useRef(0);
 
-  // the fill time is measured here, as elapsed time, so a skewed device clock cannot matter
+  // the fill time is measured here, as elapsed time, so a skewed device clock cannot matter; a form that
+  // moved (billboard ↔ page) takes back what was typed
   useEffect(() => {
     mounted.current = performance.now();
+    const el = form.current;
+    if (!el) return;
+    for (const f of FIELDS) {
+      const field = el.elements.namedItem(f.name) as HTMLInputElement | HTMLTextAreaElement | null;
+      if (field && draft[f.name]) field.value = draft[f.name]!;
+    }
   }, []);
 
   useEffect(() => {
     if (state.status !== 'sent') return;
     form.current?.reset(); // only a sent message clears the form; any other answer keeps the text
+    for (const f of FIELDS) delete draft[f.name];
     experienceStore.getState().setCelebrate(true);
     // a sent message goes up the pole to the green light, as the contact links do
     scrollToProgress(1, experienceStore.getState().reducedMotion);
@@ -76,8 +90,12 @@ export default function ContactForm() {
         data.set('elapsed', String(Math.round(performance.now() - mounted.current)));
         startTransition(() => action(data));
       }}
-      onInput={(e) => setReady(invalidFields(Object.fromEntries(new FormData(e.currentTarget))) === null)}
-      className="space-y-4"
+      onInput={(e) => {
+        const data = new FormData(e.currentTarget);
+        for (const f of FIELDS) draft[f.name] = String(data.get(f.name) ?? '');
+        setReady(invalidFields(Object.fromEntries(data)) === null);
+      }}
+      className={compact ? 'grid grid-cols-2 content-start gap-x-4 gap-y-3' : 'space-y-4'}
       style={neonStyle('contact')}
     >
       {FIELDS.map((f) => {
@@ -93,7 +111,7 @@ export default function ContactForm() {
           className: input,
         };
         return (
-          <div key={f.name}>
+          <div key={f.name} className={compact && f.type === 'textarea' ? 'col-span-2' : undefined}>
             <label htmlFor={id} className="nfield-label">
               {t(f.name)}
             </label>
@@ -125,7 +143,7 @@ export default function ContactForm() {
           />
         </label>
       </div>
-      <div className="flex flex-wrap items-center gap-4">
+      <div className={`flex flex-wrap items-center gap-4 ${compact ? 'col-span-2' : ''}`}>
         <button
           type="submit"
           disabled={pending}
@@ -145,7 +163,7 @@ export default function ContactForm() {
         </p>
       </div>
       {(state.status === 'config' || state.status === 'error') && (
-        <p role="alert" className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-[#e8f7ff]/85">
+        <p role="alert" className={`flex flex-wrap gap-x-3 gap-y-1 text-sm text-[#e8f7ff]/85 ${compact ? 'col-span-2' : ''}`}>
           <span className="text-[#ff7a1a]">{t(state.status)}</span>
           <span>{t('fallback')}</span>
           <a className="underline underline-offset-2" href={`mailto:${CONTACTS.email}`}>

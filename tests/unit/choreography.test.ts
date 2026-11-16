@@ -73,7 +73,7 @@ it('camera pose hits its end keys and is continuous', () => {
   // the blueprint is seen from a raised three-quarter angle, like an axonometric drawing
   expect(cameraPose(0)).toEqual({ position: [2.2, 3.6, 9.2], target: [0, 2.7, 0] });
   // the ride ends before the billboard at the end of the street (route.ts)
-  expect(cameraPose(1)).toEqual({ position: [0, 4.2, -44], target: [0, 6.8, -62] });
+  expect(cameraPose(1)).toEqual({ position: [0, 4.2, -46], target: [0, 7.1, -62] });
   // the ride covers ~50 m: a thousandth of the scroll may move it up to 0.25 m, never a jump (route.test.ts)
   for (let p = 0; p < 1; p += 0.001) {
     const a = cameraPose(p).position;

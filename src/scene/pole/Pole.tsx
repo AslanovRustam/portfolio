@@ -2,9 +2,9 @@
 
 import { useFrame, useThree } from '@react-three/fiber';
 import { type ReactNode, useEffect, useMemo, useRef } from 'react';
-import { CylinderGeometry, type Group, Vector3 } from 'three';
+import { Box3, CylinderGeometry, type Group, Vector3 } from 'three';
 import { damp, lightState, poleYaw, reducedYaw } from '@/experience/choreography';
-import { type PoleMode, poleWorldPose, stackPark } from '@/experience/poleRide';
+import { poleAway, type PoleMode, poleWorldPose, throughGantry } from '@/experience/poleRide';
 import { POLE, SIGNS } from '@/experience/signs';
 import { experienceStore } from '@/experience/store';
 import { registerProbe } from '@/dev/sceneProbe';
@@ -74,13 +74,40 @@ export default function Pole({ children }: { children?: ReactNode }) {
       v.project(camera);
       return [v.x, v.y];
     };
+    const bounds = new Box3();
+    // the whole pole on the page (CSS px): its bounding box's corners in front of the camera, projected
+    const screenBox = () => {
+      const r = ride.current;
+      if (!r) return null;
+      bounds.setFromObject(r);
+      let x0 = Infinity;
+      let y0 = Infinity;
+      let x1 = -Infinity;
+      let y1 = -Infinity;
+      for (let i = 0; i < 8; i++) {
+        v.set(i & 1 ? bounds.max.x : bounds.min.x, i & 2 ? bounds.max.y : bounds.min.y, i & 4 ? bounds.max.z : bounds.min.z);
+        v.applyMatrix4(camera.matrixWorldInverse);
+        if (v.z > -0.1) continue; // behind the camera
+        v.applyMatrix4(camera.projectionMatrix);
+        const px = ((v.x + 1) / 2) * size.width;
+        const py = ((1 - v.y) / 2) * size.height;
+        x0 = Math.min(x0, px);
+        y0 = Math.min(y0, py);
+        x1 = Math.max(x1, px);
+        y1 = Math.max(y1, py);
+      }
+      return x0 === Infinity ? null : { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
+    };
     return registerProbe('pole', () => ({
       ndc: toNdc(2.6),
       lightNdc: toNdc(LIGHT_Y),
       mode: mode.current,
       light: lightState(experienceStore.getState().progress),
+      world: ride.current ? [ride.current.position.x, ride.current.position.y, ride.current.position.z] : null,
+      visible: ride.current?.visible ?? false,
+      box: screenBox(),
     }));
-  }, [camera]);
+  }, [camera, size]);
 
   useFrame((_, dt) => {
     const g = group.current;
@@ -90,7 +117,7 @@ export default function Pole({ children }: { children?: ReactNode }) {
     g.rotation.y = reducedMotion ? reducedYaw(progress) : damp(g.rotation.y, poleYaw(progress), 2.5, dt);
     // where the camera is heading, and where the pole rides beside it
     const cam = desiredCameraPose(progress, aspect, reducedMotion);
-    const want = poleWorldPose(progress, cam, aspect, Math.max(wallWeight(progress, reducedMotion), stackPark(progress, aspect)));
+    const want = poleWorldPose(progress, cam, aspect, Math.max(wallWeight(progress, reducedMotion), poleAway(progress, aspect)));
     mode.current = want.mode;
     const k = reducedMotion ? Infinity : RIDE_LAMBDA;
     r.position.set(
@@ -99,6 +126,8 @@ export default function Pole({ children }: { children?: ReactNode }) {
       damp(r.position.z, want.position[2], k, dt),
     );
     r.rotation.y = damp(r.rotation.y, want.facing, k, dt);
+    // never drawn through the gantry, should a fling outrun the easing that keeps it out of the frame there
+    r.visible = !throughGantry([r.position.x, r.position.y, r.position.z]);
   });
 
   const r = POLE.radius;

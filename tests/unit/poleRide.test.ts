@@ -1,7 +1,9 @@
 import { PerspectiveCamera, Vector3 } from 'three';
 import { expect, it } from 'vitest';
 import type { Pose, Vec3 } from '@/experience/choreography';
-import { poleWorldPose, stackPark } from '@/experience/poleRide';
+import { poleAway, poleWorldPose, throughGantry } from '@/experience/poleRide';
+import { desiredCameraPose } from '@/scene/cameraPose';
+import { gantryLayout } from '@/scene/stack/layout';
 import { STACK_STOPS, stackStopProgress } from '@/experience/stackStops';
 import { ridePose, STATIONS } from '@/experience/route';
 
@@ -100,12 +102,46 @@ it('its signs turn with the camera: a camera looking left down the street turns 
   expect(poleWorldPose(0.7, cam, LAPTOP).facing).toBeCloseTo(Math.PI / 2, 6);
 });
 
-it('on a phone the pole steps out of the frame at the Stack signs (a sign fills the width); on a laptop it rides on', () => {
+it('the pole steps out of the frame where it would be in the way', () => {
+  // a phone's frame is full of a sign (Stack) or of the form (Contact): the pole steps aside; a laptop keeps it
   for (let i = 0; i < STACK_STOPS; i++) {
-    expect(stackPark(stackStopProgress(i), PHONE)).toBe(1);
-    expect(stackPark(stackStopProgress(i), LAPTOP)).toBe(0);
+    expect(poleAway(stackStopProgress(i), PHONE)).toBe(1);
+    expect(poleAway(stackStopProgress(i), LAPTOP)).toBe(0);
   }
-  for (const p of [0.3, 0.5, 0.58, 0.81, 0.95]) expect(stackPark(p, PHONE), `p ${p}`).toBe(0);
+  for (const p of [0.9, 1]) {
+    expect(poleAway(p, PHONE)).toBe(1);
+    expect(poleAway(p, LAPTOP)).toBe(0);
+  }
+  // driving under the gantry, the riding pole would pass through its signs: out of the frame on every screen
+  for (const p of [0.79, 0.8, 0.82]) for (const a of [LAPTOP, PHONE]) expect(poleAway(p, a), `p ${p}`).toBe(1);
+  for (const p of [0.3, 0.5, 0.58]) for (const a of [LAPTOP, PHONE]) expect(poleAway(p, a), `p ${p}`).toBe(0);
   // it eases out and back, never jumps
-  for (let p = 0.55; p < 0.85; p += 0.0005) expect(Math.abs(stackPark(p + 0.0005, PHONE) - stackPark(p, PHONE))).toBeLessThan(0.1);
+  for (const a of [LAPTOP, PHONE])
+    for (let p = 0.55; p < 1; p += 0.0005) expect(Math.abs(poleAway(p + 0.0005, a) - poleAway(p, a))).toBeLessThan(0.1);
+});
+
+it('wherever the riding pole crosses the gantry, it is out of the frame', () => {
+  const G = gantryLayout();
+  const span = G.signs[5].position[0] + G.signs[5].width / 2 + 0.6;
+  for (const aspect of [LAPTOP, PHONE, 2560 / 1080])
+    for (let p = 0.59; p <= 1; p += 0.001) {
+      const pose = desiredCameraPose(p, aspect, false);
+      const pole = poleWorldPose(p, pose, aspect, poleAway(p, aspect));
+      if (Math.abs(pole.position[2] - G.signs[0].position[2]) > 0.8 || Math.abs(pole.position[0]) > span) continue;
+      const [x] = ndc(pose, pole.position, aspect);
+      expect(Math.abs(x), `aspect ${aspect.toFixed(2)} p ${p.toFixed(3)}`).toBeGreaterThan(1.2);
+    }
+});
+
+it('the pole is not drawn while it would pass through the gantry (a fling outruns its easing)', () => {
+  const G = gantryLayout();
+  const z = G.signs[0].position[2];
+  // riding at its usual height (its foot ~1 m up, its light ~6 m), crossing under the signs: hidden
+  expect(throughGantry([2.5, 0.9, z - 0.3])).toBe(true);
+  expect(throughGantry([-6, 1.2, z + 0.5])).toBe(true);
+  // anywhere else it is drawn: before or past the gantry, beyond its posts, or sunk below the catwalk
+  expect(throughGantry([2.5, 0.9, z + 4])).toBe(false);
+  expect(throughGantry([2.5, 0.9, z - 4])).toBe(false);
+  expect(throughGantry([G.postX + 1.5, 0.9, z])).toBe(false);
+  expect(throughGantry([2.5, -2, z])).toBe(false);
 });

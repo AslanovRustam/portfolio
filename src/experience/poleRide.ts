@@ -1,8 +1,10 @@
 import { LIGHT_Y } from '@/scene/pole/lightMount';
+import { gantryLayout } from '@/scene/stack/layout';
 import { INTRO_END, type Pose, type Vec3 } from './choreography';
 import { sectionPresence } from './panels';
-import { STATIONS } from './route';
-import { SIGNS } from './signs';
+import { END_FROM, STATIONS } from './route';
+import { STACK_TO } from './stackStops';
+import { POLE, SIGNS } from './signs';
 
 export type PoleMode = 'start' | 'ride' | 'parked' | 'centre';
 
@@ -39,21 +41,45 @@ export function rideOffset(aspect: number): { right: number; ahead: number } {
   return { right: edge * halfWidth, ahead };
 }
 
+/** From the last sign until the camera has passed under the gantry: leaving and coming back. */
+const UNDER_GANTRY_OUT: readonly [number, number] = [STACK_TO, STACK_TO + 0.012];
+const UNDER_GANTRY_IN: readonly [number, number] = [0.83, END_FROM];
+
 /**
- * How far the pole steps out of the frame at the Stack signs (0..1): on a portrait screen a sign fills the
- * frame's width and the riding pole would stand across it (the menu is in the header there); on a wide
- * one it rides on beside the signs. It eases out as Stack's caption comes and back as it goes.
+ * How far the pole steps out of the frame (0..1) where it would be in the way. Driving from the last sign
+ * under the gantry, the riding pole would pass through the signs: it leaves the frame on every screen and
+ * comes back for the end. On a portrait screen a Stack sign or the Contact form fills the frame (the menu
+ * is in the header there): it stays out through both. It eases out and back with the sections' presence.
  */
-export function stackPark(p: number, aspect: number): number {
-  if (aspect >= 1) return 0;
-  return sectionPresence(p, 'stack');
+export function poleAway(p: number, aspect: number): number {
+  const q = clamp01(p);
+  const under = between(q, UNDER_GANTRY_OUT) * (1 - between(q, UNDER_GANTRY_IN));
+  if (aspect >= 1) return under;
+  return Math.max(under, sectionPresence(q, 'stack'), sectionPresence(q, 'contact'));
+}
+
+const G = gantryLayout();
+/** the gantry's slab the pole must not be drawn through: its posts' span, the catwalk to the truss's top */
+const GANTRY = {
+  x: G.postX + 0.7,
+  y: [G.catwalk.y - 0.05, G.truss.top + 0.1] as const,
+  z: [G.truss.back - 0.7, G.catwalk.z + 0.7] as const,
+};
+
+/**
+ * Whether the pole, its foot at `foot`, would stand through the gantry (its signs, catwalk or truss). Its
+ * easing keeps it out of the frame there (poleAway), but a fling outruns the easing: for that moment it is
+ * not drawn.
+ */
+export function throughGantry([x, y, z]: Vec3): boolean {
+  return Math.abs(x) < GANTRY.x && z > GANTRY.z[0] && z < GANTRY.z[1] && y + POLE.height > GANTRY.y[0] && y < GANTRY.y[1];
 }
 
 /**
  * The pole's place in the street for story progress p, given the camera's pose: at its spot while the
  * intro plays; then riding with the camera on the right of the frame, its signs turned to it; out of the
- * frame to the right while the camera faces the shop window or, on a phone, the Stack signs (`parked`,
- * 0..1: the Work wall's weight, stackPark);
+ * frame to the right while the camera faces the shop window, and wherever poleAway says it is in the way
+ * (`parked`, 0..1: the larger of the two);
  * at its own spot, in the middle of the frame, for About. `facing` turns its signs towards the camera.
  */
 export function poleWorldPose(

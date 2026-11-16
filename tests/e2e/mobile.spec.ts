@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gantry, gotoScene, HOLD, innerScrollers, progress, scrollTo, stackStop, stop, underSign, waitReady } from './helpers';
+import { billboard, gantry, gotoScene, HOLD, innerScrollers, progress, scrollTo, stackStop, stop, underSign, waitReady } from './helpers';
 
 // Review Focus 4
 test('touch swipe advances progress on a phone, low tier, no errors', async ({ page }) => {
@@ -279,4 +279,12 @@ test('About on a phone: the bills take the width of the screen, the pole behind 
   const widths = await page.locator('#about .paper-bill').evaluateAll((els) => els.map((el) => el.getBoundingClientRect().width));
   expect(widths.length).toBe(5);
   for (const w of widths) expect(w).toBeGreaterThan(0.85 * vw);
+});
+
+test('on a phone the billboard carries the title and the form follows in the page', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 1);
+  await expect(page.locator('#journey section#contact form')).toHaveCount(1);
+  await expect.poll(async () => (await billboard(page))?.title).toBe('Let’s go');
 });
