@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoScene, HOLD, innerScrollers, progress, scrollTo, stop } from './helpers';
+import { gotoScene, HOLD, innerScrollers, progress, scrollTo, stop, waitReady } from './helpers';
 
 // Review Focus 4
 test('touch swipe advances progress on a phone, low tier, no errors', async ({ page }) => {
@@ -152,6 +152,7 @@ test('blades fit a phone: one line each and inside the screen', async ({ page })
 
 test('a phone shows the progress tube and a centred Next from the first screen, clear of the title block and the Work caption', async ({ page }) => {
   await gotoScene(page);
+  await waitReady(page); // the tube and the Next button come once the street is there
   const tube = page.locator('.progress-tube');
   await expect(tube).toBeVisible();
   const h0 = (await tube.boundingBox())!.height;
@@ -191,7 +192,8 @@ test('the Work pager keeps its nine numbers on one row, down to a 390 px phone',
 test('a phone (low tier) keeps the boxes unblurred', async ({ page }) => {
   await gotoScene(page);
   await expect.poll(() => page.evaluate(() => window.__portfolio.state().tier), { timeout: 30_000 }).toBe('low');
-  expect(await page.locator('#about .nbox').first().evaluate((el) => getComputedStyle(el).backdropFilter)).toBe('none');
+  // About is paper bills now; Contact's boxes are the glass ones
+  expect(await page.locator('#contact .nbox').first().evaluate((el) => getComputedStyle(el).backdropFilter)).toBe('none');
 });
 
 test('Esc over an open case closes only the menu', async ({ page }) => {
@@ -261,4 +263,13 @@ test('a case plays its live loop on a phone too (the wall keeps stills on the lo
   const video = page.getByRole('dialog').locator('video');
   await expect(video).toHaveCount(1, { timeout: 15_000 });
   await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime), { timeout: 10_000 }).toBeGreaterThan(0.5);
+});
+
+test('About on a phone: the bills take the width of the screen, the pole behind them', async ({ page }) => {
+  await gotoScene(page);
+  await page.locator('#about .paper-bill').first().scrollIntoViewIfNeeded();
+  const vw = page.viewportSize()!.width;
+  const widths = await page.locator('#about .paper-bill').evaluateAll((els) => els.map((el) => el.getBoundingClientRect().width));
+  expect(widths.length).toBe(5);
+  for (const w of widths) expect(w).toBeGreaterThan(0.85 * vw);
 });

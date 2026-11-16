@@ -51,7 +51,7 @@ export default function JourneyTrack({ about, stack, contact }: { about: ReactNo
       },
       { rootMargin: '0px 0px -8% 0px' },
     );
-    for (const t of el.querySelectorAll('#about [data-flow] > .paper-poster, #about [data-flow] > .nbox, #stack [data-flow] > .nbox, #stack .blade')) swing.observe(t);
+    for (const t of el.querySelectorAll('#about [data-flow] > .paper-poster, #about [data-flow] > .paper-bill, #stack [data-flow] > .nbox, #stack .blade')) swing.observe(t);
 
     return () => {
       alive = false;

@@ -159,7 +159,7 @@ test("the wheel over a section's text carries on along the street", async ({ pag
   await gotoScene(page);
   await waitReady(page);
   await scrollTo(page, 0.42);
-  const box = (await page.locator('#about .nbox').first().boundingBox())!;
+  const box = (await page.locator('#about .paper-bill').first().boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, Math.max(box.y + 20, 120));
   for (let i = 0; i < 25; i++) {
     await page.mouse.wheel(0, 400);

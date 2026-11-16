@@ -50,3 +50,15 @@ it('at each section the camera looks at its place: the shop, the pole, the gantr
 it('reduced motion: one still pose per section, at the same places', () => {
   for (const id of ['work', 'about', 'stack', 'contact'] as const) expect(looksAt(stationPose(id), id), id).toBe(true);
 });
+
+it('in About the camera rises along the pole, looking at it all the way', () => {
+  let y = -Infinity;
+  for (let p = 0.4; p <= 0.565; p += 0.005) {
+    const pose = ridePose(p);
+    expect(pose.position[1]).toBeGreaterThanOrEqual(y - 1e-9);
+    y = pose.position[1];
+    expect(Math.abs(pose.target[0] - STATIONS.pole.x)).toBeLessThan(0.05);
+    expect(Math.abs(pose.target[2] - STATIONS.pole.z)).toBeLessThan(0.05);
+  }
+  expect(ridePose(0.565).position[1] - ridePose(0.4).position[1]).toBeGreaterThan(2);
+});

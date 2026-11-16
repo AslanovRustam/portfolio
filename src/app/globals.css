@@ -900,7 +900,8 @@ html:not([data-tier='low']) :is(.nbox, .blade) {
     animation: swing-in 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both;
   }
   .nbox[data-swing],
-  .paper-poster[data-swing] {
+  .paper-poster[data-swing],
+  .paper-bill[data-swing] {
     transform-origin: top center;
   }
 }
@@ -914,6 +915,51 @@ html:not([data-tier='low']) :is(.nbox, .blade) {
   html:not([data-shown]) :is(header[data-ui], .top-fade, [data-hero], .next-button, .next-fade, .progress-tube) {
     visibility: hidden;
     pointer-events: none;
+  }
+}
+
+/*
+ * About's paper bills, pasted on the pole (src/ui/flow/PaperBill.tsx; Plan 4, spec §8): printed paper with
+ * dark ink, torn at the top and the bottom, two strips of tape, each tilted its own way (--tilt, a transform,
+ * so the swing-in's rotate/scale adds to it). On a laptop About's column stands over the pole in the middle
+ * of the frame; on a phone the bills take the width of the screen.
+ */
+@layer components {
+  #about.flow-piece > [data-flow] {
+    @variant wide {
+      width: min(32rem, 44vw);
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+  #about.flow-piece > [data-flow] > .paper-poster {
+    align-self: center;
+  }
+  .paper-bill {
+    position: relative;
+    transform: rotate(var(--tilt, 0deg));
+    filter: drop-shadow(0 12px 18px rgb(0 0 0 / 0.6));
+    color: #1d1c22;
+  }
+  .paper-bill-sheet {
+    padding: 26px 26px 24px;
+    background:
+      radial-gradient(120% 90% at 20% 10%, rgb(255 255 255 / 0.35), transparent 60%),
+      linear-gradient(180deg, #efe9da, #e2dbc8);
+  }
+  .paper-bill .flow-title {
+    color: #17161b;
+    text-shadow: none;
+  }
+  .paper-bill .flow-label {
+    color: #a3301f;
+    text-shadow: none;
+  }
+  .paper-bill .flow-accent {
+    color: #a3301f;
+  }
+  .paper-bill .flow-rule {
+    border-color: rgb(0 0 0 / 0.14);
   }
 }
 

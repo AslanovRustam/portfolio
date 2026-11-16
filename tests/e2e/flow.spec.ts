@@ -47,7 +47,8 @@ test('the last box has left before the pole turns', async ({ page }) => {
   await waitReady(page);
   await scrollTo(page, HOLD.about[1]);
   const vh = page.viewportSize()!.height;
-  const bottoms = await page.locator('#about .nbox').evaluateAll((els) => els.map((el) => el.getBoundingClientRect().bottom));
+  const bottoms = await page.locator('#about .paper-bill').evaluateAll((els) => els.map((el) => el.getBoundingClientRect().bottom));
+  expect(bottoms.length).toBeGreaterThan(0);
   for (const b of bottoms) expect(b).toBeLessThan(0.2 * vh);
 });
 
@@ -111,7 +112,8 @@ test('the measured pieces add up to the scroll track', async ({ page }) => {
 test('the empty part of a section lets the signs be hovered', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
-  await scrollTo(page, 0.48);
+  // the start of About: the ABOUT sign above the poster (further on, the bills are pasted over the pole)
+  await scrollTo(page, HOLD.about[0]);
   // the pole and camera ease into place: aim at where the sign is now, until the pointer is on it
   await expect
     .poll(
@@ -173,7 +175,7 @@ test('About boxes and Stack blades swing in as they reach the screen', async ({ 
   await scrollTo(page, HOLD.stack[0] + 0.05);
   await expect.poll(async () => (await state()).filter((b) => !b.below && b.top > 0).every((b) => b.swing === 'in')).toBe(true);
   await scrollTo(page, 0.43);
-  await expect.poll(() => page.locator('#about .nbox[data-swing="in"]').count()).toBeGreaterThan(0);
+  await expect.poll(() => page.locator('#about .paper-bill[data-swing="in"]').count()).toBeGreaterThan(0);
 });
 
 test('reduced motion: section boxes are simply there', async ({ page }) => {
@@ -220,4 +222,35 @@ test('reduced motion: the poster is simply there', async ({ page }) => {
   const poster = page.locator('#about .paper-poster');
   await expect(poster).toBeVisible();
   expect(await poster.evaluate((el) => [getComputedStyle(el).opacity, getComputedStyle(el).animationName])).toEqual(['1', 'none']);
+});
+
+// ── About: paper bills on the pole (Plan 4, Task 4) ───────────────────────────────────────────
+
+test('About is paper bills pasted over the pole: the poster, then the lead, the story, the path, the education, the languages', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, HOLD.about[0] + 0.04);
+  const items = page.locator('#about [data-flow] > *');
+  await expect(items.first()).toHaveClass(/paper-poster/);
+  const bills = page.locator('#about [data-flow] > .paper-bill');
+  await expect(bills).toHaveCount(5);
+  await expect(page.locator('#about .nbox')).toHaveCount(0);
+  // the camera has the pole in the middle of the frame, and the bills hang over it
+  const poleX = await page.evaluate(() => {
+    const [x] = (window.__portfolio.probe('pole') as { ndc: [number, number] }).ndc;
+    return ((x + 1) / 2) * innerWidth;
+  });
+  const vw = page.viewportSize()!.width;
+  for (const box of await bills.evaluateAll((els) => els.map((el) => el.getBoundingClientRect()))) {
+    expect(Math.abs(box.x + box.width / 2 - poleX)).toBeLessThan(0.25 * vw);
+  }
+});
+
+test('reduced motion: the bills are simply there', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await gotoScene(page);
+  await scrollTo(page, HOLD.about[0] + 0.01);
+  const bills = await page.locator('#about .paper-bill').evaluateAll((els) => els.map((el) => [getComputedStyle(el).opacity, getComputedStyle(el).animationName]));
+  expect(bills.length).toBe(5);
+  for (const [o, a] of bills) expect([o, a]).toEqual(['1', 'none']);
 });
