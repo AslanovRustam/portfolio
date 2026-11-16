@@ -12,6 +12,10 @@
     "label": "Rendering",
     "unit": "km/h"
   },
+  "notFound": {
+    "line": "404 — there is no such road",
+    "back": "Back to the street"
+  },
   "fallback": {
     "title": "This street needs WebGL2",
     "body": "Open the site in a recent Chrome, Edge, Firefox or Safari to see the 3D scene."

@@ -12,6 +12,10 @@
     "label": "Рендеринг",
     "unit": "км/ч"
   },
+  "notFound": {
+    "line": "404 — такой дороги нет",
+    "back": "На улицу"
+  },
   "fallback": {
     "title": "Этой улице нужен WebGL2",
     "body": "Откройте сайт в свежем Chrome, Edge, Firefox или Safari, чтобы увидеть 3D-сцену."

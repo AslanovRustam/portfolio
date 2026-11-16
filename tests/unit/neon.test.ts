@@ -48,3 +48,13 @@ it('the name never flashes more than three times at once: a word dips twice, a l
   expect(drops(css, 'neon-letter')).toBe(1);
   expect(drops(css, 'neon-buzz')).toBe(2);
 });
+
+it('the 404 glitch flashes at most three times a second, and only where motion is welcome', () => {
+  const css = readFileSync('src/app/globals.css', 'utf8');
+  const n = drops(css, 'critical-glitch');
+  const anim = /\.critical-glitch\s*{[^}]*animation:\s*critical-glitch\s+([\d.]+)s/.exec(css);
+  expect(anim).not.toBeNull();
+  expect(n).toBeGreaterThan(0);
+  expect(n / parseFloat(anim![1])).toBeLessThanOrEqual(3);
+  expect(/@media \(prefers-reduced-motion: no-preference\)\s*{\s*\.critical-glitch/.test(css)).toBe(true);
+});
