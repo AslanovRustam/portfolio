@@ -23,10 +23,12 @@ const undecided = () => null;
  */
 export default function ExperienceGate({
   loaderLabel,
+  loaderUnit,
   fallbackTitle,
   fallbackBody,
 }: {
   loaderLabel: string;
+  loaderUnit: string;
   fallbackTitle: string;
   fallbackBody: string;
 }) {
@@ -51,14 +53,14 @@ export default function ExperienceGate({
   }, [webgl, lost]);
 
   const fallback = <Fallback title={fallbackTitle} body={fallbackBody} />;
-  if (webgl === null) return <Loader label={loaderLabel} />;
+  if (webgl === null) return <Loader label={loaderLabel} unit={loaderUnit} />;
   if (!webgl || lost) return fallback;
   return (
     <>
       <SceneBoundary fallback={fallback} onError={() => setLost(true)}>
         <Experience onContextLost={() => setLost(true)} />
       </SceneBoundary>
-      <Loader label={loaderLabel} />
+      <Loader label={loaderLabel} unit={loaderUnit} />
     </>
   );
 }

@@ -9,7 +9,8 @@
     "line": "Пять лет пишу на React и Next.js. Веду команду фронтенда и преподаю React в GoIT."
   },
   "loader": {
-    "label": "Рендеринг"
+    "label": "Рендеринг",
+    "unit": "км/ч"
   },
   "fallback": {
     "title": "Этой улице нужен WebGL2",

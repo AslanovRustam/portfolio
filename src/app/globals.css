@@ -1032,3 +1032,20 @@ body {
   color: var(--fg);
   font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
+
+/* the loader's GO (src/ui/Loader.tsx): blinks while the scene compiles, under three flashes a second */
+@keyframes gauge-go {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  56%,
+  100% {
+    opacity: 0.15;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .gauge-go {
+    animation: gauge-go 0.6s steps(1, end) infinite;
+  }
+}

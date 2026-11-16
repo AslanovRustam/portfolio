@@ -9,7 +9,8 @@
     "line": "Five years of React and Next.js. I lead a front-end team and teach React at GoIT."
   },
   "loader": {
-    "label": "Rendering"
+    "label": "Rendering",
+    "unit": "km/h"
   },
   "fallback": {
     "title": "This street needs WebGL2",
