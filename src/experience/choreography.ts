@@ -1,3 +1,4 @@
+import { ridePose, stationPose } from './route';
 import { signById, type SectionId } from './signs';
 import type { LightState } from './store';
 
@@ -20,7 +21,6 @@ export const SECTIONS: readonly { id: SectionId; start: number; end: number; cen
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
-const smoothstep = (t: number) => t * t * (3 - 2 * t);
 
 export type HoldId = 'about' | 'stack' | 'contact';
 
@@ -92,40 +92,15 @@ export interface Pose {
   position: Vec3;
   target: Vec3;
 }
-const CAMERA_KEYS: readonly { p: number; position: Vec3; target: Vec3 }[] = [
-  // the blueprint: raised three-quarter angle, like an axonometric drawing
-  { p: 0, position: [2.2, 3.6, 9.2], target: [0, 2.7, 0] },
-  { p: 0.15, position: [1.4, 3.0, 6.2], target: [0, 3.0, 0] },
-  { p: 0.26, position: [1.0, 3.4, 4.6], target: [0, 3.4, 0] },
-  { p: 0.48, position: [1.0, 2.9, 4.6], target: [0, 2.9, 0] },
-  { p: 0.695, position: [1.0, 3.68, 4.8], target: [0, 3.68, 0] },
-  { p: 0.85, position: [0.6, 2.6, 4.8], target: [0, 2.6, 0] },
-  { p: 1, position: [0, 4.6, 3.4], target: [0, 4.7, 0] },
-];
-
-const lerp3 = (a: Vec3, b: Vec3, t: number): Vec3 => [
-  a[0] + (b[0] - a[0]) * t,
-  a[1] + (b[1] - a[1]) * t,
-  a[2] + (b[2] - a[2]) * t,
-];
-
-export function cameraPose(p: number): { position: Vec3; target: Vec3 } {
-  const q = clamp01(p);
-  const last = CAMERA_KEYS[CAMERA_KEYS.length - 1];
-  if (q >= last.p) return { position: [...last.position], target: [...last.target] };
-  let i = 0;
-  while (q >= CAMERA_KEYS[i + 1].p) i++;
-  const a = CAMERA_KEYS[i];
-  const b = CAMERA_KEYS[i + 1];
-  const t = smoothstep((q - a.p) / (b.p - a.p));
-  if (t === 0) return { position: [...a.position], target: [...a.target] };
-  return { position: lerp3(a.position, b.position, t), target: lerp3(a.target, b.target, t) };
+/** The camera pose for story progress p: the intro shot, then the ride down the street (route.ts). */
+export function cameraPose(p: number): Pose {
+  return ridePose(p);
 }
 
-/** Reduced motion: one still camera pose per section (the intro keeps the opening shot), no dolly. */
-export function reducedCameraPose(p: number): { position: Vec3; target: Vec3 } {
+/** Reduced motion: one still camera pose per section (the intro keeps the opening shot), no ride. */
+export function reducedCameraPose(p: number): Pose {
   const s = activeSection(p);
-  return cameraPose(s ? sectionCenter(s) : 0);
+  return s ? stationPose(s) : ridePose(0);
 }
 
 /**

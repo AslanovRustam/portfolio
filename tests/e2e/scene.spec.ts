@@ -29,15 +29,14 @@ for (const q of ['high', 'medium', 'low'] as const) {
   });
 }
 
-test('camera follows the choreography', async ({ page }) => {
+test('the camera rides to the end of the street', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
   await scrollTo(page, 1);
-  await expect
-    .poll(() => page.evaluate(() => (window.__portfolio.probe('camera') as { position: number[] }).position[1]), {
-      timeout: 10_000,
-    })
-    .toBeCloseTo(4.6, 1);
+  const camera = () => page.evaluate(() => (window.__portfolio.probe('camera') as { position: number[] }).position);
+  // the end of the ride (route.ts): before the billboard, far down the road from the pole
+  await expect.poll(async () => (await camera())[2], { timeout: 10_000 }).toBeCloseTo(-44, 0);
+  expect((await camera())[1]).toBeCloseTo(4.2, 1);
 });
 
 test('the street gets wet as the scene renders', async ({ page }) => {

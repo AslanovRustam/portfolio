@@ -12,6 +12,7 @@ import {
   revealProgress,
   sectionCenter,
 } from '@/experience/choreography';
+import { stationPose } from '@/experience/route';
 import { experienceStore } from '@/experience/store';
 
 const close = (a: number, b: number, eps = 1e-6) => expect(Math.abs(a - b)).toBeLessThan(eps);
@@ -70,11 +71,13 @@ it('pole yaw: a three-quarter turn in the intro (no sign edge-on on the blueprin
 it('camera pose hits its end keys and is continuous', () => {
   // the blueprint is seen from a raised three-quarter angle, like an axonometric drawing
   expect(cameraPose(0)).toEqual({ position: [2.2, 3.6, 9.2], target: [0, 2.7, 0] });
-  expect(cameraPose(1)).toEqual({ position: [0, 4.6, 3.4], target: [0, 4.7, 0] });
+  // the ride ends before the billboard at the end of the street (route.ts)
+  expect(cameraPose(1)).toEqual({ position: [0, 4.2, -44], target: [0, 6.8, -62] });
+  // the ride covers ~50 m: a thousandth of the scroll may move it up to 0.25 m, never a jump (route.test.ts)
   for (let p = 0; p < 1; p += 0.001) {
     const a = cameraPose(p).position;
     const b = cameraPose(p + 0.001).position;
-    expect(Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2])).toBeLessThan(0.05);
+    expect(Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2])).toBeLessThanOrEqual(0.25);
   }
 });
 
@@ -109,9 +112,10 @@ it('reduced motion: the pole jumps from sign to sign, never turns with scroll', 
 
 it('reduced motion: the camera holds one pose per section', () => {
   expect(reducedCameraPose(0.05)).toEqual(cameraPose(0));
-  expect(reducedCameraPose(0.3)).toEqual(cameraPose(0.26));
-  expect(reducedCameraPose(0.36)).toEqual(cameraPose(0.26));
-  expect(reducedCameraPose(0.95)).toEqual(cameraPose(0.9));
+  expect(reducedCameraPose(0.3)).toEqual(stationPose('work'));
+  expect(reducedCameraPose(0.36)).toEqual(stationPose('work'));
+  expect(reducedCameraPose(0.5)).toEqual(stationPose('about'));
+  expect(reducedCameraPose(0.95)).toEqual(stationPose('contact'));
 });
 
 it('an instant damp (reduced motion) lands on the target even on a zero-length frame', () => {
