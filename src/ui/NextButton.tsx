@@ -10,14 +10,14 @@ import { scrollToSection } from '@/scroll/SmoothScroll';
 import { flicker, neonStyle } from './neon';
 
 /** Fixed HTML at the bottom of the screen that the button must never cover. */
-const OBSTACLES = ['header[data-hero]', 'section#work'];
+const OBSTACLES = ['header[data-hero]', 'section#work', 'section#stack'];
 const GAP = 12;
 
 /**
  * "Next: About ↓" — one tube at the bottom of the screen that names the way on and takes the visitor
  * there; it is also the hint that the page scrolls. It wears the colour of the section it leads to (the
- * blueprint's blue on the first screen), rises above the title block and the Work caption when they
- * share its column, and is gone at Contact (the road ends) and over an open case.
+ * blueprint's blue on the first screen), rises above the title block and the Work and Stack captions when
+ * they share its column, and is gone at Contact (the road ends) and over an open case.
  */
 export default function NextButton({ prefix, labels }: { prefix: string; labels: Record<SectionId, string> }) {
   const next = useExperience((s) => nextSection(s.progress));

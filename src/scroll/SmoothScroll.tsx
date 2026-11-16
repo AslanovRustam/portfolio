@@ -9,6 +9,7 @@ import { scrollFromStory, storyFromScroll } from '@/experience/journey';
 import { takePlace } from '@/experience/place';
 import type { SectionId } from '@/experience/signs';
 import { experienceStore } from '@/experience/store';
+import { stackSnapTarget } from '@/experience/stackStops';
 import { parseHash, sectionTarget, snapTarget } from '@/experience/workStops';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -159,7 +160,7 @@ export default function SmoothScroll() {
     ScrollTrigger.addEventListener('refreshInit', onRefreshInit);
     ScrollTrigger.addEventListener('refresh', onRefresh);
 
-    // Inside Work a scroll that comes to rest between two projects settles on the nearest one. Only the
+    // Inside Work (and among Stack's signs) a scroll that comes to rest between two stops settles on one. Only the
     // visitor's own scrolling counts: any wheel, touch or key hands control back from a site-made scroll.
     let snapTimer: ReturnType<typeof setTimeout> | undefined;
     const settle = () => {
@@ -168,7 +169,8 @@ export default function SmoothScroll() {
         snapTimer = setTimeout(settle, SNAP_IDLE_MS); // still gliding or coasting
         return;
       }
-      const target = snapTarget(experienceStore.getState().progress, gestureFrom ?? undefined);
+      const q = experienceStore.getState().progress;
+      const target = snapTarget(q, gestureFrom ?? undefined) ?? stackSnapTarget(q, gestureFrom ?? undefined);
       gestureFrom = null;
       const y = target === null ? null : yForStory(target);
       if (y === null) return;

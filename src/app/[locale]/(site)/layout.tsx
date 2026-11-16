@@ -45,16 +45,11 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         <SmoothScroll />
         <HooksMount />
         <Hero name={t('hero.name')} role={t('hero.role')} line={t('hero.line')} />
-        {/* the scroll track the whole journey is measured against; the sections' text rides along it */}
+        {/* the scroll track the whole journey is measured against; About's and Contact's text rides along it */}
         <JourneyTrack
           about={
             <SectionFlow id="about" labelledBy="about-title">
               <AboutSection />
-            </SectionFlow>
-          }
-          stack={
-            <SectionFlow id="stack" labelledBy="stack-title" wide>
-              <StackSection />
             </SectionFlow>
           }
           contact={
@@ -66,6 +61,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         <WorkPanel>
           <WorkSection />
         </WorkPanel>
+        <StackSection />
       </main>
       <ScrollAccent />
       <ProgressTube />

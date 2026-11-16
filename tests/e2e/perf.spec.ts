@@ -3,11 +3,11 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { gotoScene, scrollTo, stop, waitReady } from './helpers';
+import { gotoScene, scrollTo, stackStop, stop, waitReady } from './helpers';
 
 /** PERF_BLUR=1 measures the boxes with their glass blurred (the blur decision in Plan 2c, Task 10). */
 async function maybeBlur(page: Page) {
-  if (process.env.PERF_BLUR) await page.addStyleTag({ content: '.nbox, .blade { backdrop-filter: blur(5px); }' });
+  if (process.env.PERF_BLUR) await page.addStyleTag({ content: '.nbox { backdrop-filter: blur(5px); }' });
 }
 
 test('scrolling the whole journey keeps at least 30 fps', async ({ page }) => {
@@ -148,4 +148,38 @@ test('reading About with its boxes on screen keeps at least 30 fps', async ({ pa
   writeFileSync('test-results/perf-about.json', JSON.stringify(report, null, 2));
   console.log('perf-about', JSON.stringify(report));
   expect(medianMs).toBeLessThanOrEqual(33.4);
+});
+
+test('standing under a Stack sign keeps at least 30 fps', async ({ page }) => {
+  test.setTimeout(120_000);
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, stackStop(0));
+  await page.waitForTimeout(4000);
+  const frames = await page.evaluate(
+    () =>
+      new Promise<number[]>((resolve) => {
+        const out: number[] = [];
+        let last = performance.now();
+        const end = last + 3000;
+        const tick = (t: number) => {
+          out.push(t - last);
+          last = t;
+          if (t < end) requestAnimationFrame(tick);
+          else resolve(out.slice(3));
+        };
+        requestAnimationFrame(tick);
+      }),
+  );
+  const sorted = [...frames].sort((a, b) => a - b);
+  const report = {
+    tier: await page.evaluate(() => window.__portfolio.state().tier),
+    medianMs: +sorted[Math.floor(sorted.length / 2)].toFixed(2),
+    p95Ms: +sorted[Math.floor(sorted.length * 0.95)].toFixed(2),
+    frames: frames.length,
+  };
+  mkdirSync('test-results', { recursive: true });
+  writeFileSync('test-results/perf-stack.json', JSON.stringify(report, null, 2));
+  console.log('perf-stack', JSON.stringify(report));
+  expect(report.medianMs).toBeLessThanOrEqual(33.4);
 });

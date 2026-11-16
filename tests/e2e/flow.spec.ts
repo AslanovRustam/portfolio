@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoScene, HOLD, innerScrollers, progress, scrollTo, stop, switchLanguage, waitReady } from './helpers';
+import { gotoScene, HOLD, innerScrollers, progress, scrollTo, stackStop, stop, switchLanguage, waitReady } from './helpers';
 
 const firstBox = (page: Page, id: string) => page.locator(`#${id} [data-flow] > *`).first();
 const yaw = (page: Page) => page.evaluate(() => window.__portfolio.probe('poleYaw') as number);
@@ -12,7 +12,7 @@ test('no inner scroll anywhere on the home page, in every language', async ({ pa
   for (const l of ['en', 'ru', 'uk']) {
     await gotoScene(page, `/${l}`);
     await waitReady(page);
-    for (const p of [stop(3), 0.48, 0.695, 0.9, 1]) {
+    for (const p of [stop(3), 0.48, stackStop(2), 0.9, 1]) {
       await scrollTo(page, p);
       expect(await innerScrollers(page), `${l} @ ${p}`).toEqual([]);
     }
@@ -151,39 +151,34 @@ test('the language switch keeps the place inside the section', async ({ page }) 
 test('without WebGL every section is still there', async ({ page }) => {
   await page.goto('/en?webgl=0');
   await page.waitForFunction(() => !!window.__portfolio);
-  for (const id of ['about', 'stack', 'contact']) {
+  for (const id of ['about', 'contact']) {
     const box = firstBox(page, id);
     await box.scrollIntoViewIfNeeded();
     await expect(box).toBeInViewport();
   }
+  // Stack is a caption fixed at the bottom of the screen while its stretch of the page goes by
+  await page.evaluate((p) => window.__portfolio.scrollToProgress(p, true), stackStop(1));
+  await expect(page.locator('section#stack')).toBeInViewport();
+  await expect(page.locator('section#stack').getByRole('heading', { level: 3 })).toHaveText('State');
 });
 
-test('About boxes and Stack blades swing in as they reach the screen', async ({ page }) => {
+test("About's bills swing in as they reach the screen", async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
-  await scrollTo(page, HOLD.stack[0] + 0.005);
+  await scrollTo(page, HOLD.about[0] + 0.005);
   const vh = page.viewportSize()!.height;
+  const bills = page.locator('#about [data-flow] > .paper-bill');
   const state = () =>
-    page.locator('#stack .blade').evaluateAll((els, h) => els.map((el) => ({ swing: (el as HTMLElement).dataset.swing, top: el.getBoundingClientRect().top, below: el.getBoundingClientRect().top > h })), vh);
-  await expect.poll(async () => (await state()).filter((b) => !b.below && b.top > 0).every((b) => b.swing === 'in')).toBe(true);
+    bills.evaluateAll((els, h) => els.map((el) => ({ swing: (el as HTMLElement).dataset.swing, top: el.getBoundingClientRect().top, below: el.getBoundingClientRect().top > h })), vh);
   const hidden = (await state()).filter((b) => b.below);
   expect(hidden.length).toBeGreaterThan(0);
   expect(hidden.every((b) => b.swing === 'out')).toBe(true);
-  const name = await page.locator('#stack .blade[data-swing="in"]').first().evaluate((el) => getComputedStyle(el).animationName);
-  expect(name).toBe('swing-in');
-  // further down, the blades that were below have swung in too
-  await scrollTo(page, HOLD.stack[0] + 0.05);
+  // further on, the bills that were below have reached the screen and swung in
+  await scrollTo(page, HOLD.about[0] + 0.06);
   await expect.poll(async () => (await state()).filter((b) => !b.below && b.top > 0).every((b) => b.swing === 'in')).toBe(true);
-  await scrollTo(page, 0.43);
-  await expect.poll(() => page.locator('#about .paper-bill[data-swing="in"]').count()).toBeGreaterThan(0);
-});
-
-test('reduced motion: section boxes are simply there', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await gotoScene(page);
-  await scrollTo(page, HOLD.stack[0] + 0.005);
-  const opacities = await page.locator('#stack .blade').evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity));
-  expect(opacities.every((o) => o === '1')).toBe(true);
+  expect((await state()).filter((b) => !b.below && b.top > 0).length).toBeGreaterThan(0);
+  const name = await page.locator('#about .paper-bill[data-swing="in"]').first().evaluate((el) => getComputedStyle(el).animationName);
+  expect(name).toBe('swing-in');
 });
 
 // ── the About poster (Plan 3, Task 6) ─────────────────────────────────────────────────────────

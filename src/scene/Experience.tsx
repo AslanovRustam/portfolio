@@ -9,6 +9,7 @@ import { experienceStore, useExperience } from '@/experience/store';
 import CameraRig from './CameraRig';
 import Lighting from './Lighting';
 import Shop from './shop/Shop';
+import Gantry from './stack/Gantry';
 import Street from './street/Street';
 import Pole from './pole/Pole';
 import QualityGovernor from './QualityGovernor';
@@ -65,6 +66,7 @@ export default function Experience({ onContextLost }: { onContextLost?: () => vo
           <Lighting />
           <Street />
           <Shop />
+          <Gantry />
           <BlueprintUnlessReduced />
           <Pole>
             <PoleStickers />

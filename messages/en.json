@@ -89,6 +89,7 @@
   "stack": {
     "title": "Stack",
     "lead": "The tools I work with. Point at one and its sticker lights up on the pole.",
+    "pager": "Categories",
     "groups": {
       "frontend": "Front-end",
       "state": "State",

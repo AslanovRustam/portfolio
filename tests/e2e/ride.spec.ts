@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoScene, HOLD, progress, scrollTo, stop, waitReady } from './helpers';
+import { gotoScene, progress, scrollTo, stackStop, stop, waitReady } from './helpers';
 
 interface PoleProbe {
   /** the pole's middle on screen, NDC */
@@ -56,7 +56,8 @@ test('its signs still lead to their sections', async ({ page }) => {
   // click where the sign is now (the pole may still be settling)
   const { x, y } = (await page.evaluate(() => window.__portfolio.probe('signScreen:stack'))) as { x: number; y: number };
   await page.mouse.click(x, y);
-  await expect.poll(() => progress(page), { timeout: 6000 }).toBeCloseTo(HOLD.stack[0], 2);
+  // Stack opens on its first sign
+  await expect.poll(() => progress(page), { timeout: 6000 }).toBeCloseTo(stackStop(0), 2);
 });
 
 test('in Work the pole steps aside', async ({ page }) => {

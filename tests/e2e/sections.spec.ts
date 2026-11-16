@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import en from '../../messages/en.json';
-import { gotoScene, HOLD, progress, scrollTo, stop, swungIn, switchLanguage, waitReady } from './helpers';
+import { gotoScene, HOLD, progress, scrollTo, stackStop, stop, switchLanguage, waitReady } from './helpers';
 
 test('a case URL renders inside the same experience', async ({ page }) => {
   // canvas persistence across client navigation is pinned in work.spec, once cards exist to click
@@ -73,7 +73,7 @@ test('HTML over a sign swallows the pointer: no sign hover, no sign click', asyn
 test('a hash deep link opens its section, also without WebGL', async ({ page }) => {
   await page.goto('/en?webgl=0#stack');
   await page.waitForFunction(() => !!window.__portfolio);
-  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(HOLD.stack[0], 2);
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(stackStop(0), 2);
   await expect(page.locator('section#stack')).toBeVisible();
 });
 
@@ -126,12 +126,11 @@ test('About lists the work path and, apart, the education', async ({ page }) => 
   await expect(school.nth(1)).toContainText(/2002–2007.*Popov Odesa National Academy of Telecommunications/);
 });
 
-test('hovering a stack chip lights its sticker on the pole', async ({ page }) => {
+test('hovering a tool in the Stack caption lights its sticker on the pole', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
-  await scrollTo(page, 0.695);
+  await scrollTo(page, stackStop(0));
   const react = page.locator('section#stack').getByText('React', { exact: true });
-  await swungIn(react);
   await react.hover();
   await expect.poll(() => page.evaluate(() => window.__portfolio.probe('stickerGlow'))).toBe('react');
   await page.mouse.move(5, 5);

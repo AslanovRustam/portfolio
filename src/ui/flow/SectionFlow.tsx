@@ -10,12 +10,10 @@ import type { HoldId } from '@/experience/journey';
 export default function SectionFlow({
   id,
   labelledBy,
-  wide = false,
   children,
 }: {
   id: HoldId;
   labelledBy: string;
-  wide?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -27,9 +25,7 @@ export default function SectionFlow({
       aria-labelledby={labelledBy}
       className="flow-piece pointer-events-none"
     >
-      <div data-flow className={wide ? 'flow-wide' : undefined}>
-        {children}
-      </div>
+      <div data-flow>{children}</div>
     </section>
   );
 }

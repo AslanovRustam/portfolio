@@ -6,42 +6,13 @@ import {
   AdditiveBlending,
   BufferAttribute,
   BufferGeometry,
-  Color,
   type InstancedMesh,
   type MeshStandardMaterial,
   Object3D,
   ShaderMaterial,
 } from 'three';
 import { globalReveal } from '../reveal/registry';
-import { mulberry32 } from './random';
-
-const PALETTE = ['#ffcf8a', '#ffb36b', '#9fd8ff', '#ff3d6e', '#35e0ff', '#ff7a1a', '#fff1d6'].map((c) => new Color(c));
-
-function layout(seed: number) {
-  const rand = mulberry32(seed);
-  const blocks: { x: number; z: number; w: number; d: number; h: number }[] = [];
-  let x = -60;
-  while (x < 60) {
-    const w = 5 + rand() * 9;
-    if (Math.abs(x + w / 2) > 6) blocks.push({ x: x + w / 2, z: -34 - rand() * 18, w, d: 8, h: 10 + rand() * 30 });
-    x += w + 0.5 + rand() * 2;
-  }
-  // defocused city lights: windows, shop neons, far headlights at street level
-  const n = 140;
-  const pos = new Float32Array(n * 3);
-  const col = new Float32Array(n * 3);
-  const size = new Float32Array(n);
-  const phase = new Float32Array(n);
-  for (let i = 0; i < n; i++) {
-    const street = rand() < 0.25;
-    pos.set([(rand() - 0.5) * 70, street ? 0.4 + rand() * 2.5 : 2 + rand() * 24, -20 - rand() * 34], i * 3);
-    const c = PALETTE[Math.floor(rand() * PALETTE.length)];
-    col.set([c.r, c.g, c.b], i * 3);
-    size[i] = 0.35 + rand() * (street ? 1.1 : 0.7);
-    phase[i] = rand() * 6.283;
-  }
-  return { blocks, bokeh: { pos, col, size, phase } };
-}
+import { skylineLayout } from './skylineLayout';
 
 const bokehVertex = /* glsl */ `
   uniform float uTime;
@@ -77,7 +48,7 @@ const bokehFragment = /* glsl */ `
 
 /** Barely-there blocks far away and a defocused field of city lights: depth and bokeh, no clutter. */
 export default function Skyline() {
-  const { blocks, bokeh } = useMemo(() => layout(7), []);
+  const { blocks, bokeh } = useMemo(() => skylineLayout(7), []);
   const mesh = useRef<InstancedMesh>(null);
   const blockMat = useRef<MeshStandardMaterial>(null);
 

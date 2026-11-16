@@ -77,6 +77,7 @@ test('focus never hides under the header: the page keeps room for it when it scr
 
 test('the name flickers by words and letters', async ({ page }) => {
   await gotoScene(page);
+  await waitReady(page); // the header comes once the street is there
   const name = page.locator('header[data-ui]').getByRole('link', { name: 'Rustam Aslanov', exact: true });
   await expect(name).toBeVisible();
   const words = name.locator('.neon-word');

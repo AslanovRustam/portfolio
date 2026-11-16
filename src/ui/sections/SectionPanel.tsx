@@ -12,13 +12,15 @@ const PLACE = {
   bottom: 'wide:inset-x-6 wide:bottom-6',
   // the caption beside the TV wall: a bottom sheet on phones, a box in the lower-left corner on wide screens
   caption: 'wide:inset-x-auto wide:left-6 wide:bottom-6 wide:w-[min(34rem,40vw)]',
+  // the caption under the gantry's sign: the same, wider and lower, so it stays below the sign it captions
+  sign: 'wide:inset-x-auto wide:left-6 wide:bottom-6 wide:w-[min(46rem,56vw)]',
 } as const;
 
 /**
- * Work's HTML: a neon box fixed on the screen while the camera walks the TV wall, gone (hidden and inert)
- * outside Work. It never scrolls inside: what does not fit is in the case. Presence comes from the store
- * by subscription, so scrolling never re-renders React. (About, Stack and Contact ride the page flow
- * instead: src/ui/flow/SectionFlow.tsx.)
+ * Work's and Stack's HTML: a neon box fixed on the screen while the camera walks the TV wall or the signs,
+ * gone (hidden and inert) outside its section. It never scrolls inside. Presence comes from the store by
+ * subscription, so scrolling never re-renders React. (About and Contact ride the page flow instead:
+ * src/ui/flow/SectionFlow.tsx.)
  */
 export default function SectionPanel({
   id,

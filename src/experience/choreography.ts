@@ -1,47 +1,19 @@
-import { ridePose, stationPose } from './route';
+import { ridePose, stackSignPose, stationPose } from './route';
+import { stackStopAt } from './stackStops';
+import { activeSection, INTRO_END, SECTIONS, TURN } from './sections';
 import { signById, type SectionId } from './signs';
+
+export { activeSection, holdWindow, type HoldId, INTRO_END, sectionCenter, SECTIONS, TURN } from './sections';
 import type { LightState } from './store';
 
-/** End of the blueprint → render intro (spec §5). */
-export const INTRO_END = 0.15;
 /**
  * Where the intro turn starts: a three-quarter view, so on the blueprint every sign is seen at an angle
  * with its thickness showing (from π the side signs were edge-on and read as flat slivers).
  */
 export const INTRO_YAW = 0.75 * Math.PI;
-/** Width of the turn window around each section boundary. */
-export const TURN = 0.05;
-
-export const SECTIONS: readonly { id: SectionId; start: number; end: number; center: number }[] = [
-  { id: 'work', start: 0.15, end: 0.37, center: 0.26 },
-  { id: 'about', start: 0.37, end: 0.59, center: 0.48 },
-  { id: 'stack', start: 0.59, end: 0.8, center: 0.695 },
-  { id: 'contact', start: 0.8, end: 1, center: 0.9 },
-];
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
-
-export type HoldId = 'about' | 'stack' | 'contact';
-
-/** The story stretch where a section's text is on screen: from the end of the turn onto its sign to the start of the next. */
-export function holdWindow(id: HoldId): [number, number] {
-  const s = SECTIONS.find((x) => x.id === id);
-  if (!s) throw new Error(`unknown section ${id}`);
-  return [s.start + TURN / 2, s.end >= 1 ? 1 : s.end - TURN / 2];
-}
-
-export function activeSection(p: number): SectionId | null {
-  if (p < INTRO_END) return null;
-  for (const s of SECTIONS) if (p < s.end) return s.id;
-  return 'contact';
-}
-
-export function sectionCenter(id: SectionId): number {
-  const s = SECTIONS.find((x) => x.id === id);
-  if (!s) throw new Error(`unknown section ${id}`);
-  return s.center;
-}
 
 export function lightState(p: number): LightState {
   if (p < 0.02) return 'off';
@@ -97,9 +69,13 @@ export function cameraPose(p: number): Pose {
   return ridePose(p);
 }
 
-/** Reduced motion: one still camera pose per section (the intro keeps the opening shot), no ride. */
+/**
+ * Reduced motion: one still camera pose per section (the intro keeps the opening shot), no ride; in Stack it
+ * stands under the sign the caption shows, jumping from one to the next.
+ */
 export function reducedCameraPose(p: number): Pose {
   const s = activeSection(p);
+  if (s === 'stack') return stackSignPose(stackStopAt(p));
   return s ? stationPose(s) : ridePose(0);
 }
 

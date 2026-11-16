@@ -1,4 +1,4 @@
-import { SECTIONS } from './choreography';
+import { SECTIONS } from './sections';
 import type { SectionId } from './signs';
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));

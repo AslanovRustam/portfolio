@@ -4,7 +4,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { CylinderGeometry, type Group, Vector3 } from 'three';
 import { damp, lightState, poleYaw, reducedYaw } from '@/experience/choreography';
-import { type PoleMode, poleWorldPose } from '@/experience/poleRide';
+import { type PoleMode, poleWorldPose, stackPark } from '@/experience/poleRide';
 import { POLE, SIGNS } from '@/experience/signs';
 import { experienceStore } from '@/experience/store';
 import { registerProbe } from '@/dev/sceneProbe';
@@ -90,7 +90,7 @@ export default function Pole({ children }: { children?: ReactNode }) {
     g.rotation.y = reducedMotion ? reducedYaw(progress) : damp(g.rotation.y, poleYaw(progress), 2.5, dt);
     // where the camera is heading, and where the pole rides beside it
     const cam = desiredCameraPose(progress, aspect, reducedMotion);
-    const want = poleWorldPose(progress, cam, aspect, wallWeight(progress, reducedMotion));
+    const want = poleWorldPose(progress, cam, aspect, Math.max(wallWeight(progress, reducedMotion), stackPark(progress, aspect)));
     mode.current = want.mode;
     const k = reducedMotion ? Infinity : RIDE_LAMBDA;
     r.position.set(

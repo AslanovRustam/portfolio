@@ -1,4 +1,5 @@
 import type { Pose, Vec3 } from './choreography';
+import { STACK_FROM, STACK_STOPS, STACK_TO, stackPosition } from './stackStops';
 
 /**
  * The places on the street the ride passes (spec §5), in metres; the road runs from the pole (z = 0) away
@@ -11,9 +12,37 @@ import type { Pose, Vec3 } from './choreography';
 export const STATIONS = {
   shop: { x: -6.6, z0: 0, z1: -11.8 },
   pole: { x: 1.4, z: -30 },
-  gantry: { z: -40 },
+  gantry: { z: -40, y: 5.6, signW: 2.4, signH: 1.92, gap: 0.25 },
   billboard: { z: -62, y: 7 },
 } as const;
+
+/** The centre x of sign i (0..5) on the gantry, left to right across the road. */
+export function gantrySignX(i: number): number {
+  const { signW, gap } = STATIONS.gantry;
+  return (i - (STACK_STOPS - 1) / 2) * (signW + gap);
+}
+
+/**
+ * Where the camera reads the signs from: 7 m short of the gantry, looking up at them, a little below the
+ * sign's middle, so the sign sits in the upper part of the frame, clear of its caption in the corner below.
+ */
+const STACK_Z: readonly [number, number] = [STATIONS.gantry.z + 7, STATIONS.gantry.z + 6.9];
+const STACK_EYE = 3.4;
+const STACK_LOOK = STATIONS.gantry.y - 0.7;
+
+/** The camera before sign position s (0..5, fractional between signs). */
+function stackPose(s: number): Pose {
+  const i = Math.min(Math.floor(s), STACK_STOPS - 2);
+  const f = s - i;
+  const x = gantrySignX(i) + (gantrySignX(i + 1) - gantrySignX(i)) * f;
+  const z = STACK_Z[0] + (STACK_Z[1] - STACK_Z[0]) * (s / (STACK_STOPS - 1));
+  return { position: [x, STACK_EYE, z], target: [x, STACK_LOOK, STATIONS.gantry.z] };
+}
+
+/** The camera at rest before sign i (0..5): where reduced motion stands while the caption shows that sign. */
+export function stackSignPose(i: number): Pose {
+  return stackPose(Math.min(STACK_STOPS - 1, Math.max(0, Math.round(i))));
+}
 
 /** The intro's two keys: the blueprint from a raised three-quarter angle, then the pole (unchanged from the orbit). */
 const INTRO: readonly { p: number; position: Vec3; target: Vec3 }[] = [
@@ -34,9 +63,10 @@ const RIDE: readonly { p: number; position: Vec3; target: Vec3 }[] = [
   { p: 0.4, position: [1.4, 2.0, -25.5], target: [1.4, 2.0, -30] },
   { p: 0.48, position: [1.4, 3.2, -25.6], target: [1.4, 3.2, -30] },
   { p: 0.565, position: [1.4, 4.4, -25.7], target: [1.4, 4.4, -30] },
-  { p: 0.59, position: [0.8, 3.8, -28], target: [0.2, 5.2, -40] },
-  { p: 0.62, position: [0, 3.4, -33], target: [0, 5.4, -40] },
-  { p: 0.775, position: [0, 3.4, -33.1], target: [0, 5.4, -40] },
+  { p: 0.59, position: [-1.5, 3.7, -29], target: [-4.5, 5.3, -40] },
+  // the first and the last sign (stackPose(0), stackPose(5)); in between, stackPose stops at every sign
+  { p: STACK_FROM, ...stackPose(0) },
+  { p: STACK_TO, ...stackPose(STACK_STOPS - 1) },
   // past the gantry, the billboard far ahead: a big panel, read from under 20 m away
   { p: 0.85, position: [0, 4.0, -42], target: [0, 6.6, -62] },
   { p: 1, position: [0, 4.2, -44], target: [0, 6.8, -62] },
@@ -99,11 +129,12 @@ export function ridePose(p: number): Pose {
     const lerp = (a: Vec3, b: Vec3): Vec3 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
     return { position: lerp(INTRO[0].position, INTRO[1].position), target: lerp(INTRO[0].target, INTRO[1].target) };
   }
+  if (q > STACK_FROM && q < STACK_TO) return stackPose(stackPosition(q));
   const at = (tr: [number[], number[], number[]]): Vec3 => [monotone(xs, tr[0], q), monotone(xs, tr[1], q), monotone(xs, tr[2], q)];
   return { position: at(POS), target: at(TGT) };
 }
 
-/** Reduced motion: one still pose per section, looking at its place on the street. */
+/** Reduced motion: one still pose per section, looking at its place on the street (Stack: its first sign). */
 export function stationPose(id: 'work' | 'about' | 'stack' | 'contact'): Pose {
   switch (id) {
     case 'work':
@@ -111,7 +142,7 @@ export function stationPose(id: 'work' | 'about' | 'stack' | 'contact'): Pose {
     case 'about':
       return ridePose(0.48);
     case 'stack':
-      return ridePose(0.7);
+      return stackSignPose(0);
     case 'contact':
       return ridePose(1);
   }

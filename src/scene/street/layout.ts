@@ -1,8 +1,11 @@
+import { STATIONS } from '@/experience/route';
 import { mulberry32 } from './random';
 
 /** The road behind the pole: carriageway ±half, sidewalks beyond, running away from the camera. */
 export const ROAD = { half: 4, sidewalk: 2.6, zNear: -3, zFar: -80, kerb: 0.15 } as const;
 export const LAMP_HEIGHT = 6;
+/** no lamp within this many metres of the sign gantry (along the road) */
+const GANTRY_GAP = 3;
 /** how far the arm carries the luminaire out over the road */
 export const ARM_REACH = 1.5;
 /** light-emitting panel under the luminaire */
@@ -35,7 +38,8 @@ export function streetLayout(seed: number): { lamps: Lamp[] } {
   }
   // three failing lamps, spread along the street (not the nearest one: it would dominate the frame)
   for (const k of [2, 5, 7]) if (lamps[k]) lamps[k].flicker = true;
-  return { lamps };
+  // none just before or behind the sign gantry: it would stand across a sign (the gantry lights itself)
+  return { lamps: lamps.filter((l) => Math.abs(l.z - STATIONS.gantry.z) > GANTRY_GAP) };
 }
 
 const hash = (n: number) => {

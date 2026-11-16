@@ -1,7 +1,8 @@
 import { PerspectiveCamera, Vector3 } from 'three';
 import { expect, it } from 'vitest';
 import type { Pose, Vec3 } from '@/experience/choreography';
-import { poleWorldPose } from '@/experience/poleRide';
+import { poleWorldPose, stackPark } from '@/experience/poleRide';
+import { STACK_STOPS, stackStopProgress } from '@/experience/stackStops';
 import { ridePose, STATIONS } from '@/experience/route';
 
 const LAPTOP = 16 / 9;
@@ -97,4 +98,14 @@ it('in About it stands at its spot in the middle of the frame, faced to the came
 it('its signs turn with the camera: a camera looking left down the street turns them a quarter', () => {
   const cam: Pose = { position: [0, 2.5, -10], target: [-10, 2.5, -10] };
   expect(poleWorldPose(0.7, cam, LAPTOP).facing).toBeCloseTo(Math.PI / 2, 6);
+});
+
+it('on a phone the pole steps out of the frame at the Stack signs (a sign fills the width); on a laptop it rides on', () => {
+  for (let i = 0; i < STACK_STOPS; i++) {
+    expect(stackPark(stackStopProgress(i), PHONE)).toBe(1);
+    expect(stackPark(stackStopProgress(i), LAPTOP)).toBe(0);
+  }
+  for (const p of [0.3, 0.5, 0.58, 0.81, 0.95]) expect(stackPark(p, PHONE), `p ${p}`).toBe(0);
+  // it eases out and back, never jumps
+  for (let p = 0.55; p < 0.85; p += 0.0005) expect(Math.abs(stackPark(p + 0.0005, PHONE) - stackPark(p, PHONE))).toBeLessThan(0.1);
 });

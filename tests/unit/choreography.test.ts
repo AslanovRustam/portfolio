@@ -13,6 +13,7 @@ import {
   sectionCenter,
 } from '@/experience/choreography';
 import { stationPose } from '@/experience/route';
+import { STACK_STOPS, stackStopProgress } from '@/experience/stackStops';
 import { experienceStore } from '@/experience/store';
 
 const close = (a: number, b: number, eps = 1e-6) => expect(Math.abs(a - b)).toBeLessThan(eps);
@@ -116,6 +117,22 @@ it('reduced motion: the camera holds one pose per section', () => {
   expect(reducedCameraPose(0.36)).toEqual(stationPose('work'));
   expect(reducedCameraPose(0.5)).toEqual(stationPose('about'));
   expect(reducedCameraPose(0.95)).toEqual(stationPose('contact'));
+});
+
+it('reduced motion: in Stack the camera stands still under each sign in turn', () => {
+  const gap = stackStopProgress(1) - stackStopProgress(0);
+  for (let i = 0; i < STACK_STOPS; i++) {
+    const q = stackStopProgress(i);
+    const at = reducedCameraPose(q);
+    const ride = cameraPose(q);
+    for (let c = 0; c < 3; c++) {
+      close(at.position[c], ride.position[c]);
+      close(at.target[c], ride.target[c]);
+    }
+    // a little either side of the stop it has not moved: no ride between the signs
+    expect(reducedCameraPose(q + gap * 0.3)).toEqual(at);
+    if (i > 0) expect(reducedCameraPose(q - gap * 0.3)).toEqual(at);
+  }
 });
 
 it('an instant damp (reduced motion) lands on the target even on a zero-length frame', () => {

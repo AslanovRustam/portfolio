@@ -10,12 +10,12 @@ const spacer = (id: PieceId) => (
 );
 
 /**
- * The scroll track the whole journey is measured against: the intro, the Work stops and the turns as fixed
- * stretches, and the three sections whose text rides past in between. Whenever a section's height changes
+ * The scroll track the whole journey is measured against: the intro, the Work and Stack stops and the turns
+ * as fixed stretches, and the two sections whose text rides past in between (About, Contact). Whenever a section's height changes
  * (fonts, language, width) the pieces are measured again and ScrollTrigger re-reads them; SmoothScroll
  * keeps the visitor at the same story progress across that refresh.
  */
-export default function JourneyTrack({ about, stack, contact }: { about: ReactNode; stack: ReactNode; contact: ReactNode }) {
+export default function JourneyTrack({ about, contact }: { about: ReactNode; contact: ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,14 +44,14 @@ export default function JourneyTrack({ about, stack, contact }: { about: ReactNo
     ScrollTrigger.addEventListener('refreshInit', measure);
     const unprobe = registerProbe('journey', () => [...journeyLengths()]);
 
-    // About's boxes and Stack's blades swing in as they reach the screen (and again after leaving it)
+    // About's poster and bills swing in as they reach the screen (and again after leaving it)
     const swing = new IntersectionObserver(
       (entries) => {
         for (const e of entries) (e.target as HTMLElement).dataset.swing = e.isIntersecting ? 'in' : 'out';
       },
       { rootMargin: '0px 0px -8% 0px' },
     );
-    for (const t of el.querySelectorAll('#about [data-flow] > .paper-poster, #about [data-flow] > .paper-bill, #stack [data-flow] > .nbox, #stack .blade')) swing.observe(t);
+    for (const t of el.querySelectorAll('#about [data-flow] > .paper-poster, #about [data-flow] > .paper-bill')) swing.observe(t);
 
     return () => {
       alive = false;
@@ -69,7 +69,7 @@ export default function JourneyTrack({ about, stack, contact }: { about: ReactNo
       {spacer('toAbout')}
       {about}
       {spacer('toStack')}
-      {stack}
+      {spacer('stack')}
       {spacer('toContact')}
       {contact}
     </div>

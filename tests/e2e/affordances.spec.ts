@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import en from '../../messages/en.json';
-import { gotoScene, HOLD, progress, scrollTo, stop, waitReady } from './helpers';
+import { gotoScene, HOLD, progress, scrollTo, stackStop, stop, waitReady } from './helpers';
 
 const next = (page: Page) => page.getByRole('button', { name: new RegExp(`^${en.nav.next}: `) });
 const box = async (l: Locator) => (await l.boundingBox())!;
@@ -13,7 +13,7 @@ test('Next names the next section and takes you there, then leaves at Contact', 
   for (const [label, target] of [
     [en.nav.work, stop(0)],
     [en.nav.about, HOLD.about[0]],
-    [en.nav.stack, HOLD.stack[0]],
+    [en.nav.stack, stackStop(0)],
     [en.nav.contact, HOLD.contact[0]],
   ] as const) {
     await expect(next(page)).toHaveText(new RegExp(`^${en.nav.next}: ${label}`));
@@ -27,10 +27,11 @@ test('on a laptop Next stays clear of the text column and the title block', asyn
   await gotoScene(page);
   await waitReady(page);
   expect(overlaps(await box(next(page)), await box(page.locator('header[data-hero]')))).toBe(false);
-  for (const p of [0.48, 0.695]) {
+  // About's bills ride up through the whole screen; Stack's caption sits in the corner
+  for (const p of [0.41, 0.45, 0.48, 0.52, 0.56, stackStop(2)]) {
     await scrollTo(page, p);
     const b = await box(next(page));
-    const boxes = await page.locator('[data-flow] .nbox, [data-flow] .blade').evaluateAll((els) =>
+    const boxes = await page.locator('[data-flow] > .paper-poster, [data-flow] > .paper-bill, [data-flow] .nbox, section#stack').evaluateAll((els) =>
       els.map((el) => {
         const r = el.getBoundingClientRect();
         return { x: r.x, y: r.y, width: r.width, height: r.height };
@@ -56,6 +57,6 @@ test("the scrollbar wears the open section's colour", async ({ page }) => {
   const accent = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
   await scrollTo(page, 0.48);
   await expect.poll(accent).toBe('#5fe1ff');
-  await scrollTo(page, 0.695);
+  await scrollTo(page, stackStop(2));
   await expect.poll(accent).toBe('#ff3448');
 });

@@ -1,4 +1,5 @@
 import { afterEach, expect, it } from 'vitest';
+import { STACK_STOPS } from '@/experience/stackStops';
 import {
   DEFAULT_SVH,
   holdWindow,
@@ -38,14 +39,14 @@ it('the e2e mirror of the holds matches', () => {
   }
 });
 
-it('by default Work gets 40 svh a stop and every other piece its old length', () => {
+it('by default Work and Stack get 40 svh a stop and every other piece its old length', () => {
   expect(DEFAULT_SVH).toEqual({
     intro: 180,
     work: WORK_STOPS * STOP_SVH,
     toAbout: 75,
     about: 170,
     toStack: 50,
-    stack: 160,
+    stack: STACK_STOPS * STOP_SVH,
     toContact: 50,
     contact: 175,
   });

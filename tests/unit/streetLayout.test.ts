@@ -10,7 +10,7 @@ import {
 
 it('lamps stand on the sidewalks of the road behind the pole, arms reaching over the carriageway', () => {
   const { lamps } = streetLayout(5);
-  expect(lamps.length).toBeGreaterThanOrEqual(12);
+  expect(lamps.length).toBeGreaterThanOrEqual(11);
   expect(lamps.some((l) => l.side === 1)).toBe(true);
   expect(lamps.some((l) => l.side === -1)).toBe(true);
   for (const l of lamps) {

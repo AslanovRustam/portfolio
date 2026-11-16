@@ -1,5 +1,6 @@
 import { LIGHT_Y } from '@/scene/pole/lightMount';
 import { INTRO_END, type Pose, type Vec3 } from './choreography';
+import { sectionPresence } from './panels';
 import { STATIONS } from './route';
 import { SIGNS } from './signs';
 
@@ -39,9 +40,20 @@ export function rideOffset(aspect: number): { right: number; ahead: number } {
 }
 
 /**
+ * How far the pole steps out of the frame at the Stack signs (0..1): on a portrait screen a sign fills the
+ * frame's width and the riding pole would stand across it (the menu is in the header there); on a wide
+ * one it rides on beside the signs. It eases out as Stack's caption comes and back as it goes.
+ */
+export function stackPark(p: number, aspect: number): number {
+  if (aspect >= 1) return 0;
+  return sectionPresence(p, 'stack');
+}
+
+/**
  * The pole's place in the street for story progress p, given the camera's pose: at its spot while the
  * intro plays; then riding with the camera on the right of the frame, its signs turned to it; out of the
- * frame to the right while the camera faces the shop window (`parked`, 0..1, the Work wall's weight);
+ * frame to the right while the camera faces the shop window or, on a phone, the Stack signs (`parked`,
+ * 0..1: the Work wall's weight, stackPark);
  * at its own spot, in the middle of the frame, for About. `facing` turns its signs towards the camera.
  */
 export function poleWorldPose(

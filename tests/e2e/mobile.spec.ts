@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoScene, HOLD, innerScrollers, progress, scrollTo, stop, waitReady } from './helpers';
+import { gantry, gotoScene, HOLD, innerScrollers, progress, scrollTo, stackStop, stop, underSign, waitReady } from './helpers';
 
 // Review Focus 4
 test('touch swipe advances progress on a phone, low tier, no errors', async ({ page }) => {
@@ -132,22 +132,29 @@ test('the end of the page on a phone', async ({ page }) => {
   expect(last.y + last.height).toBeLessThanOrEqual(vh + 1);
 });
 
-test('blades fit a phone: one line each and inside the screen', async ({ page }) => {
+test('Stack on a phone: the caption fits under its sign in every language, Next rises above it, the pole steps aside', async ({ page }) => {
   for (const l of ['en', 'ru', 'uk']) {
     await gotoScene(page, `/${l}`);
-    await scrollTo(page, 0.695);
-    const { wrapped, overflow } = await page.evaluate(() => ({
-      wrapped: [...document.querySelectorAll('#stack .blade [data-line]')]
-        .filter((s) => s.getClientRects().length > 1)
-        .map((s) => s.textContent),
-      overflow: [...document.querySelectorAll('#stack .blade')]
-        .filter((b) => b.getBoundingClientRect().right > innerWidth + 1)
-        .map((b) => b.querySelector('h3')?.textContent),
-    }));
-    expect(wrapped, l).toEqual([]);
-    expect(overflow, l).toEqual([]);
-    expect(await page.locator('#stack .blade').count(), l).toBe(6);
+    await waitReady(page);
+    for (const i of [0, 2, 5]) {
+      await scrollTo(page, stackStop(i));
+      await underSign(page, i);
+      expect(await innerScrollers(page), `${l} ${i}`).toEqual([]);
+      const vw = await page.evaluate(() => innerWidth);
+      const vh = await page.evaluate(() => innerHeight);
+      const caption = (await page.locator('section#stack').boundingBox())!;
+      expect(caption.x).toBeGreaterThanOrEqual(0);
+      expect(caption.x + caption.width).toBeLessThanOrEqual(vw + 1);
+      // the sign above the caption, whole
+      const [, b, , t] = (await gantry(page))!.signs[i].rect;
+      expect(((1 - b) / 2) * vh, `${l} ${i}`).toBeLessThanOrEqual(caption.y);
+      expect(((1 - t) / 2) * vh, `${l} ${i}`).toBeGreaterThan(0);
+    }
   }
+  const next = (await page.locator('.next-button').boundingBox())!;
+  const caption = (await page.locator('section#stack').boundingBox())!;
+  expect(next.y + next.height).toBeLessThanOrEqual(caption.y + 1);
+  await expect.poll(async () => ((await page.evaluate(() => window.__portfolio.probe('pole'))) as { mode: string }).mode, { timeout: 10_000 }).toBe('parked');
 });
 
 test('a phone shows the progress tube and a centred Next from the first screen, clear of the title block and the Work caption', async ({ page }) => {

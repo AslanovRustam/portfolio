@@ -1,5 +1,6 @@
-import { holdWindow, type HoldId } from './choreography';
+import { holdWindow, type HoldId } from './sections';
 import { TRACK_FROM, TRACK_TO } from './panels';
+import { STACK_STOPS } from './stackStops';
 import { WORK_STOPS } from './workStops';
 
 /**
@@ -29,9 +30,12 @@ export const STORY_CUTS: readonly number[] = [
   1,
 ];
 
-/** Scroll length of each piece (svh) until the page has measured itself: the old 1000 svh story, Work stretched. */
+/** Scroll length of each piece (svh) until the page has measured itself: the old 1000 svh story, Work and Stack a stop track each. */
 export const DEFAULT_SVH: Readonly<Record<PieceId, number>> = Object.fromEntries(
-  PIECE_IDS.map((id, i) => [id, id === 'work' ? WORK_STOPS * STOP_SVH : Math.round((STORY_CUTS[i + 1] - STORY_CUTS[i]) * 1000)]),
+  PIECE_IDS.map((id, i) => [
+    id,
+    id === 'work' ? WORK_STOPS * STOP_SVH : id === 'stack' ? STACK_STOPS * STOP_SVH : Math.round((STORY_CUTS[i + 1] - STORY_CUTS[i]) * 1000),
+  ]),
 ) as Record<PieceId, number>;
 
 const defaults = (): number[] => PIECE_IDS.map((id) => DEFAULT_SVH[id]);
