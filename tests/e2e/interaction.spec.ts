@@ -4,8 +4,9 @@ import { gotoScene, progress, scrollTo, waitReady } from './helpers';
 test('hovering a sign shows a pointer, clicking it scrolls to its section', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
-  // on the way to the TV wall: the WORK arrow is still in frame, pointing at it
-  await scrollTo(page, 0.165);
+  // the end of the intro: the pole still at its spot, its WORK arrow turned to the camera (on the ride it
+  // steps out of the frame as the camera turns to the TVs)
+  await scrollTo(page, 0.14);
   await page.waitForTimeout(2000);
   const { x, y } = (await page.evaluate(() => window.__portfolio.probe('signScreen:work'))) as { x: number; y: number };
   await page.mouse.move(x, y);
@@ -17,6 +18,7 @@ test('hovering a sign shows a pointer, clicking it scrolls to its section', asyn
 
 test('hero is visible at the top and gone after the intro starts', async ({ page }) => {
   await gotoScene(page);
+  await waitReady(page); // the hero comes once the street is there
   await expect(page.getByRole('heading', { level: 1, name: 'Rustam Aslanov' })).toBeVisible();
   await scrollTo(page, 0.1);
   await expect(page.locator('[data-hero]')).toHaveCSS('opacity', '0');

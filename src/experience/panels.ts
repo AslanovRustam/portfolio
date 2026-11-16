@@ -53,5 +53,6 @@ export function frameShift(
   if (!wide) return { x: 0, y: 0.2 * presence };
   // the wall frames its screen itself; the frame only steps clear of the caption in the lower-left corner
   if (id === 'work') return { x: 0.08 * presence, y: 0 };
-  return { x: 0.2 * presence, y: 0 };
+  // the ride frames About, Stack and Contact itself, with the pole riding on the right of the frame
+  return { x: 0, y: 0 };
 }

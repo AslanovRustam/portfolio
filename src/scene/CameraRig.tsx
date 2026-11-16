@@ -3,11 +3,11 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import { Vector3 } from 'three';
-import { activeSection, cameraPose, damp, fitDistance, reducedCameraPose } from '@/experience/choreography';
+import { activeSection, cameraPose, damp } from '@/experience/choreography';
 import { frameShift, sectionPresence } from '@/experience/panels';
 import { experienceStore } from '@/experience/store';
 import { registerProbe } from '@/dev/sceneProbe';
-import { onWall } from './tvwall/camera';
+import { desiredCameraPose } from './cameraPose';
 
 const LAMBDA = 3;
 /** how quickly the frame slides aside for a section panel */
@@ -38,10 +38,7 @@ export default function CameraRig() {
 
   useFrame((_, dt) => {
     const { progress, reducedMotion } = experienceStore.getState();
-    const base = reducedMotion ? reducedCameraPose(progress) : cameraPose(progress);
-    const fit = fitDistance(aspect);
-    for (let i = 0; i < 3; i++) base.position[i] = base.target[i] + (base.position[i] - base.target[i]) * fit;
-    const pose = onWall(progress, base, aspect, reducedMotion);
+    const pose = desiredCameraPose(progress, aspect, reducedMotion);
     const k = reducedMotion ? Infinity : LAMBDA;
     const p = camera.position;
     p.set(damp(p.x, pose.position[0], k, dt), damp(p.y, pose.position[1], k, dt), damp(p.z, pose.position[2], k, dt));

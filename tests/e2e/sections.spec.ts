@@ -24,7 +24,7 @@ test('header nav scrolls to a section and the language switch keeps the path', a
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
 });
 
-test('the Work caption shows only in Work, and the scene steps aside in About', async ({ page }) => {
+test('the Work caption shows only in Work; in About the ride frames the pole itself, nothing steps aside', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
   await scrollTo(page, stop(0));
@@ -35,8 +35,8 @@ test('the Work caption shows only in Work, and the scene steps aside in About', 
   await scrollTo(page, 0.48);
   await expect(page.locator('section#work')).toBeHidden();
   await expect
-    .poll(() => page.evaluate(() => (window.__portfolio.probe('viewOffset') as { x: number }).x), { timeout: 8000 })
-    .toBeGreaterThan(0.15);
+    .poll(() => page.evaluate(() => Math.abs((window.__portfolio.probe('viewOffset') as { x: number }).x)), { timeout: 8000 })
+    .toBeLessThan(0.001);
 });
 
 // Review Focus 1

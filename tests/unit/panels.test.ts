@@ -28,7 +28,8 @@ it('the scene steps aside for the panel', () => {
   const wide = { w: 1440, h: 800 };
   const phone = { w: 412, h: 915 };
   expect(frameShift(null, 1, wide)).toEqual({ x: 0, y: 0 });
-  expect(frameShift('about', 1, wide)).toEqual({ x: 0.2, y: 0 });
+  // the ride frames About, Stack and Contact itself, the pole riding on the right: nothing steps aside
+  for (const id of ['about', 'stack', 'contact'] as const) expect(frameShift(id, 1, wide)).toEqual({ x: 0, y: 0 });
   expect(frameShift('work', 0.5, wide)).toEqual({ x: 0.04, y: 0 }); // clear of the caption in the corner
   expect(frameShift('about', 1, phone)).toEqual({ x: 0, y: 0.2 });
   expect(frameShift('contact', 1, { w: 900, h: 700 })).toEqual({ x: 0, y: 0.2 });
