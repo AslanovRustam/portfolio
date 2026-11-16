@@ -150,45 +150,11 @@ test('reading About with its boxes on screen keeps at least 30 fps', async ({ pa
   expect(medianMs).toBeLessThanOrEqual(33.4);
 });
 
-test('standing under a Stack sign keeps at least 30 fps', async ({ page }) => {
-  test.setTimeout(120_000);
+/** Median and 95th-percentile frame time standing at story progress p, once the camera has come to rest. */
+async function standing(page: Page, p: number, name: string) {
   await gotoScene(page);
   await waitReady(page);
-  await scrollTo(page, stackStop(0));
-  await page.waitForTimeout(4000);
-  const frames = await page.evaluate(
-    () =>
-      new Promise<number[]>((resolve) => {
-        const out: number[] = [];
-        let last = performance.now();
-        const end = last + 3000;
-        const tick = (t: number) => {
-          out.push(t - last);
-          last = t;
-          if (t < end) requestAnimationFrame(tick);
-          else resolve(out.slice(3));
-        };
-        requestAnimationFrame(tick);
-      }),
-  );
-  const sorted = [...frames].sort((a, b) => a - b);
-  const report = {
-    tier: await page.evaluate(() => window.__portfolio.state().tier),
-    medianMs: +sorted[Math.floor(sorted.length / 2)].toFixed(2),
-    p95Ms: +sorted[Math.floor(sorted.length * 0.95)].toFixed(2),
-    frames: frames.length,
-  };
-  mkdirSync('test-results', { recursive: true });
-  writeFileSync('test-results/perf-stack.json', JSON.stringify(report, null, 2));
-  console.log('perf-stack', JSON.stringify(report));
-  expect(report.medianMs).toBeLessThanOrEqual(33.4);
-});
-
-test('standing at the billboard keeps at least 30 fps', async ({ page }) => {
-  test.setTimeout(120_000);
-  await gotoScene(page);
-  await waitReady(page);
-  await scrollTo(page, 1);
+  await scrollTo(page, p);
   await page.waitForTimeout(6000);
   const frames = await page.evaluate(
     () =>
@@ -213,7 +179,26 @@ test('standing at the billboard keeps at least 30 fps', async ({ page }) => {
     frames: frames.length,
   };
   mkdirSync('test-results', { recursive: true });
-  writeFileSync('test-results/perf-contact.json', JSON.stringify(report, null, 2));
-  console.log('perf-contact', JSON.stringify(report));
-  expect(report.medianMs).toBeLessThanOrEqual(33.4);
+  writeFileSync(`test-results/perf-${name}.json`, JSON.stringify(report, null, 2));
+  console.log(`perf-${name}`, JSON.stringify(report));
+  return report;
+}
+
+// The end of the intro (the pole close up, the whole street behind it) is measured, not gated: it runs at
+// 35–41 ms on medium on this machine on main (before the ride) as here, with or without the shop, the
+// gantry and the billboard — a Plan 5 item.
+test('the end of the intro, measured', async ({ page }) => {
+  test.setTimeout(120_000);
+  const r = await standing(page, 0.12, 'intro');
+  test.info().annotations.push({ type: 'perf', description: `intro end median ${r.medianMs} ms (not gated, Plan 5)` });
 });
+
+for (const [name, p, where] of [
+  ['stack', stackStop(0), 'under a Stack sign'],
+  ['contact', 1, 'at the billboard'],
+] as const) {
+  test(`standing ${where} keeps at least 30 fps`, async ({ page }) => {
+    test.setTimeout(120_000);
+    expect((await standing(page, p, name)).medianMs).toBeLessThanOrEqual(33.4);
+  });
+}
