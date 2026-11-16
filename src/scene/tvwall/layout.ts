@@ -1,4 +1,5 @@
 import { WORK_STOPS } from '@/experience/workStops';
+import { streakPlacement } from '../street/layout';
 import { mulberry32 } from '../street/random';
 
 export type TvModel = 'tv1' | 'tv2';
@@ -104,11 +105,6 @@ export function wallToWorld(p: readonly [number, number, number]): [number, numb
   return [WALL_FRAME.x + x * c + z * s, WALL_FRAME.y + p[1], WALL_FRAME.z - x * s + z * c];
 }
 
-/** The wall's frame as a group transform (for what is drawn in the wall's own frame, like its road streaks). */
-export function wallFrameTransform(): { position: [number, number, number]; yaw: number } {
-  return { position: wallToWorld([0, 0, 0]), yaw: WALL_FRAME.yaw };
-}
-
 /** The wall as it stands in the shop window: every set in street coordinates. */
 export function wallLayout(seed = 7): TvSlot[] {
   return wallLayoutLocal(seed).map((s) => ({ ...s, position: wallToWorld(s.position), yaw: s.yaw + WALL_FRAME.yaw }));
@@ -146,23 +142,32 @@ export function stopSlots(layout: TvSlot[]): TvSlot[] {
 
 export interface WallStreak {
   stop: number;
-  /** the screen's centre: x, height above the road */
+  /** the screen's centre: where it stands on the floor (x, z) and its height */
   x: number;
+  z: number;
   h: number;
-  /** the far end of the streak, under the set */
-  zFar: number;
   /** longest it may get, and how wide (the screen's width) */
   length: number;
   width: number;
 }
 
 /**
- * One reflection per project screen on the wet road, laid like the street lamps' (streakPlacement):
- * from under the set toward the viewer, as wide as the screen.
+ * One reflection per project screen on the wet ground, laid like the street lamps' (streakPlacement): from
+ * under the screen toward the viewer, as wide as the screen. In the layout's own coordinates.
  */
 export function wallStreaks(layout: TvSlot[]): WallStreak[] {
   return stopSlots(layout).map((s, stop) => {
     const r = screenRect(s);
-    return { stop, x: r.center[0], h: r.center[1], zFar: s.position[2], length: 2.6, width: r.width * 0.9 };
+    return { stop, x: r.center[0], z: r.center[2], h: r.center[1], length: 2.6, width: r.width * 0.9 };
   });
+}
+
+let streets: WallStreak[] | null = null;
+/**
+ * Where each screen's light lands on the wet sidewalk for a camera in the street: the wall as it stands in
+ * the shop window, the camera's street position, the streak lying on the ground (in street coordinates).
+ */
+export function wallStreakPlacements(camera: { x: number; y: number; z: number }) {
+  streets ??= wallStreaks(wallLayout());
+  return streets.map((s) => ({ ...streakPlacement({ x: s.x, h: s.h, z: s.z }, camera, s.length), y: 0.016, width: s.width }));
 }

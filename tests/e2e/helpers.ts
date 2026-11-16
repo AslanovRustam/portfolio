@@ -72,7 +72,7 @@ export const billboard = (page: Page) => page.evaluate(() => window.__portfolio.
  * Where each section's text rides past while the pole holds its sign (story progress): a mirror of
  * holdWindow() in src/experience/journey.ts, pinned by tests/unit/journey.test.ts.
  */
-export const HOLD = { about: [0.395, 0.565], stack: [0.615, 0.775], contact: [0.825, 1] } as const;
+export const HOLD = { about: [0.395, 0.565], stack: [0.615, 0.775], contact: [0.86, 1] } as const;
 
 /** Every element on the page that scrolls inside itself right now (overflow auto/scroll with more to show). */
 export async function innerScrollers(page: Page): Promise<string[]> {

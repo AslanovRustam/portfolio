@@ -117,7 +117,8 @@ export default function Pole({ children }: { children?: ReactNode }) {
     g.rotation.y = reducedMotion ? reducedYaw(progress) : damp(g.rotation.y, poleYaw(progress), 2.5, dt);
     // where the camera is heading, and where the pole rides beside it
     const cam = desiredCameraPose(progress, aspect, reducedMotion);
-    const want = poleWorldPose(progress, cam, aspect, Math.max(wallWeight(progress, reducedMotion), poleAway(progress, aspect)));
+    const parked = Math.max(wallWeight(progress, reducedMotion), poleAway(progress, aspect, reducedMotion));
+    const want = poleWorldPose(progress, cam, aspect, parked, reducedMotion);
     mode.current = want.mode;
     const k = reducedMotion ? Infinity : RIDE_LAMBDA;
     r.position.set(

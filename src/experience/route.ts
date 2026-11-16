@@ -1,4 +1,5 @@
 import type { Pose, Vec3 } from './choreography';
+import { CONTACT_FROM } from './sections';
 import { STACK_FROM, STACK_STOPS, STACK_TO, stackPosition } from './stackStops';
 
 /**
@@ -27,7 +28,8 @@ export function gantrySignX(i: number): number {
  * Where the camera reads the signs from: 7 m short of the gantry, looking up at them, a little below the
  * sign's middle, so the sign sits in the upper part of the frame, clear of its caption in the corner below.
  */
-const STACK_Z: readonly [number, number] = [STATIONS.gantry.z + 7, STATIONS.gantry.z + 6.9];
+/** the same depth before every sign: moving between signs (or jumping, under reduced motion) is sideways only */
+const STACK_Z = STATIONS.gantry.z + 7;
 const STACK_EYE = 3.4;
 const STACK_LOOK = STATIONS.gantry.y - 0.7;
 
@@ -36,8 +38,7 @@ function stackPose(s: number): Pose {
   const i = Math.min(Math.floor(s), STACK_STOPS - 2);
   const f = s - i;
   const x = gantrySignX(i) + (gantrySignX(i + 1) - gantrySignX(i)) * f;
-  const z = STACK_Z[0] + (STACK_Z[1] - STACK_Z[0]) * (s / (STACK_STOPS - 1));
-  return { position: [x, STACK_EYE, z], target: [x, STACK_LOOK, STATIONS.gantry.z] };
+  return { position: [x, STACK_EYE, STACK_Z], target: [x, STACK_LOOK, STATIONS.gantry.z] };
 }
 
 /** The camera at rest before sign i (0..5): where reduced motion stands while the caption shows that sign. */
@@ -50,7 +51,7 @@ export function stackSignPose(i: number): Pose {
  * and the pole's green light on the right (Contact, spec §10). The camera holds it from END_FROM on.
  */
 const END: Pose = { position: [0, 4.2, -46], target: [0, 7.1, STATIONS.billboard.z] };
-export const END_FROM = 0.86;
+export const END_FROM = CONTACT_FROM;
 
 /** The intro's two keys: the blueprint from a raised three-quarter angle, then the pole (unchanged from the orbit). */
 const INTRO: readonly { p: number; position: Vec3; target: Vec3 }[] = [

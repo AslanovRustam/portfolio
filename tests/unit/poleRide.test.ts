@@ -2,7 +2,9 @@ import { PerspectiveCamera, Vector3 } from 'three';
 import { expect, it } from 'vitest';
 import type { Pose, Vec3 } from '@/experience/choreography';
 import { poleAway, poleWorldPose, throughGantry } from '@/experience/poleRide';
+import { SECTIONS } from '@/experience/sections';
 import { desiredCameraPose } from '@/scene/cameraPose';
+import { wallWeight } from '@/scene/tvwall/camera';
 import { gantryLayout } from '@/scene/stack/layout';
 import { STACK_STOPS, stackStopProgress } from '@/experience/stackStops';
 import { ridePose, STATIONS } from '@/experience/route';
@@ -144,4 +146,23 @@ it('the pole is not drawn while it would pass through the gantry (a fling outrun
   expect(throughGantry([2.5, 0.9, z - 4])).toBe(false);
   expect(throughGantry([G.postX + 1.5, 0.9, z])).toBe(false);
   expect(throughGantry([2.5, -2, z])).toBe(false);
+});
+
+// final review: reduced motion jumped the camera between still poses, but the pole still slid with the scroll
+it('reduced motion: within a section the pole stands still in the frame; it only jumps between sections', () => {
+  for (const aspect of [LAPTOP, PHONE])
+    for (const s of SECTIONS) {
+      let first: { right: number; ahead: number; y: number } | null = null;
+      for (let p = s.start + 0.003; p <= Math.min(1, s.end) - 0.003; p += 0.001) {
+        const pose = desiredCameraPose(p, aspect, true);
+        const parked = Math.max(wallWeight(p, true), poleAway(p, aspect, true));
+        const pole = poleWorldPose(p, pose, aspect, parked, true);
+        const here = { ...cameraSpace(pose, pole.position), y: pole.position[1] - pose.position[1] };
+        first ??= here;
+        const at = `${s.id} aspect ${aspect.toFixed(2)} p ${p.toFixed(3)}`;
+        expect(here.right, at).toBeCloseTo(first.right, 6);
+        expect(here.ahead, at).toBeCloseTo(first.ahead, 6);
+        expect(here.y, at).toBeCloseTo(first.y, 6);
+      }
+    }
 });

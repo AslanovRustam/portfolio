@@ -52,7 +52,7 @@ it('each lit screen throws one streak on the road, toward the viewer', () => {
   s.forEach((x, i) => {
     expect(x.x).toBeCloseTo(screenRect(stops[i]).center[0], 3);
     expect(x.h).toBeCloseTo(screenRect(stops[i]).center[1], 3);
-    expect(x.zFar).toBeLessThanOrEqual(WALL.z + 0.1);
+    expect(x.z).toBeCloseTo(screenRect(stops[i]).center[2], 3);
     expect(x.length).toBeGreaterThan(1);
   });
 });

@@ -22,6 +22,11 @@ const input = 'nfield';
  * window is resized, and a move must not lose the message. A sent message clears it.
  */
 const draft: Partial<Record<ContactField, string>> = {};
+/**
+ * When the form first opened (performance.now()), kept with the draft: the fill time the server screens
+ * for bots runs from here, not from the latest move, or a message sent just after a move would be dropped.
+ */
+let openedAt: number | null = null;
 
 /**
  * Name, email, message. The browser checks the fields first (same zod schema as the server), the
@@ -51,10 +56,11 @@ export default function ContactForm({ compact = false }: { compact?: boolean }) 
   const form = useRef<HTMLFormElement>(null);
   const mounted = useRef(0);
 
-  // the fill time is measured here, as elapsed time, so a skewed device clock cannot matter; a form that
-  // moved (billboard ↔ page) takes back what was typed
+  // the fill time is measured here, as elapsed time since the form first opened, so a skewed device clock
+  // cannot matter; a form that moved (billboard ↔ page) takes back what was typed and keeps its start
   useEffect(() => {
-    mounted.current = performance.now();
+    openedAt ??= performance.now();
+    mounted.current = openedAt;
     const el = form.current;
     if (!el) return;
     for (const f of FIELDS) {
@@ -67,6 +73,9 @@ export default function ContactForm({ compact = false }: { compact?: boolean }) 
     if (state.status !== 'sent') return;
     form.current?.reset(); // only a sent message clears the form; any other answer keeps the text
     for (const f of FIELDS) delete draft[f.name];
+    // the next message is a new fill
+    openedAt = performance.now();
+    mounted.current = openedAt;
     experienceStore.getState().setCelebrate(true);
     // a sent message goes up the pole to the green light, as the contact links do
     scrollToProgress(1, experienceStore.getState().reducedMotion);

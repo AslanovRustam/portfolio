@@ -179,3 +179,26 @@ test('a resize at the end fits the form again, or puts it back in the page, with
   await expect(inPage.getByLabel('Message')).toHaveValue('Hello from a big screen');
   await expect.poll(() => progress(page), { timeout: 8000 }).toBeGreaterThan(0.99);
 });
+
+// final review: a form that moved (billboard ↔ page) restarted its fill timer, and a message sent within
+// three seconds of the move was taken for a bot's and silently dropped
+test('a message sent right after the form moved counts the time since the form first opened', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 1);
+  await atRest(page);
+  const billboardForm = page.locator('section#contact form');
+  await billboardForm.getByLabel('Name').fill('Ann');
+  await billboardForm.getByLabel('Email').fill('ann@example.com');
+  await billboardForm.getByLabel('Message').fill('Hello, I have a front-end role for you.');
+  await page.waitForTimeout(3200);
+  await page.setViewportSize({ width: 900, height: 700 });
+  const inPage = page.locator('#journey section#contact form');
+  await expect(inPage.getByLabel('Message')).toHaveValue('Hello, I have a front-end role for you.');
+  const posted = page.waitForRequest((r) => r.method() === 'POST');
+  await inPage.getByRole('button', { name: 'Send' }).click();
+  const body = (await posted).postData() ?? '';
+  const elapsed = Number(/name="[^"]*elapsed"\r\n\r\n(\d+)/.exec(body)?.[1]);
+  expect(elapsed).toBeGreaterThanOrEqual(3000);
+  await expect(page.locator('section#contact')).toContainText(/sent|thanks/i);
+});

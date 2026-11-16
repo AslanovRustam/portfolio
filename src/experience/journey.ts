@@ -13,6 +13,12 @@ import { WORK_STOPS } from './workStops';
 /** Scroll per Work stop: a firm wheel gesture or a short swipe moves one project. */
 export const STOP_SVH = 40;
 
+/**
+ * Contact's scroll (svh) when the form is on the billboard (a laptop): the piece is a fixed stretch then,
+ * as tall as a screen plus this (the last piece's length is its height less a screen).
+ */
+export const CONTACT_ON_BILLBOARD_SCROLL = 30;
+
 export type PieceId = 'intro' | 'work' | 'toAbout' | 'about' | 'toStack' | 'stack' | 'toContact' | 'contact';
 
 export const PIECE_IDS: readonly PieceId[] = ['intro', 'work', 'toAbout', 'about', 'toStack', 'stack', 'toContact', 'contact'];

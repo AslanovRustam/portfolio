@@ -20,7 +20,7 @@ afterEach(resetJourneyLengths);
 it('eight pieces run in order over the whole story', () => {
   expect(PIECE_IDS).toEqual(['intro', 'work', 'toAbout', 'about', 'toStack', 'stack', 'toContact', 'contact']);
   expect(STORY_CUTS).toHaveLength(9);
-  [0, 0.18, 0.32, 0.395, 0.565, 0.615, 0.775, 0.825, 1].forEach((v, i) => expect(STORY_CUTS[i]).toBeCloseTo(v, 9));
+  [0, 0.18, 0.32, 0.395, 0.565, 0.615, 0.775, 0.86, 1].forEach((v, i) => expect(STORY_CUTS[i]).toBeCloseTo(v, 9));
 });
 
 it('a hold runs between the turns around its section', () => {
@@ -28,7 +28,8 @@ it('a hold runs between the turns around its section', () => {
   expect(holdWindow('about')[1]).toBeCloseTo(0.565, 9);
   expect(holdWindow('stack')[0]).toBeCloseTo(0.615, 9);
   expect(holdWindow('stack')[1]).toBeCloseTo(0.775, 9);
-  expect(holdWindow('contact')[0]).toBeCloseTo(0.825, 9);
+  // Contact holds from the arrival at the billboard: the drive from the gantry is the stretch before it
+  expect(holdWindow('contact')[0]).toBeCloseTo(0.86, 9);
   expect(holdWindow('contact')[1]).toBe(1);
 });
 
@@ -47,8 +48,8 @@ it('by default Work and Stack get 40 svh a stop and every other piece its old le
     about: 170,
     toStack: 50,
     stack: STACK_STOPS * STOP_SVH,
-    toContact: 50,
-    contact: 175,
+    toContact: 85,
+    contact: 140,
   });
   const total = Object.values(DEFAULT_SVH).reduce((a, b) => a + b, 0);
   expect((scrollFromStory(0.565) - scrollFromStory(0.395)) * total).toBeCloseTo(170, 6);

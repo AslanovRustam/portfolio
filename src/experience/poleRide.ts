@@ -1,6 +1,7 @@
 import { LIGHT_Y } from '@/scene/pole/lightMount';
 import { gantryLayout } from '@/scene/stack/layout';
 import { INTRO_END, type Pose, type Vec3 } from './choreography';
+import { activeSection } from './sections';
 import { sectionPresence } from './panels';
 import { END_FROM, STATIONS } from './route';
 import { STACK_TO } from './stackStops';
@@ -51,8 +52,13 @@ const UNDER_GANTRY_IN: readonly [number, number] = [0.83, END_FROM];
  * comes back for the end. On a portrait screen a Stack sign or the Contact form fills the frame (the menu
  * is in the header there): it stays out through both. It eases out and back with the sections' presence.
  */
-export function poleAway(p: number, aspect: number): number {
+export function poleAway(p: number, aspect: number, reduced = false): number {
   const q = clamp01(p);
+  if (reduced) {
+    // the camera jumps from section to section, so the pole never drives under the gantry in view
+    const s = activeSection(q);
+    return aspect < 1 && (s === 'stack' || s === 'contact') ? 1 : 0;
+  }
   const under = between(q, UNDER_GANTRY_OUT) * (1 - between(q, UNDER_GANTRY_IN));
   if (aspect >= 1) return under;
   return Math.max(under, sectionPresence(q, 'stack'), sectionPresence(q, 'contact'));
@@ -87,6 +93,7 @@ export function poleWorldPose(
   camera: Pose,
   aspect: number,
   parked = 0,
+  reduced = false,
 ): { position: Vec3; facing: number; mode: PoleMode } {
   if (p <= INTRO_END) return { position: [0, 0, 0], facing: 0, mode: 'start' };
 
@@ -99,7 +106,9 @@ export function poleWorldPose(
   const rx = -fz;
   const rz = fx;
 
-  const join = between(p, RIDE_IN);
+  // reduced motion: no blend follows the scroll — each one switches where its section begins
+  const section = activeSection(p);
+  const join = reduced ? 1 : between(p, RIDE_IN);
   const { right, ahead } = rideOffset(aspect);
   const away = clamp01(parked);
   // joining the ride, it slides in the frame from where it stood to the right edge (in the camera's frame,
@@ -116,11 +125,11 @@ export function poleWorldPose(
   const flat = Math.hypot(camera.target[0] - camera.position[0], camera.target[2] - camera.position[2]) || 1;
   const tilt = (camera.target[1] - camera.position[1]) / flat;
   const centre = camera.position[1] + a * tilt;
-  const end = between(p, LIGHT_IN);
+  const end = reduced ? (section === 'contact' ? 1 : 0) : between(p, LIGHT_IN);
   const anchor = lerp(SIGNS_MID, LIGHT_Y, end);
   ride[1] = lerp(0, centre + lerp(-0.08, 0.3, end) * a * TAN_HALF - anchor, join);
 
-  const about = between(p, ABOUT_IN) * (1 - between(p, ABOUT_OUT));
+  const about = reduced ? (section === 'about' ? 1 : 0) : between(p, ABOUT_IN) * (1 - between(p, ABOUT_OUT));
   const x = lerp(ride[0], STATIONS.pole.x, about);
   const y = lerp(ride[1], 0, about);
   const z = lerp(ride[2], STATIONS.pole.z, about);

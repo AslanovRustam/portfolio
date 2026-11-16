@@ -88,3 +88,40 @@ it('no street lamp stands between the end of the ride and the billboard (it woul
   const end = ridePose(1).position[2];
   for (const l of streetLayout(5).lamps) expect(l.z > end - 0.5 || l.z < BILLBOARD.building.z1, `lamp at z ${l.z}`).toBe(true);
 });
+
+// final review: squarish laptop windows (4:3, 5:4) put the panel partly off the screen and under the light
+it('wherever the form goes into the billboard, it is whole on the screen and clear of the green light', () => {
+  const windows: [number, number][] = [
+    [1024, 768],
+    [1100, 900],
+    [1280, 1024],
+    [1366, 1024],
+    [1600, 1200],
+    [1024, 1000],
+    [1280, 960],
+    [1440, 1080],
+    [1680, 1050],
+    [1920, 1200],
+    ...LAPTOPS,
+  ];
+  for (const [w, h] of windows) {
+    const fit = billboardFit({ w, h });
+    if (!fit) continue;
+    const { x, y, width, height } = fit.rect;
+    const at = `${w}×${h}`;
+    expect(x, at).toBeGreaterThanOrEqual(16);
+    expect(x + width, at).toBeLessThanOrEqual(w - 16);
+    expect(y, at).toBeGreaterThanOrEqual(70);
+    expect(y + height, at).toBeLessThanOrEqual(h - 16);
+    const pose = desiredCameraPose(1, w / h, false);
+    const pole = poleWorldPose(1, pose, w / h);
+    const cam = new PerspectiveCamera(35, w / h, 0.1, 200);
+    cam.position.set(...pose.position);
+    cam.lookAt(new Vector3(...pose.target));
+    cam.updateMatrixWorld();
+    const left = new Vector3(pole.position[0] - BOARD.w / 2, pole.position[1] + LIGHT_Y, pole.position[2]).project(cam);
+    expect(x + width, at).toBeLessThan(((left.x + 1) / 2) * w - 8);
+  }
+  // the usual laptop shapes still carry it on the billboard
+  for (const [w, h] of LAPTOPS) expect(billboardFit({ w, h }), `${w}×${h}`).not.toBeNull();
+});

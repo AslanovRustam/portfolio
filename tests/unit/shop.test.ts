@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { ROAD } from '@/scene/street/layout';
 import { shopLayout } from '@/scene/shop/layout';
 import { wallPose } from '@/scene/tvwall/camera';
-import { screenRect, stopSlots, TV_MODELS, wallLayout } from '@/scene/tvwall/layout';
+import { screenRect, stopSlots, TV_MODELS, wallLayout, wallStreakPlacements } from '@/scene/tvwall/layout';
 
 const shop = shopLayout();
 
@@ -40,4 +40,22 @@ it('the building stands behind the sidewalk, never on it', () => {
 it('the shop sign over the window says WORK', () => {
   expect(shop.sign.text).toBe('WORK');
   expect(shop.sign.position[1]).toBeGreaterThan(shop.window.y1);
+});
+
+// final review: the streaks were laid in the wall's frame from the camera's street position and landed
+// inside the building, floating at the riser's height
+it('each lit screen lights the wet sidewalk in front of the window, level with its TV', () => {
+  const W = shopLayout().window;
+  const slots = stopSlots(wallLayout());
+  for (const aspect of [16 / 9, 0.46]) {
+    slots.forEach((slot, i) => {
+      const cam = wallPose(i, aspect).position;
+      const p = wallStreakPlacements({ x: cam[0], y: cam[1], z: cam[2] })[i];
+      const at = `stop ${i} aspect ${aspect.toFixed(2)}`;
+      expect(p.x, at).toBeGreaterThan(W.glassX);
+      expect(p.x, at).toBeLessThan(W.glassX + 3);
+      expect(Math.abs(p.z - screenRect(slot).center[2]), at).toBeLessThan(1);
+      expect(p.y, at).toBeCloseTo(0.016, 6);
+    });
+  }
 });

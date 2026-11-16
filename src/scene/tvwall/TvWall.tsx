@@ -32,7 +32,7 @@ import { revealUniforms } from '../reveal/registry';
 import { applyReveal } from '../reveal/revealMaterial';
 import { overUi } from '../uiPointer';
 import { createCrtMaterial } from './crtMaterial';
-import { screenRect, stopSlots, TV_MODELS, type TvModel, type TvSlot, WALL_FRAME, wallFrameTransform, wallLayout } from './layout';
+import { screenRect, stopSlots, TV_MODELS, type TvModel, type TvSlot, WALL_FRAME, wallLayout } from './layout';
 import { projectScreen, setScreenRectSource } from './screenRects';
 import { screenAge, screenLevel } from './power';
 import { createGlowUniforms, withScreenGlow } from './screenGlow';
@@ -41,7 +41,6 @@ import WallStreaks from './WallStreaks';
 
 const LAYOUT = wallLayout();
 const STOPS = stopSlots(LAYOUT);
-const FRAME = wallFrameTransform();
 const MODELS: readonly TvModel[] = ['tv1', 'tv2'];
 const FILLERS: Record<TvModel, TvSlot[]> = {
   tv1: LAYOUT.filter((s) => s.content.kind === 'filler' && s.model === 'tv1'),
@@ -446,10 +445,8 @@ export default function TvWall() {
           </group>
         );
       })}
-      {/* the screens' light on the wet sidewalk, laid in the wall's own frame: out of the window, toward the road */}
-      <group position={FRAME.position} rotation-y={FRAME.yaw}>
-        <WallStreaks levels={levels} glow={glow} out={streaks} />
-      </group>
+      {/* the screens' light on the wet sidewalk in front of the window */}
+      <WallStreaks levels={levels} glow={glow} out={streaks} />
       {STOPS.map((s, i) => (
         <mesh
           key={i}

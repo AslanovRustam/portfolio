@@ -3,18 +3,15 @@
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { type ReactNode, useEffect, useRef } from 'react';
 import { registerProbe } from '@/dev/sceneProbe';
-import { DEFAULT_SVH, journeyLengths, lengthsFromLayout, PIECE_IDS, type PieceId, setJourneyLengths } from '@/experience/journey';
+import { CONTACT_ON_BILLBOARD_SCROLL, DEFAULT_SVH, journeyLengths, lengthsFromLayout, PIECE_IDS, type PieceId, setJourneyLengths } from '@/experience/journey';
 import { useBillboardFit } from '../sections/useBillboardFit';
 
 const spacer = (id: PieceId, svh = DEFAULT_SVH[id]) => (
   <div key={id} data-piece={id} aria-hidden="true" style={{ height: `${svh}svh` }} />
 );
 
-/**
- * Contact's piece when the form is on the billboard: its scroll (the last piece's length is its height
- * less a screen) is the short way from the gantry to the billboard and the rest at the end.
- */
-const CONTACT_ON_BILLBOARD_SVH = 100 + 45;
+/** Contact's piece when the form is on the billboard: a screen plus its scroll (journey.ts). */
+const CONTACT_ON_BILLBOARD_SVH = 100 + CONTACT_ON_BILLBOARD_SCROLL;
 
 /**
  * The scroll track the whole journey is measured against: the intro, the Work and Stack stops and the turns

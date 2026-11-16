@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
 import type { Pose } from '@/experience/choreography';
+import { CONTACT_ON_BILLBOARD_SCROLL, DEFAULT_SVH, PIECE_IDS, resetJourneyLengths, scrollFromStory, setJourneyLengths } from '@/experience/journey';
 import { ridePose, STATIONS, stationPose } from '@/experience/route';
 
 const near = (a: readonly number[], b: readonly number[], eps = 1e-6) => a.every((v, i) => Math.abs(v - b[i]) < eps);
@@ -61,4 +62,22 @@ it('in About the camera rises along the pole, looking at it all the way', () => 
     expect(Math.abs(pose.target[2] - STATIONS.pole.z)).toBeLessThan(0.05);
   }
   expect(ridePose(0.565).position[1] - ridePose(0.4).position[1]).toBeGreaterThan(2);
+});
+
+// final review: the drive to the billboard ended inside Contact's short stretch of scroll (a laptop puts the
+// form on the billboard, and that stretch is short) — its last metres went by in one wheel notch
+it('the camera never surges: at most 0.5 m per svh of scroll anywhere on the ride, with the form on the billboard or in the page', () => {
+  for (const contact of [CONTACT_ON_BILLBOARD_SCROLL, DEFAULT_SVH.contact]) {
+    const lengths = PIECE_IDS.map((id) => (id === 'contact' ? contact : DEFAULT_SVH[id]));
+    setJourneyLengths(lengths);
+    const total = lengths.reduce((a, b) => a + b, 0);
+    let worst = { v: 0, p: 0 };
+    for (let p = 0.15; p < 0.999; p += 0.0005) {
+      const svh = (scrollFromStory(p + 0.0005) - scrollFromStory(p)) * total;
+      const v = dist(ridePose(p).position, ridePose(p + 0.0005).position) / svh;
+      if (v > worst.v) worst = { v, p };
+    }
+    expect(worst.v, `contact ${contact} svh, at ${worst.p.toFixed(4)}`).toBeLessThanOrEqual(0.5);
+  }
+  resetJourneyLengths();
 });

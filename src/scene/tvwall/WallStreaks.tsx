@@ -3,18 +3,16 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { type RefObject, useEffect, useMemo, useRef } from 'react';
 import { AdditiveBlending, Color, type InstancedMesh, Object3D } from 'three';
-import { streakPlacement } from '../street/layout';
 import { streakTexture } from '../street/Streaks';
-import { wallLayoutLocal, wallStreaks } from './layout';
-
-/** in the wall's own frame (TvWall sets it in the street) */
-const STREAKS = wallStreaks(wallLayoutLocal());
+import { WORK_STOPS } from '@/experience/workStops';
+import { wallStreakPlacements } from './layout';
 /** How strongly a fully lit screen shows on the road. */
 const POWER = 1.1;
 
 /**
- * The TV wall's light on the wet road: a streak under each project screen, in the colour of its picture,
- * as bright as the screen is. Dark on standby. Laid like the street lamps' reflections.
+ * The TV wall's light on the wet sidewalk in front of the window: a streak under each project screen, in
+ * the colour of its picture, as bright as the screen is. Dark on standby. Laid like the street lamps'
+ * reflections, in street coordinates.
  */
 export default function WallStreaks({
   levels,
@@ -41,14 +39,13 @@ export default function WallStreaks({
   useFrame(() => {
     const m = mesh.current;
     if (!m) return;
-    STREAKS.forEach((s, i) => {
+    wallStreakPlacements(camera.position).forEach((p, i) => {
       const power = Math.min(1, levels.current[i] ?? 0) * POWER;
       out.current[i] = power;
       m.setColorAt(i, tint.copy(live.current[i] ?? live.current[0]).multiplyScalar(power));
-      const p = streakPlacement({ x: s.x, h: s.h, z: s.zFar }, camera.position, s.length);
-      o.position.set(p.x, 0.016, p.z);
+      o.position.set(p.x, p.y, p.z);
       o.rotation.set(-Math.PI / 2, p.angle, 0, 'YXZ');
-      o.scale.set(s.width, p.length, 1);
+      o.scale.set(p.width, p.length, 1);
       o.updateMatrix();
       m.setMatrixAt(i, o.matrix);
     });
@@ -60,7 +57,7 @@ export default function WallStreaks({
 
   return (
     // matrices change every frame: a bounding sphere computed once would cull them wrongly
-    <instancedMesh ref={mesh} args={[undefined, undefined, STREAKS.length]} renderOrder={1} frustumCulled={false}>
+    <instancedMesh ref={mesh} args={[undefined, undefined, WORK_STOPS]} renderOrder={1} frustumCulled={false}>
       <planeGeometry />
       <meshBasicMaterial map={texture} transparent depthWrite={false} blending={AdditiveBlending} toneMapped={false} />
     </instancedMesh>

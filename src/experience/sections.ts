@@ -19,10 +19,18 @@ export const SECTIONS: readonly { id: SectionId; start: number; end: number; cen
 
 export type HoldId = 'about' | 'stack' | 'contact';
 
-/** The story stretch where a section's text is on screen: from the end of the turn onto its sign to the start of the next. */
+/**
+ * Where the ride arrives at the billboard and holds still to the end (route.ts): Contact's text holds from
+ * here, so the whole drive from the gantry falls in the stretch before it, not in Contact's own (short, on a
+ * laptop) stretch of scroll.
+ */
+export const CONTACT_FROM = 0.86;
+
+/** The story stretch where a section's text is on screen: from the end of the turn onto its sign to the start of the next (Contact: from the arrival). */
 export function holdWindow(id: HoldId): [number, number] {
   const s = SECTIONS.find((x) => x.id === id);
   if (!s) throw new Error(`unknown section ${id}`);
+  if (id === 'contact') return [CONTACT_FROM, 1];
   return [s.start + TURN / 2, s.end >= 1 ? 1 : s.end - TURN / 2];
 }
 
