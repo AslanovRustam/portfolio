@@ -13,14 +13,11 @@ import { type AtlasRect, layoutAtlas } from './atlas';
 import { getIcon } from './icons';
 import { type StickerDef, STICKERS } from './stickers';
 
-/**
- * The atlas's size, cell and margin: About brings the camera within centimetres of the stickers (M4 round 1),
- * so the medium and high tiers draw them twice as sharp (3072 px, six 512 px cells a row: ~50 MB on the GPU
- * with mipmaps); the low tier (phones) keeps 2048 px of 256 px cells.
- */
-type AtlasSpec = { size: number; cell: number; pad: number };
-const SHARP: AtlasSpec = { size: 3072, cell: 512, pad: 64 };
-const PLAIN: AtlasSpec = { size: 2048, cell: 256, pad: 32 };
+const ATLAS = 2048;
+const CELL = 256;
+/** transparent margin inside each cell: a rolled sticker's bounding box must never reach the next cell */
+const PAD = 32;
+const INNER = CELL - 2 * PAD;
 const LIFT = 0.0018;
 
 let fonts: Promise<unknown> | null = null;
@@ -39,23 +36,21 @@ function shapePath(ctx: CanvasRenderingContext2D, s: StickerDef, x: number, y: n
 }
 
 /** Every sticker drawn once into one atlas: white die-cut edge, coloured vinyl, logo or lettering. */
-function drawAtlas(stickers: readonly StickerDef[], rects: AtlasRect[], { size, cell, pad }: AtlasSpec): CanvasTexture {
+function drawAtlas(stickers: readonly StickerDef[], rects: AtlasRect[]): CanvasTexture {
   const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = size;
+  canvas.width = canvas.height = ATLAS;
   const ctx = canvas.getContext('2d')!;
-  const inner = cell - 2 * pad;
-  const k = cell / PLAIN.cell;
   stickers.forEach((s, i) => {
-    const cx = rects[i].u * size;
-    const cy = rects[i].v * size;
-    const w = inner;
-    const h = inner * s.aspect;
-    const x = cx + pad;
-    const y = cy + (cell - h) / 2;
+    const cx = rects[i].u * ATLAS;
+    const cy = rects[i].v * ATLAS;
+    const w = INNER;
+    const h = INNER * s.aspect;
+    const x = cx + PAD;
+    const y = cy + (CELL - h) / 2;
     ctx.fillStyle = '#f7f5ef';
     shapePath(ctx, s, x, y, w, h);
     ctx.fill();
-    const edge = 7 * k;
+    const edge = 7;
     ctx.fillStyle = s.bg;
     shapePath(ctx, s, x + edge, y + edge, w - 2 * edge, h - 2 * edge);
     ctx.fill();
@@ -95,8 +90,7 @@ function drawAtlas(stickers: readonly StickerDef[], rects: AtlasRect[], { size, 
  * each vertex samples the atlas through the inverse rotation, so the sticker hugs the pole at any angle
  * and the alpha test cuts its die-cut outline.
  */
-function stickerGeometry(s: StickerDef, rect: AtlasRect, { size, cell, pad }: AtlasSpec): CylinderGeometry {
-  const inner = cell - 2 * pad;
+function stickerGeometry(s: StickerDef, rect: AtlasRect): CylinderGeometry {
   const r = POLE.radius + LIFT;
   const c = Math.abs(Math.cos(s.roll));
   const sn = Math.abs(Math.sin(s.roll));
@@ -113,9 +107,9 @@ function stickerGeometry(s: StickerDef, rect: AtlasRect, { size, cell, pad }: At
     const yr = x * Math.sin(-s.roll) + y * Math.cos(-s.roll);
     const sx = xr / s.size + 0.5;
     const sy = yr / h + 0.5;
-    const px = rect.u * size + pad + sx * inner;
-    const py = rect.v * size + cell / 2 + (0.5 - sy) * inner * s.aspect;
-    uv.setXY(i, px / size, 1 - py / size);
+    const px = rect.u * ATLAS + PAD + sx * INNER;
+    const py = rect.v * ATLAS + CELL / 2 + (0.5 - sy) * INNER * s.aspect;
+    uv.setXY(i, px / ATLAS, 1 - py / ATLAS);
   }
   uv.needsUpdate = true;
   return g;
@@ -125,11 +119,9 @@ function stickerGeometry(s: StickerDef, rect: AtlasRect, { size, cell, pad }: At
 export default function PoleStickers() {
   use(loadFonts());
   const env = useNightEnv();
-  const sharp = useExperience((st) => st.tier !== 'low');
-  const spec = sharp ? SHARP : PLAIN;
-  const rects = useMemo(() => layoutAtlas(STICKERS.length, spec.cell, spec.size), [spec]);
-  const atlas = useMemo(() => drawAtlas(STICKERS, rects, spec), [rects, spec]);
-  const geometries = useMemo(() => STICKERS.map((s, i) => stickerGeometry(s, rects[i], spec)), [rects, spec]);
+  const rects = useMemo(() => layoutAtlas(STICKERS.length, CELL, ATLAS), []);
+  const atlas = useMemo(() => drawAtlas(STICKERS, rects), [rects]);
+  const geometries = useMemo(() => STICKERS.map((s, i) => stickerGeometry(s, rects[i])), [rects]);
   const [hovered, setHovered] = useState<string | null>(null);
   // a chip in the Stack panel lights its sticker too
   const highlight = useExperience((st) => st.highlight);
