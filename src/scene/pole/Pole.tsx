@@ -111,9 +111,9 @@ export default function Pole({ children }: { children?: ReactNode }) {
         const s = p.clone().project(camera);
         return [((s.x + 1) / 2) * size.width, ((1 - s.y) / 2) * size.height] as const;
       };
-      const pin = px(axis.clone().addScaledVector(toward, POLE.radius))[1];
+      const [x, pin] = px(axis.clone().addScaledVector(toward, POLE.radius));
       const width = Math.abs(px(axis.clone().add(side))[0] - px(axis.clone().sub(side))[0]);
-      return { pin, width };
+      return { x, pin, width };
     };
     return registerProbe('pole', () => ({
       ndc: toNdc(2.6),

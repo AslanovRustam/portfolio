@@ -10,9 +10,14 @@ const overlaps = (a: { x: number; y: number; width: number; height: number }, b:
 test('Next names the next section and takes you there, then leaves at Contact', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
+  // About lands where its first bill has come a third up the screen (M4 round 1): 0.7 of a screen into its piece
+  const aboutLanding = await page.evaluate((from) => {
+    const lengths = window.__portfolio.probe('journey') as number[];
+    return from + ((0.7 * innerHeight) / lengths[3]) * 0.17;
+  }, HOLD.about[0]);
   for (const [label, target] of [
     [en.nav.work, stop(0)],
-    [en.nav.about, HOLD.about[0]],
+    [en.nav.about, aboutLanding],
     [en.nav.stack, stackStop(0)],
     [en.nav.contact, 1],
   ] as const) {

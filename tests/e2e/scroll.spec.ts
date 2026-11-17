@@ -65,9 +65,13 @@ test('a header jump across Work is not bent by the snap', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
   await page.getByRole('button', { name: 'About', exact: true }).click();
-  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(HOLD.about[0], 2);
+  // About lands where its first bill has come up the screen (M4 round 1): wherever that is, it stays there
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeGreaterThan(HOLD.about[0]);
+  await page.waitForTimeout(1500);
+  const landed = await progress(page);
+  expect(landed).toBeLessThan(HOLD.about[1]);
   await page.waitForTimeout(800);
-  expect(await progress(page)).toBeCloseTo(HOLD.about[0], 2);
+  expect(await progress(page)).toBeCloseTo(landed, 3);
 });
 
 test('Work in the header lands on the first project', async ({ page }) => {

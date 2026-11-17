@@ -18,7 +18,9 @@ test('header nav scrolls to a section and the language switch keeps the path', a
   await gotoScene(page);
   await waitReady(page); // a click inside the scene's first, shader-compiling frames is answered seconds late
   await page.getByRole('button', { name: 'About' }).click();
-  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(HOLD.about[0], 2);
+  // About lands where its first bill has come up the screen (M4 round 1), inside its stretch
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeGreaterThan(HOLD.about[0]);
+  expect(await progress(page)).toBeLessThan(HOLD.about[1]);
   await switchLanguage(page, 'RU');
   await expect(page).toHaveURL(/\/ru(#about)?$/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
@@ -142,15 +144,18 @@ test('switching language keeps the visitor at the same section', async ({ page }
   await gotoScene(page);
   await waitReady(page);
   await page.getByRole('button', { name: 'About' }).click();
-  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(HOLD.about[0], 2);
+  // About lands where its first bill has come up the screen (M4 round 1)
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeGreaterThan(HOLD.about[0]);
+  await page.waitForTimeout(1500);
+  const landed = await progress(page);
   await switchLanguage(page, 'RU');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
   // the new page glides back to the place; a wheel during that glide would take over from it, so the
   // visitor's own scroll comes once the page has landed
-  await expect.poll(() => progress(page), { timeout: 30_000 }).toBeCloseTo(HOLD.about[0], 2);
+  await expect.poll(() => progress(page), { timeout: 30_000 }).toBeCloseTo(landed, 2);
   await page.mouse.wheel(0, 100);
   await page.waitForTimeout(800);
-  expect(await progress(page)).toBeCloseTo(HOLD.about[0], 1);
+  expect(await progress(page)).toBeCloseTo(landed, 1);
 });
 
 // the wheel over About's text is the page's wheel: it carries on along the street

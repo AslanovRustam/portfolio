@@ -115,7 +115,7 @@ export async function intoContact(page: Page, px: number): Promise<number> {
 
 /** The pole's face in About (M4 round 1): a point on it 1.2 m up, on the page (px), and the pole's width there. */
 export const poleFace = (page: Page) =>
-  page.evaluate(() => (window.__portfolio.probe('pole') as { face: { pin: number; width: number } | null }).face);
+  page.evaluate(() => (window.__portfolio.probe('pole') as { face: { x: number; pin: number; width: number } | null }).face);
 
 /**
  * Scrolls `px` further through About and checks the pole's face and the first bill on the screen moved up by

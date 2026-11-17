@@ -220,14 +220,17 @@ test('About is paper bills pasted over the pole: the poster, then the lead, the 
   const bills = page.locator('#about [data-flow] > .paper-bill');
   await expect(bills).toHaveCount(5);
   await expect(page.locator('#about .nbox')).toHaveCount(0);
-  // the camera has the pole in the middle of the frame, and the bills hang over it
-  const poleX = await page.evaluate(() => {
-    const [x] = (window.__portfolio.probe('pole') as { ndc: [number, number] }).ndc;
-    return ((x + 1) / 2) * innerWidth;
-  });
-  const vw = page.viewportSize()!.width;
+  // the camera has the pole's face in the middle of the frame (centimetres away: once it has settled), and
+  // the bills hang over it, within its width
+  const settled = async () => {
+    const a = (await poleFace(page))!.x;
+    await page.waitForTimeout(250);
+    return Math.abs((await poleFace(page))!.x - a) < 0.5;
+  };
+  await expect.poll(settled, { timeout: 15_000 }).toBe(true);
+  const face = (await poleFace(page))!;
   for (const box of await bills.evaluateAll((els) => els.map((el) => el.getBoundingClientRect()))) {
-    expect(Math.abs(box.x + box.width / 2 - poleX)).toBeLessThan(0.25 * vw);
+    expect(Math.abs(box.x + box.width / 2 - face.x)).toBeLessThan(face.width / 2);
   }
 });
 

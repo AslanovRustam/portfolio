@@ -106,7 +106,8 @@ test('standing at a Work stop keeps at least 30 fps, and its live loop costs at 
   expect(withLoop.medianMs).toBeLessThanOrEqual(noLoop.medianMs + 3);
 });
 
-test('reading About with its boxes on screen keeps at least 30 fps', async ({ page }) => {
+// About close to the pole (M4 round 1): the pole's face fills the middle, the street beside it blurred
+test('reading About close to the pole, its bills riding up and down, keeps at least 30 fps', async ({ page }) => {
   test.setTimeout(120_000);
   await gotoScene(page);
   await maybeBlur(page);
@@ -191,6 +192,14 @@ test('the end of the intro, measured', async ({ page }) => {
   test.setTimeout(120_000);
   const r = await standing(page, 0.12, 'intro');
   test.info().annotations.push({ type: 'perf', description: `intro end median ${r.medianMs} ms (not gated, Plan 5)` });
+});
+
+// the phone's dive (M4 round 1): inside the billboard's screen, the form in its frame
+test('standing inside the billboard’s screen on a phone-sized window keeps at least 30 fps', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 412, height: 839 });
+  const r = await standing(page, 1, 'dive');
+  expect(r.medianMs).toBeLessThanOrEqual(33.4);
 });
 
 for (const [name, p, where] of [
