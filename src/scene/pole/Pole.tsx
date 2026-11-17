@@ -11,7 +11,7 @@ import { registerProbe } from '@/dev/sceneProbe';
 import EdgesOverlay from '../reveal/EdgesOverlay';
 import { revealUniforms } from '../reveal/registry';
 import { applyReveal } from '../reveal/revealMaterial';
-import { desiredCameraPose } from '../cameraPose';
+import { desiredCameraPose, divesIntoScreen } from '../cameraPose';
 import { wallWeight } from '../tvwall/camera';
 import { LIGHT_Y } from './lightMount';
 import { usePoleMaterials } from './materials';
@@ -116,8 +116,12 @@ export default function Pole({ children }: { children?: ReactNode }) {
     const { progress, reducedMotion } = experienceStore.getState();
     g.rotation.y = reducedMotion ? reducedYaw(progress) : damp(g.rotation.y, poleYaw(progress), 2.5, dt);
     // where the camera is heading, and where the pole rides beside it
-    const cam = desiredCameraPose(progress, aspect, reducedMotion);
-    const parked = Math.max(wallWeight(progress, reducedMotion), poleAway(progress, aspect, reducedMotion));
+    const viewport = { w: size.width, h: size.height };
+    const cam = desiredCameraPose(progress, viewport, reducedMotion);
+    const parked = Math.max(
+      wallWeight(progress, reducedMotion),
+      poleAway(progress, aspect, reducedMotion, divesIntoScreen(viewport)),
+    );
     const want = poleWorldPose(progress, cam, aspect, parked, reducedMotion);
     mode.current = want.mode;
     const k = reducedMotion ? Infinity : RIDE_LAMBDA;

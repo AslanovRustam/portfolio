@@ -2,6 +2,7 @@ import { PROJECTS } from '@/content/projects';
 import { activeSection, holdWindow, SECTIONS } from './sections';
 import { progressForTrack, TRACK_FROM, TRACK_TO, trackProgress } from './panels';
 import { stackStopProgress } from './stackStops';
+import { contactLanding, type DiveView } from './diveStages';
 import type { SectionId } from './signs';
 
 /** One stop per project on the TV wall, then the "a small part / NDA" screen. */
@@ -62,10 +63,11 @@ export function snapTarget(q: number, from?: number): number | null {
  * Where a link to a section lands: Work opens on its first project, Stack on its first sign, About where its
  * text begins, Contact at the end of the road (the billboard with the form, the green light).
  */
-export function sectionTarget(id: SectionId): number {
+export function sectionTarget(id: SectionId, dive?: DiveView): number {
   if (id === 'work') return stopProgress(0);
   if (id === 'stack') return stackStopProgress(0);
-  if (id === 'contact') return 1;
+  // the end of the road; where the window dives into the billboard's screen, where the dive ends (the form)
+  if (id === 'contact') return dive ? contactLanding(dive) : 1;
   return holdWindow(id)[0];
 }
 
@@ -77,12 +79,12 @@ export function hashFor(q: number): string | null {
 }
 
 /** Story progress a hash asks for, or null when it names nothing on the journey. */
-export function parseHash(h: string): number | null {
+export function parseHash(h: string, dive?: DiveView): number | null {
   const stop = /^work-(\d+)$/.exec(h);
   if (stop) {
     const n = Number(stop[1]);
     return n >= 1 && n <= WORK_STOPS ? stopProgress(n - 1) : null;
   }
   const section = SECTIONS.find((s) => s.id === h);
-  return section ? sectionTarget(section.id) : null;
+  return section ? sectionTarget(section.id, dive) : null;
 }

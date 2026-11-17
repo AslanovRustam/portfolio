@@ -50,7 +50,8 @@ export function frameShift(
 ): { x: number; y: number } {
   if (!id) return { x: 0, y: 0 };
   const wide = viewport.w >= 1024 && viewport.w / viewport.h >= 1;
-  if (!wide) return { x: 0, y: 0.2 * presence };
+  // the dive frames Contact itself: square to the billboard's screen, then inside it (M4 round 1)
+  if (!wide) return { x: 0, y: id === 'contact' ? 0 : 0.2 * presence };
   // the wall frames its screen itself; the frame only steps clear of the caption in the lower-left corner
   if (id === 'work') return { x: 0.08 * presence, y: 0 };
   // the ride frames About, Stack and Contact itself, with the pole riding on the right of the frame

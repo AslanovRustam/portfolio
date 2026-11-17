@@ -43,7 +43,7 @@ export default function CameraRig() {
 
   useFrame((_, dt) => {
     const { progress, reducedMotion } = experienceStore.getState();
-    const pose = desiredCameraPose(progress, aspect, reducedMotion);
+    const pose = desiredCameraPose(progress, { w: size.width, h: size.height }, reducedMotion);
     const k = reducedMotion ? Infinity : LAMBDA;
     const p = camera.position;
     p.set(damp(p.x, pose.position[0], k, dt), damp(p.y, pose.position[1], k, dt), damp(p.z, pose.position[2], k, dt));

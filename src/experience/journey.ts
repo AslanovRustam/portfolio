@@ -46,6 +46,8 @@ export const DEFAULT_SVH: Readonly<Record<PieceId, number>> = Object.fromEntries
 
 const defaults = (): number[] => PIECE_IDS.map((id) => DEFAULT_SVH[id]);
 let lengths = defaults();
+/** the lengths in use came from the page (px), not the defaults (svh) */
+let measured = false;
 let total = lengths.reduce((a, b) => a + b, 0);
 
 /** The measured scroll length of each piece, in PIECE_IDS order and in any one unit (the page uses px). */
@@ -54,6 +56,7 @@ export function setJourneyLengths(next: readonly number[]): void {
   if (!next.every((v) => Number.isFinite(v) && v > 0)) throw new Error(`journey lengths must be positive: ${next.join(', ')}`);
   lengths = [...next];
   total = lengths.reduce((a, b) => a + b, 0);
+  measured = true;
 }
 
 /**
@@ -72,6 +75,12 @@ export function lengthsFromLayout(heights: readonly number[], track: number, vie
 /** Back to the unmeasured defaults. */
 export function resetJourneyLengths(): void {
   setJourneyLengths(defaults());
+  measured = false;
+}
+
+/** A piece's scroll length in px: as measured, or its default before the page has measured itself. */
+export function pieceSpanPx(id: PieceId, viewportH: number): number {
+  return measured ? lengths[PIECE_IDS.indexOf(id)] : (DEFAULT_SVH[id] * viewportH) / 100;
 }
 
 /** The lengths in use (measured, or the defaults). */

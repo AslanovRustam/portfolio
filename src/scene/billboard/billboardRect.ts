@@ -1,7 +1,6 @@
 import { type Camera, PerspectiveCamera, Vector3 } from 'three';
-import { desiredCameraPose } from '../cameraPose';
 import type { Rect } from '../tvwall/screenRects';
-import { FOV } from './fit';
+import { endPose, FOV } from './fit';
 import { BILLBOARD, onBillboard } from './layout';
 
 const corner = new Vector3();
@@ -32,7 +31,7 @@ export function billboardRect(camera: Camera, canvas: Rect): Rect {
 
 /** The camera as it stands at the end of the ride on a screen of this aspect. */
 export function endCamera(aspect: number): PerspectiveCamera {
-  const pose = desiredCameraPose(1, aspect, false);
+  const pose = endPose(aspect);
   const cam = new PerspectiveCamera(FOV, aspect, 0.1, 200);
   cam.position.set(...pose.position);
   cam.lookAt(new Vector3(...pose.target));

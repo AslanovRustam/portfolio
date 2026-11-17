@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+import { contactLanding } from '@/experience/dive';
 import { stackStopProgress } from '@/experience/stackStops';
 import { PROJECTS } from '@/content/projects';
 import {
@@ -47,6 +48,10 @@ it('Work links land on the first project; hashes carry the stop', () => {
   expect(sectionTarget('stack')).toBeCloseTo(stackStopProgress(0), 9);
   // Contact opens the end of the road: the billboard with the form, the green light
   expect(sectionTarget('contact')).toBe(1);
+  // where the camera dives into the billboard's screen (a phone), it opens where the dive ends: the form
+  const view = { w: 412, h: 839, contactPx: 2.5 * 839 };
+  expect(sectionTarget('contact', view)).toBeCloseTo(contactLanding(view), 9);
+  expect(sectionTarget('contact', view)).toBeLessThan(1);
   expect(hashFor(stopProgress(4))).toBe('work-5');
   expect(hashFor(0.48)).toBe('about');
   expect(hashFor(0.05)).toBeNull();

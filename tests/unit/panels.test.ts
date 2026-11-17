@@ -32,7 +32,9 @@ it('the scene steps aside for the panel', () => {
   for (const id of ['about', 'stack', 'contact'] as const) expect(frameShift(id, 1, wide)).toEqual({ x: 0, y: 0 });
   expect(frameShift('work', 0.5, wide)).toEqual({ x: 0.04, y: 0 }); // clear of the caption in the corner
   expect(frameShift('about', 1, phone)).toEqual({ x: 0, y: 0.2 });
-  expect(frameShift('contact', 1, { w: 900, h: 700 })).toEqual({ x: 0, y: 0.2 });
+  // a narrow window dives into the billboard's screen for Contact: the dive frames it (M4 round 1)
+  expect(frameShift('contact', 1, { w: 900, h: 700 })).toEqual({ x: 0, y: 0 });
+  expect(frameShift('contact', 1, phone)).toEqual({ x: 0, y: 0 });
 });
 
 it('a track position maps back to the scroll progress that shows it (keyboard focus on a hidden card)', () => {

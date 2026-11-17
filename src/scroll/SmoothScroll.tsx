@@ -5,12 +5,14 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 import { useEffect } from 'react';
-import { scrollFromStory, storyFromScroll } from '@/experience/journey';
+import type { DiveView } from '@/experience/diveStages';
+import { pieceSpanPx, scrollFromStory, storyFromScroll } from '@/experience/journey';
 import { takePlace } from '@/experience/place';
 import type { SectionId } from '@/experience/signs';
 import { experienceStore } from '@/experience/store';
 import { stackSnapTarget } from '@/experience/stackStops';
 import { parseHash, sectionTarget, snapTarget } from '@/experience/workStops';
+import { billboardFit } from '@/scene/billboard/fit';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -70,9 +72,19 @@ export function lockScroll(on: boolean): void {
   }
 }
 
+/**
+ * This window as the dive sees it (M4 round 1), or undefined where the form goes into the billboard (or
+ * there is no scene): Contact's links land where the dive ends, which depends on Contact's length.
+ */
+function diveView(): DiveView | undefined {
+  const v = { w: innerWidth, h: innerHeight };
+  if (!experienceStore.getState().webgl || billboardFit(v) !== null) return undefined;
+  return { ...v, contactPx: pieceSpanPx('contact', innerHeight) };
+}
+
 /** Scrolls to a section (Work: its first project); glides unless the visitor prefers reduced motion. */
 export function scrollToSection(id: SectionId): void {
-  scrollToProgress(sectionTarget(id), experienceStore.getState().reducedMotion);
+  scrollToProgress(sectionTarget(id, diveView()), experienceStore.getState().reducedMotion);
 }
 
 /** How long the page has to rest inside Work before it settles on the nearest project. */
@@ -200,13 +212,15 @@ export default function SmoothScroll() {
     // A deep link (/en#stack, /en#work-5) opens its place once there is something to look at: when the
     // scene is ready, or straight away on the no-WebGL fallback, which never becomes ready.
     // after a language switch, the exact place inside that section (the text is longer or shorter now)
-    const hashed = parseHash(location.hash.slice(1));
-    const target = hashed === null ? null : (takePlace(hashed) ?? hashed);
+    const hash = location.hash.slice(1);
+    const hashed = parseHash(hash, diveView());
+    const placed = hashed === null ? null : takePlace(hashed);
     let stopDeepLink = () => {};
-    if (target !== null) {
+    if (hashed !== null) {
       const go = (s: { ready: boolean; webgl: boolean }) => {
         if (!s.ready && s.webgl) return false;
-        scrollToProgress(target, experienceStore.getState().reducedMotion);
+        // asked again now that the page has measured itself: the dive's landing depends on Contact's length
+        scrollToProgress(placed ?? parseHash(hash, diveView()) ?? hashed, experienceStore.getState().reducedMotion);
         return true;
       };
       if (!go(experienceStore.getState())) {

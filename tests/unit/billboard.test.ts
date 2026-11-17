@@ -60,7 +60,7 @@ for (const [w, h] of LAPTOPS) {
     expect(CONTACT_DESIGN.h * fit.scale).toBeLessThanOrEqual(rect.height + 1);
 
     // the traffic light's backboard, where the riding pole holds it at the end
-    const pose = desiredCameraPose(1, w / h, false);
+    const pose = desiredCameraPose(1, { w, h }, false);
     const pole = poleWorldPose(1, pose, w / h);
     const cam = new PerspectiveCamera(35, w / h, 0.1, 200);
     cam.position.set(...pose.position);
@@ -80,7 +80,7 @@ it('a phone, a portrait tablet or a very small window keeps the form in the page
 
 it('the page places the form by the same projection the scene draws with (no three.js in the page)', () => {
   for (const [w, h] of LAPTOPS) {
-    const a = projectPanel(desiredCameraPose(1, w / h, false), { w, h });
+    const a = projectPanel(desiredCameraPose(1, { w, h }, false), { w, h });
     const b = billboardRect(endCamera(w / h), { x: 0, y: 0, width: w, height: h });
     for (const k of ['x', 'y', 'width', 'height'] as const) expect(a[k]).toBeCloseTo(b[k], 3);
   }
@@ -115,7 +115,7 @@ it('wherever the form goes into the billboard, it is whole on the screen and cle
     expect(x + width, at).toBeLessThanOrEqual(w - 16);
     expect(y, at).toBeGreaterThanOrEqual(70);
     expect(y + height, at).toBeLessThanOrEqual(h - 16);
-    const pose = desiredCameraPose(1, w / h, false);
+    const pose = desiredCameraPose(1, { w, h }, false);
     const pole = poleWorldPose(1, pose, w / h);
     const cam = new PerspectiveCamera(35, w / h, 0.1, 200);
     cam.position.set(...pose.position);

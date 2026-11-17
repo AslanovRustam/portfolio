@@ -114,6 +114,10 @@ it('the pole steps out of the frame where it would be in the way', () => {
     expect(poleAway(p, PHONE)).toBe(1);
     expect(poleAway(p, LAPTOP)).toBe(0);
   }
+  // a small landscape window dives into the billboard's screen like a phone: the pole steps aside there too
+  for (const p of [0.9, 1]) expect(poleAway(p, 1.5, false, true), `p ${p}`).toBe(1);
+  expect(poleAway(0.9, LAPTOP, false, false)).toBe(0);
+  expect(poleAway(0.9, 1.5, true, true)).toBe(1);
   // driving under the gantry, the riding pole would pass through its signs: out of the frame on every screen
   for (const p of [0.79, 0.8, 0.82]) for (const a of [LAPTOP, PHONE]) expect(poleAway(p, a), `p ${p}`).toBe(1);
   for (const p of [0.3, 0.5, 0.58]) for (const a of [LAPTOP, PHONE]) expect(poleAway(p, a), `p ${p}`).toBe(0);
@@ -127,7 +131,7 @@ it('wherever the riding pole crosses the gantry, it is out of the frame', () => 
   const span = G.signs[5].position[0] + G.signs[5].width / 2 + 0.6;
   for (const aspect of [LAPTOP, PHONE, 2560 / 1080])
     for (let p = 0.59; p <= 1; p += 0.001) {
-      const pose = desiredCameraPose(p, aspect, false);
+      const pose = desiredCameraPose(p, { w: aspect * 1000, h: 1000 }, false);
       const pole = poleWorldPose(p, pose, aspect, poleAway(p, aspect));
       if (Math.abs(pole.position[2] - G.signs[0].position[2]) > 0.8 || Math.abs(pole.position[0]) > span) continue;
       const [x] = ndc(pose, pole.position, aspect);
@@ -154,7 +158,7 @@ it('reduced motion: within a section the pole stands still in the frame; it only
     for (const s of SECTIONS) {
       let first: { right: number; ahead: number; y: number } | null = null;
       for (let p = s.start + 0.003; p <= Math.min(1, s.end) - 0.003; p += 0.001) {
-        const pose = desiredCameraPose(p, aspect, true);
+        const pose = desiredCameraPose(p, { w: aspect * 1000, h: 1000 }, true);
         const parked = Math.max(wallWeight(p, true), poleAway(p, aspect, true));
         const pole = poleWorldPose(p, pose, aspect, parked, true);
         const here = { ...cameraSpace(pose, pole.position), y: pole.position[1] - pose.position[1] };

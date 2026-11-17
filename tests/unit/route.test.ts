@@ -2,6 +2,8 @@ import { expect, it } from 'vitest';
 import type { Pose } from '@/experience/choreography';
 import { CONTACT_ON_BILLBOARD_SCROLL, DEFAULT_SVH, PIECE_IDS, resetJourneyLengths, scrollFromStory, setJourneyLengths } from '@/experience/journey';
 import { ridePose, STATIONS, stationPose } from '@/experience/route';
+import { STACK_TO } from '@/experience/stackStops';
+import { desiredCameraPose } from '@/scene/cameraPose';
 
 const near = (a: readonly number[], b: readonly number[], eps = 1e-6) => a.every((v, i) => Math.abs(v - b[i]) < eps);
 const dist = (a: readonly number[], b: readonly number[]) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
@@ -66,18 +68,27 @@ it('in About the camera rises along the pole, looking at it all the way', () => 
 
 // final review: the drive to the billboard ended inside Contact's short stretch of scroll (a laptop puts the
 // form on the billboard, and that stretch is short) — its last metres went by in one wheel notch
-it('the camera never surges: at most 0.5 m per svh of scroll anywhere on the ride, with the form on the billboard or in the page', () => {
-  for (const contact of [CONTACT_ON_BILLBOARD_SCROLL, DEFAULT_SVH.contact]) {
-    const lengths = PIECE_IDS.map((id) => (id === 'contact' ? contact : DEFAULT_SVH[id]));
+it('the camera never surges: at most 0.5 m per svh of scroll anywhere on the ride, on a laptop and in a phone’s dive', () => {
+  const cases: { w: number; h: number; contact: number; from?: number }[] = [
+    // a laptop: the form on the billboard (a short Contact), or in the page
+    { w: 1440, h: 800, contact: CONTACT_ON_BILLBOARD_SCROLL },
+    { w: 1440, h: 800, contact: DEFAULT_SVH.contact },
+    // a phone diving into the screen, Contact 1.6 to 4 screens long: from the gantry on (the phone's ride
+    // before it, backed off along the view line, is Plan 4's and unchanged here)
+    ...[160, 250, 400].map((contact) => ({ w: 412, h: 839, contact, from: STACK_TO })),
+  ];
+  for (const { w, h, contact, from = 0.15 } of cases) {
+    // the page measures its pieces in px: svh × h / 100
+    const lengths = PIECE_IDS.map((id) => ((id === 'contact' ? contact : DEFAULT_SVH[id]) * h) / 100);
     setJourneyLengths(lengths);
     const total = lengths.reduce((a, b) => a + b, 0);
     let worst = { v: 0, p: 0 };
-    for (let p = 0.15; p < 0.999; p += 0.0005) {
-      const svh = (scrollFromStory(p + 0.0005) - scrollFromStory(p)) * total;
-      const v = dist(ridePose(p).position, ridePose(p + 0.0005).position) / svh;
+    for (let p = from; p < 0.999; p += 0.0005) {
+      const svh = ((scrollFromStory(p + 0.0005) - scrollFromStory(p)) * total * 100) / h;
+      const v = dist(desiredCameraPose(p, { w, h }, false).position, desiredCameraPose(p + 0.0005, { w, h }, false).position) / svh;
       if (v > worst.v) worst = { v, p };
     }
-    expect(worst.v, `contact ${contact} svh, at ${worst.p.toFixed(4)}`).toBeLessThanOrEqual(0.5);
+    expect(worst.v, `${w}×${h}, contact ${contact} svh, at ${worst.p.toFixed(4)}`).toBeLessThanOrEqual(0.5);
   }
   resetJourneyLengths();
 });

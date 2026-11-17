@@ -50,18 +50,21 @@ const UNDER_GANTRY_IN: readonly [number, number] = [0.83, END_FROM];
  * How far the pole steps out of the frame (0..1) where it would be in the way. Driving from the last sign
  * under the gantry, the riding pole would pass through the signs: it leaves the frame on every screen and
  * comes back for the end. On a portrait screen a Stack sign or the Contact form fills the frame (the menu
- * is in the header there): it stays out through both. It eases out and back with the sections' presence.
+ * is in the header there): it stays out through both, and any window that dives into the billboard's
+ * screen keeps it out of Contact. It eases out and back with the sections' presence.
  */
-export function poleAway(p: number, aspect: number, reduced = false): number {
+export function poleAway(p: number, aspect: number, reduced = false, dive = false): number {
   const q = clamp01(p);
   if (reduced) {
     // the camera jumps from section to section, so the pole never drives under the gantry in view
     const s = activeSection(q);
-    return aspect < 1 && (s === 'stack' || s === 'contact') ? 1 : 0;
+    return (aspect < 1 && s === 'stack') || ((aspect < 1 || dive) && s === 'contact') ? 1 : 0;
   }
   const under = between(q, UNDER_GANTRY_OUT) * (1 - between(q, UNDER_GANTRY_IN));
-  if (aspect >= 1) return under;
-  return Math.max(under, sectionPresence(q, 'stack'), sectionPresence(q, 'contact'));
+  // a window that dives into the billboard's screen keeps the pole out of it (M4 round 1)
+  const contact = aspect < 1 || dive ? sectionPresence(q, 'contact') : 0;
+  if (aspect >= 1) return Math.max(under, contact);
+  return Math.max(under, sectionPresence(q, 'stack'), contact);
 }
 
 const G = gantryLayout();

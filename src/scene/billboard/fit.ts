@@ -1,6 +1,6 @@
-import type { Pose } from '@/experience/choreography';
+import { fitDistance, type Pose, type Vec3 } from '@/experience/choreography';
 import { poleWorldPose } from '@/experience/poleRide';
-import { desiredCameraPose } from '../cameraPose';
+import { ridePose } from '@/experience/route';
 import { BOARD, LIGHT_Y } from '../pole/lightMount';
 import type { Rect } from '../tvwall/screenRects';
 import { BILLBOARD, onBillboard } from './layout';
@@ -70,6 +70,16 @@ export function projectPanel(pose: Pose, viewport: { w: number; h: number }): Re
 }
 
 /**
+ * The camera at the end of the ride on a screen of this aspect (backed off on a narrow one): straight from
+ * the route, so the scene's camera module may ask billboardFit without a cycle.
+ */
+export function endPose(aspect: number): Pose {
+  const { position, target } = ridePose(1);
+  const k = fitDistance(aspect);
+  return { position: position.map((v, i) => target[i] + (v - target[i]) * k) as Vec3, target };
+}
+
+/**
  * Where the contact content goes on a laptop: the panel's rect at the end of the ride, less a margin, and
  * the scale that fits the content's design size into it (centred). Null on a portrait or narrow screen, or
  * where the text would come out too small, or where it would not be whole on the screen and clear of the
@@ -79,7 +89,7 @@ export function projectPanel(pose: Pose, viewport: { w: number; h: number }): Re
 export function billboardFit(viewport: { w: number; h: number }): { rect: Rect; scale: number } | null {
   const { w, h } = viewport;
   if (w < 1024 || w / h < 1) return null;
-  const pose = desiredCameraPose(1, w / h, false);
+  const pose = endPose(w / h);
   const panel = projectPanel(pose, viewport);
   const mx = panel.width * INSET;
   const my = panel.height * INSET;
