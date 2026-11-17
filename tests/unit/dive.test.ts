@@ -58,6 +58,11 @@ describe('the dive into the billboard’s screen', () => {
       expect(diveStage((arrived + inside) / 2, view).t).toBeCloseTo(0.5, 2);
       expect(diveStage(inside + 1e-4, view).stage).toBe('inside');
       expect(contactLanding(view)).toBeCloseTo(inside, 6);
+      // a link lands exactly there: that is inside, whatever the rounding
+      for (const h of [839, 844, 740, 1024, 600]) {
+        const v = { w: 412, h, contactPx: k * h + 0.37 };
+        expect(diveStage(contactLanding(v), v).stage, String(h)).toBe('inside');
+      }
     }
   });
 

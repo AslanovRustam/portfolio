@@ -20,12 +20,23 @@ export const DIVE = {
   overscan: 0.9,
 } as const;
 
-export type DiveView = { w: number; h: number; contactPx: number };
+/** A window that dives; `still` under reduced motion: the camera stands inside from the start, no dive. */
+export type DiveView = { w: number; h: number; contactPx: number; still?: boolean };
 export type DiveStage = 'approach' | 'arrived' | 'dive' | 'inside';
 
 const SPAN = 1 - CONTACT_FROM;
 const offsetPx = (p: number, view: DiveView) => ((p - CONTACT_FROM) / SPAN) * view.contactPx;
-const px = (svh: number, view: DiveView) => (svh * view.h) / 100;
+
+let pinned: number | null = null;
+/**
+ * The window height the page's dive laid Contact out for (ContactScreen): the scene's stages count with it
+ * too, so a phone's address bar showing or hiding (it changes the window's height, not the layout) never
+ * leaves the camera and the frame a stage apart. Null: count with the view's own height.
+ */
+export function pinDiveHeight(h: number | null): void {
+  pinned = h;
+}
+const px = (svh: number, view: DiveView) => (svh * (pinned ?? view.h)) / 100;
 
 /** Where the dive is at story progress p: before Contact the approach, then arrived, diving (t 0..1), inside. */
 export function diveStage(p: number, view: DiveView): { stage: DiveStage; t: number } {
@@ -34,11 +45,14 @@ export function diveStage(p: number, view: DiveView): { stage: DiveStage; t: num
   const a = px(DIVE.arriveSvh, view);
   const d = px(DIVE.diveSvh, view);
   if (off < a) return { stage: 'arrived', t: 0 };
-  if (off < a + d) return { stage: 'dive', t: (off - a) / d };
+  // a pixel of slack: a link that lands exactly where the dive ends is inside
+  if (off < a + d - 1) return { stage: 'dive', t: Math.min(1, (off - a) / (d - 1)) };
   return { stage: 'inside', t: 1 };
 }
 
 /** Story progress where the dive ends and the form's start shows inside the frame (Contact links land here). */
 export function contactLanding(view: DiveView): number {
+  // with no dive, the form starts in the frame where Contact begins
+  if (view.still) return CONTACT_FROM;
   return Math.min(1, CONTACT_FROM + (px(DIVE.arriveSvh + DIVE.diveSvh, view) / view.contactPx) * SPAN);
 }

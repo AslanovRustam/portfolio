@@ -23,6 +23,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { registerProbe } from '@/dev/sceneProbe';
 import { GLITCH_MS, panelFlicker, screenOn } from '@/experience/billboardScreen';
 import type { Vec3 } from '@/experience/choreography';
+import { publishScreenRect, screenRectWanted } from '@/experience/liveScreen';
 import { experienceStore } from '@/experience/store';
 import { NEON } from '@/ui/neon';
 import { revealUniforms } from '../reveal/registry';
@@ -396,6 +397,8 @@ export default function Billboard() {
     const b = panelFlicker(ms, want);
     parts.panel.color.setScalar(1 + 0.8 * b);
     parts.tube.color.copy(tubeBase).multiplyScalar(ms < GLITCH_MS ? Math.max(0.35, b) : 1);
+    // the page's dive places the picture of the form on the panel where the live camera sees it
+    if (screenRectWanted()) publishScreenRect(billboardRect(camera, { x: 0, y: 0, width: size.width, height: size.height }));
   });
 
   return (

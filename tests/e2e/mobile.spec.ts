@@ -1,5 +1,23 @@
 import { expect, test } from '@playwright/test';
-import { billboard, gantry, gotoScene, HOLD, innerScrollers, progress, scrollTo, stackStop, stop, underSign, waitReady } from './helpers';
+import {
+  billboard,
+  gantry,
+  gotoScene,
+  HOLD,
+  innerScrollers,
+  insideTheScreen,
+  intoContact,
+  progress,
+  screenPicture,
+  screenTube,
+  scrollTo,
+  stackStop,
+  stop,
+  switchLanguage,
+  underSign,
+  waitReady,
+  within,
+} from './helpers';
 
 // Review Focus 4
 test('touch swipe advances progress on a phone, low tier, no errors', async ({ page }) => {
@@ -127,9 +145,11 @@ test('the end of the page on a phone', async ({ page }) => {
     await page.waitForTimeout(300);
   }
   await expect.poll(() => progress(page), { timeout: 8000 }).toBeGreaterThan(0.995);
-  const vh = await page.evaluate(() => innerHeight);
-  const last = (await page.locator('#contact .nbox').last().boundingBox())!;
-  expect(last.y + last.height).toBeLessThanOrEqual(vh + 1);
+  // the camera has dived into the billboard's screen: Contact's end rests inside its frame
+  await insideTheScreen(page);
+  const frame = (await screenTube(page).boundingBox())!;
+  const last = (await page.locator('#journey section#contact [data-flow] > * > :last-child').boundingBox())!;
+  expect(last.y + last.height).toBeLessThanOrEqual(frame.y + frame.height + 1);
 });
 
 test('Stack on a phone: the caption fits under its sign in every language, Next rises above it, the pole steps aside', async ({ page }) => {
@@ -199,8 +219,8 @@ test('the Work pager keeps its nine numbers on one row, down to a 390 px phone',
 test('a phone (low tier) keeps the boxes unblurred', async ({ page }) => {
   await gotoScene(page);
   await expect.poll(() => page.evaluate(() => window.__portfolio.state().tier), { timeout: 30_000 }).toBe('low');
-  // About is paper bills now; Contact's boxes are the glass ones
-  expect(await page.locator('#contact .nbox').first().evaluate((el) => getComputedStyle(el).backdropFilter)).toBe('none');
+  // About is paper bills and Contact the billboard's screen now; the captions' boxes are the glass ones
+  expect(await page.locator('.nbox').first().evaluate((el) => getComputedStyle(el).backdropFilter)).toBe('none');
 });
 
 test('Esc over an open case closes only the menu', async ({ page }) => {
@@ -287,4 +307,101 @@ test('on a phone the billboard carries the title and the form follows in the pag
   await scrollTo(page, 1);
   await expect(page.locator('#journey section#contact form')).toHaveCount(1);
   await expect.poll(async () => (await billboard(page))?.title).toBe('Let’s go');
+});
+
+// M4 round 1, note 4: on a phone the camera dives into the billboard's screen
+const contactByMenu = async (page: import('@playwright/test').Page) => {
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Contact', exact: true }).click();
+};
+
+test('at the billboard a phone shows a picture of the form on the switched-on screen; the form itself waits', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  const h = await page.evaluate(() => innerHeight);
+  await scrollTo(page, await intoContact(page, 0.1 * h));
+  await expect(screenPicture(page)).toBeVisible({ timeout: 20_000 });
+  const panel = (await billboard(page))!.rect;
+  expect(within((await screenPicture(page).boundingBox())!, panel, 2)).toBe(true);
+  await expect(page.locator('section#contact form')).toBeHidden();
+  expect(await page.locator('#journey section#contact').evaluate((e) => (e as HTMLElement).inert)).toBe(true);
+  await expect(screenTube(page)).toBeHidden();
+});
+
+test('after the dive the form scrolls inside the screen’s neon frame, the frame still, nothing scrolling inside itself', async ({ page }) => {
+  // a short phone: the form is taller than the frame, so there is something to scroll
+  await page.setViewportSize({ width: 412, height: 600 });
+  await gotoScene(page);
+  await waitReady(page);
+  await contactByMenu(page);
+  await insideTheScreen(page);
+  const { width: vw, height: vh } = page.viewportSize()!;
+  const frame = (await screenTube(page).boundingBox())!;
+  const header = (await page.locator('header[data-ui]').boundingBox())!;
+  expect(frame.x).toBeGreaterThanOrEqual(4);
+  expect(frame.x).toBeLessThanOrEqual(20);
+  expect(vw - frame.x - frame.width).toBeGreaterThanOrEqual(4);
+  expect(vw - frame.x - frame.width).toBeLessThanOrEqual(20);
+  expect(vh - frame.y - frame.height).toBeGreaterThanOrEqual(4);
+  expect(vh - frame.y - frame.height).toBeLessThanOrEqual(20);
+  expect(frame.y).toBeGreaterThanOrEqual(header.y + header.height);
+  const form = page.locator('section#contact form');
+  await expect(form).toBeVisible();
+  for (const label of ['Name', 'Email']) expect(within((await form.getByLabel(label).boundingBox())!, frame)).toBe(true);
+  // the page scrolls on to its end, the form rides up inside the frame by as much
+  const y0 = (await form.boundingBox())!.y;
+  const s0 = await page.evaluate(() => scrollY);
+  await scrollTo(page, 1);
+  const moved = (await page.evaluate(() => scrollY)) - s0;
+  expect(moved).toBeGreaterThan(40);
+  await expect.poll(async () => Math.abs(y0 - (await form.boundingBox())!.y - moved)).toBeLessThan(2);
+  expect(await screenTube(page).boundingBox()).toEqual(frame);
+  expect(await innerScrollers(page)).toEqual([]);
+});
+
+test('back at the billboard the frame goes out and the form is put away', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await contactByMenu(page);
+  await insideTheScreen(page);
+  await scrollTo(page, 0.861);
+  await expect(screenTube(page)).toBeHidden({ timeout: 10_000 });
+  await expect(page.locator('section#contact form')).toBeHidden();
+  expect(await page.locator('#journey section#contact').evaluate((e) => (e as HTMLElement).inert)).toBe(true);
+});
+
+test('#contact and a language switch land at the start of the form inside the frame', async ({ page }) => {
+  await gotoScene(page, '/en#contact');
+  await waitReady(page);
+  await insideTheScreen(page);
+  const frame = (await screenTube(page).boundingBox())!;
+  const en = (await page.locator('#journey section#contact').getByText(/^Tell me about a role/).boundingBox())!;
+  expect(en.y).toBeGreaterThan(frame.y);
+  expect(en.y).toBeLessThan(frame.y + 80);
+  await switchLanguage(page, 'RU');
+  await expect(page).toHaveURL(/\/ru/);
+  await waitReady(page);
+  await insideTheScreen(page);
+  const ru = (await page.locator('#journey section#contact').getByText(/^Расскажите о вакансии/).boundingBox())!;
+  expect(ru.y).toBeGreaterThan(frame.y);
+  expect(ru.y).toBeLessThan(frame.y + 80);
+});
+
+// Review Focus 5: reduced motion, Contact from the header menu
+test('under reduced motion the menu’s Contact lands inside the lit frame, with no glitch', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() => {
+    new MutationObserver(() => {
+      if (document.querySelector('[data-glitch]')) (window as unknown as { glitched: boolean }).glitched = true;
+    }).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['data-glitch'] });
+  });
+  await contactByMenu(page);
+  await insideTheScreen(page);
+  const frame = (await screenTube(page).boundingBox())!;
+  const lead = (await page.locator('#journey section#contact').getByText(/^Tell me about a role/).boundingBox())!;
+  expect(lead.y).toBeGreaterThan(frame.y);
+  expect(lead.y).toBeLessThan(frame.y + 80);
+  expect(await page.evaluate(() => !!(window as unknown as { glitched?: boolean }).glitched)).toBe(false);
 });

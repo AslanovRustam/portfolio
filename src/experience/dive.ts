@@ -2,7 +2,7 @@ import { BILLBOARD, onBillboard } from '@/scene/billboard/layout';
 import type { Pose, Vec3 } from './choreography';
 import { DIVE, type DiveView, diveStage } from './diveStages';
 
-export { contactLanding, DIVE, type DiveStage, diveStage, type DiveView } from './diveStages';
+export { contactLanding, DIVE, type DiveStage, diveStage, type DiveView, pinDiveHeight } from './diveStages';
 
 // The dive's camera (spec §5); its stages are in diveStages.ts.
 
@@ -39,6 +39,11 @@ export function diveArrival(view: { h: number }): Pose {
   const d = half / (TAN * Math.max(0.2, 1 - (2 * MARGIN) / view.h));
   const aim = along(C, U, mid);
   return { position: along(aim, N, d), target: aim };
+}
+
+/** Screen px per metre on the panel at the end of the dive, in a window this tall: the frame's scale. */
+export function diveScale(h: number): number {
+  return h / (INNER_H * DIVE.overscan);
 }
 
 /** The end of the dive: square to the panel, near enough that its interior overfills the window. */

@@ -1,7 +1,7 @@
 import { activeSection, lightState } from '@/experience/choreography';
 import type { SectionId } from '@/experience/signs';
 import { experienceStore, type ExperienceState, type LightState } from '@/experience/store';
-import { scrollToProgress } from '@/scroll/SmoothScroll';
+import { scrollToProgress, scrollToSection } from '@/scroll/SmoothScroll';
 import { readProbe } from './sceneProbe';
 
 export interface PortfolioHooks {
@@ -10,6 +10,8 @@ export interface PortfolioHooks {
   section(): SectionId | null;
   probe(name: string): unknown;
   scrollToProgress(p: number, immediate?: boolean): void;
+  /** as a section link does it (the header, the menu, Next) */
+  scrollToSection(id: SectionId): void;
 }
 
 declare global {
@@ -29,5 +31,6 @@ export function installTestHooks(): void {
     section: () => activeSection(experienceStore.getState().progress),
     probe: readProbe,
     scrollToProgress,
+    scrollToSection,
   };
 }

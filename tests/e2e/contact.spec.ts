@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { billboard, gotoScene, progress, scrollTo, waitReady } from './helpers';
+import { billboard, gotoScene, insideTheScreen, progress, screenTube, scrollTo, waitReady, within } from './helpers';
 
 type Box = { x: number; y: number; width: number; height: number };
 const inside = (a: Box, b: Box, slack = 1) =>
@@ -274,6 +274,8 @@ test('a resize at the end fits the form again, or puts it back in the page, with
   expect(await progress(page)).toBeGreaterThan(0.99);
   // too small a window for the panel: the form is back in the page, still at the end, still holding the text
   await page.setViewportSize({ width: 900, height: 700 });
+  // a window that small dives into the billboard's screen: the form shows once the camera is inside
+  await insideTheScreen(page);
   const inPage = page.locator('#journey section#contact form');
   await expect(inPage).toHaveCount(1);
   await expect(inPage.getByLabel('Message')).toHaveValue('Hello from a big screen');
@@ -301,4 +303,55 @@ test('a message sent right after the form moved counts the time since the form f
   const elapsed = Number(/name="[^"]*elapsed"\r\n\r\n(\d+)/.exec(body)?.[1]);
   expect(elapsed).toBeGreaterThanOrEqual(3000);
   await expect(page.locator('section#contact')).toContainText(/sent|thanks/i);
+});
+
+// M4 round 1, note 4: a small landscape window dives into the screen like a phone
+test('a small landscape window dives into the billboard’s screen and the form scrolls inside its frame', async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 600 });
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
+  await insideTheScreen(page);
+  const frame = (await screenTube(page).boundingBox())!;
+  expect(frame.x).toBeLessThanOrEqual(20);
+  expect(900 - frame.x - frame.width).toBeLessThanOrEqual(20);
+  expect(within((await page.locator('section#contact form').getByLabel('Name').boundingBox())!, frame)).toBe(true);
+  await expect(page.locator('section[data-billboard]')).toHaveCount(0);
+});
+
+// Review Focus 3: a tablet turned between the billboard and the dive in the middle of Contact
+test('turning a tablet between the dive and the billboard keeps what was typed, never a half-lit frame', async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
+  await insideTheScreen(page);
+  await page.locator('section#contact form').getByLabel('Name').fill('Ann');
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const board = page.locator('section[data-billboard]');
+  await expect(board).toBeVisible({ timeout: 20_000 });
+  await expect(board.getByLabel('Name')).toHaveValue('Ann');
+  await expect(screenTube(page)).toHaveCount(0);
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await insideTheScreen(page);
+  await expect(page.locator('section#contact form').getByLabel('Name')).toHaveValue('Ann');
+});
+
+// Review Focus 1: the on-screen keyboard shrinks the window while the visitor types. A real phone's keyboard
+// shrinks only the visual viewport; this shrinks the window itself, on a fine pointer, where the page re-measures.
+test('typing the message with the keyboard up keeps the field inside the frame, the visitor inside the screen', async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 839 });
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
+  await insideTheScreen(page);
+  const message = page.locator('section#contact form').getByLabel('Message');
+  await message.focus();
+  const size = page.viewportSize()!;
+  await page.setViewportSize({ width: size.width, height: Math.round(size.height * 0.6) });
+  await page.waitForTimeout(1000);
+  await expect(page.locator('#journey section#contact')).toHaveAttribute('data-stage', 'inside');
+  await message.pressSequentially('Hello');
+  expect(within((await message.boundingBox())!, (await screenTube(page).boundingBox())!, 2)).toBe(true);
+  await page.setViewportSize(size);
 });

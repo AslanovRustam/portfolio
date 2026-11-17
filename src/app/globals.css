@@ -1196,3 +1196,25 @@ body {
     animation: screen-off 0.7s steps(1, end) both;
   }
 }
+
+/*
+ * The dive (M4 round 1; src/ui/sections/ContactScreen.tsx): where the camera drives into the billboard's
+ * screen, Contact's content scrolls in the page inside the screen's frame. ContactScreen sets --entry so
+ * its first line meets the frame's top as the dive ends; until then it is hidden (and inert).
+ */
+@layer components {
+  #contact.flow-piece[data-dive] > [data-flow] {
+    padding: 0 24px;
+  }
+  #contact.flow-piece[data-dive]:not([data-stage='inside']) > [data-flow] {
+    visibility: hidden;
+  }
+  /* a field the keyboard reaches stays clear of the header and the frame's mats */
+  #contact.flow-piece[data-dive] :is(input, textarea, button, a) {
+    scroll-margin-top: 96px;
+    scroll-margin-bottom: 24px;
+  }
+}
+html[data-in-screen] .top-fade {
+  opacity: 0;
+}

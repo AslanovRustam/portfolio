@@ -85,6 +85,34 @@ export async function innerScrollers(page: Page): Promise<string[]> {
   );
 }
 
+type Box = { x: number; y: number; width: number; height: number };
+/** Whether box a lies inside box b (with some slack, px). */
+export const within = (a: Box, b: Box, slack = 1) =>
+  a.x >= b.x - slack && a.y >= b.y - slack && a.x + a.width <= b.x + b.width + slack && a.y + a.height <= b.y + b.height + slack;
+
+/** The dive (M4 round 1): the neon frame along the window's edges once the camera is inside the screen. */
+// (visible ones: after a language switch the old page stays in the DOM for a moment, hidden)
+export const screenTube = (page: Page) => page.locator('[data-screen-tube]').filter({ visible: true });
+/** The dive: the picture of the form on the billboard's screen while the camera arrives and dives. */
+export const screenPicture = (page: Page) => page.locator('[data-screen-picture]').filter({ visible: true });
+
+/**
+ * Until the camera is inside the billboard's screen and Contact's content shows in its frame, the frame's
+ * switch-on glitch played out (it shifts the frame for a moment). The dive's own section: a language switch
+ * keeps the old page's for a moment.
+ */
+export async function insideTheScreen(page: Page): Promise<void> {
+  await expect(page.locator('#journey section#contact[data-dive]')).toHaveAttribute('data-stage', 'inside', { timeout: 25_000 });
+  await expect(screenTube(page)).toBeVisible();
+  await expect(page.locator('[data-screen-frame]').filter({ visible: true })).not.toHaveAttribute('data-glitch', /.*/);
+}
+
+/** Story progress some px of scroll into Contact's piece (the last piece: story 0.86..1). */
+export async function intoContact(page: Page, px: number): Promise<number> {
+  const lengths = (await page.evaluate(() => window.__portfolio.probe('journey'))) as number[];
+  return 0.86 + (px / lengths[lengths.length - 1]) * 0.14;
+}
+
 /** Switches the language through the header's language tube and the sign it drops. */
 export async function switchLanguage(page: Page, to: 'EN' | 'RU' | 'UK'): Promise<void> {
   const header = page.locator('header[data-ui]');

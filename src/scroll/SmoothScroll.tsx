@@ -78,8 +78,9 @@ export function lockScroll(on: boolean): void {
  */
 function diveView(): DiveView | undefined {
   const v = { w: innerWidth, h: innerHeight };
-  if (!experienceStore.getState().webgl || billboardFit(v) !== null) return undefined;
-  return { ...v, contactPx: pieceSpanPx('contact', innerHeight) };
+  const { webgl, reducedMotion } = experienceStore.getState();
+  if (!webgl || billboardFit(v) !== null) return undefined;
+  return { ...v, contactPx: pieceSpanPx('contact', innerHeight), still: reducedMotion };
 }
 
 /** Scrolls to a section (Work: its first project); glides unless the visitor prefers reduced motion. */

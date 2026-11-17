@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoScene, HOLD, innerScrollers, progress, scrollTo, stackStop, stop, switchLanguage, waitReady } from './helpers';
+import { gotoScene, HOLD, innerScrollers, insideTheScreen, progress, screenTube, scrollTo, stackStop, stop, switchLanguage, waitReady } from './helpers';
 
 const firstBox = (page: Page, id: string) => page.locator(`#${id} [data-flow] > *`).first();
 const yaw = (page: Page) => page.evaluate(() => window.__portfolio.probe('poleYaw') as number);
@@ -52,8 +52,28 @@ test('the last box has left before the pole turns', async ({ page }) => {
   for (const b of bottoms) expect(b).toBeLessThan(0.2 * vh);
 });
 
-test("where Contact rides the page, it ends with its last box resting low on the screen", async ({ page }) => {
-  // a window too small for the form on the billboard (a laptop puts it there: contact.spec)
+test("where Contact rides the page (no WebGL), it ends with its last box resting low on the screen", async ({ page }) => {
+  for (const size of [
+    { width: 1000, height: 700 },
+    { width: 1000, height: 900 },
+  ]) {
+    await page.setViewportSize(size);
+    await page.goto('/en?webgl=0');
+    await page.waitForFunction(() => !!window.__portfolio);
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect
+      .poll(async () => {
+        const last = (await page.locator('#contact .nbox').last().boundingBox())!;
+        return last.y + last.height;
+      })
+      .toBeGreaterThan(0.85 * size.height);
+    const last = (await page.locator('#contact .nbox').last().boundingBox())!;
+    expect(last.y + last.height, `${size.height}`).toBeLessThanOrEqual(size.height);
+  }
+});
+
+// M4 round 1: a window too small for the form on the billboard dives into its screen instead
+test('where the camera dives into the screen, Contact ends inside the frame', async ({ page }) => {
   for (const size of [
     { width: 1000, height: 700 },
     { width: 1000, height: 900 },
@@ -62,9 +82,11 @@ test("where Contact rides the page, it ends with its last box resting low on the
     await gotoScene(page);
     await waitReady(page);
     await scrollTo(page, 1);
-    const last = (await page.locator('#contact .nbox').last().boundingBox())!;
-    expect(last.y + last.height, `${size.height}`).toBeGreaterThan(0.85 * size.height);
-    expect(last.y + last.height, `${size.height}`).toBeLessThanOrEqual(size.height);
+    await insideTheScreen(page);
+    const frame = (await screenTube(page).boundingBox())!;
+    const last = (await page.locator('#journey section#contact [data-flow] > * > :last-child').boundingBox())!;
+    expect(last.y + last.height, `${size.height}`).toBeLessThanOrEqual(frame.y + frame.height);
+    expect(last.y, `${size.height}`).toBeGreaterThan(frame.y);
   }
 });
 

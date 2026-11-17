@@ -9,6 +9,7 @@ import { getIcon } from '@/scene/stickers/icons';
 import { neonStyle } from '../neon';
 import ContactForm from './ContactForm';
 import NeonBox from '../flow/NeonBox';
+import { useContactMode } from './useContactMode';
 
 const tube = 'neon text-[15px] sm:text-base';
 
@@ -82,10 +83,25 @@ function Links() {
  * The last stop: the form, direct links, the email to copy and the CV. In the page's flow it is three neon
  * boxes riding up under the billboard (a phone, no WebGL); `fitted`, it is laid out for the billboard's
  * panel on a laptop (ContactBillboard): the lead and the links on the left, the form on the right, the
- * title in neon on the billboard itself (kept here for screen readers).
+ * title in neon on the billboard itself (kept here for screen readers). Where the camera dives into the
+ * billboard's screen (M4 round 1), it is the screen's content: the lead, the form and the links one under
+ * another inside the screen's neon frame, no boxes of their own (ContactScreen draws the frame).
  */
 export default function ContactSection({ fitted = false }: { fitted?: boolean }) {
   const t = useTranslations('contact');
+  const mode = useContactMode();
+
+  if (!fitted && mode === 'dive')
+    return (
+      <div data-ui className="pointer-events-auto space-y-7" style={neonStyle('contact')}>
+        <h2 id="contact-title" className="sr-only">
+          {t('title')}
+        </h2>
+        <p className="text-sm leading-relaxed text-[#e8f7ff]/85">{t('lead')}</p>
+        <ContactForm />
+        <Links />
+      </div>
+    );
 
   // in the page's order (the lead, the form, the links), placed as two columns
   if (fitted)

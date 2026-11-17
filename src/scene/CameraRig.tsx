@@ -50,8 +50,9 @@ export default function CameraRig() {
     t.set(damp(t.x, pose.target[0], k, dt), damp(t.y, pose.target[1], k, dt), damp(t.z, pose.target[2], k, dt));
     camera.lookAt(t);
     const lag = p.distanceTo(goal.set(...pose.position)) + t.distanceTo(goal.set(...pose.target));
-    // computed against this frame's progress: a jump to the end does not find a camera "at rest" from before it
-    const atBillboard = lag < AT_REST && progress >= END_FROM;
+    // computed against this frame's progress: a jump to the end does not find a camera "at rest" from before
+    // it; once there it holds while the scroll stays at the billboard (a dive into its screen moves the camera)
+    const atBillboard = progress >= END_FROM && (experienceStore.getState().cameraAtBillboard || lag < AT_REST);
     if (atBillboard !== experienceStore.getState().cameraAtBillboard) experienceStore.getState().setCameraAtBillboard(atBillboard);
 
     const section = activeSection(progress);
