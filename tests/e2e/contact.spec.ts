@@ -5,6 +5,15 @@ type Box = { x: number; y: number; width: number; height: number };
 const inside = (a: Box, b: Box, slack = 1) =>
   a.x >= b.x - slack && a.y >= b.y - slack && a.x + a.width <= b.x + b.width + slack && a.y + a.height <= b.y + b.height + slack;
 
+/**
+ * Scrolls into Contact and waits for its form: on a laptop the billboard's screen switches on only once
+ * the camera has come to rest in front of it (M4 round 1).
+ */
+async function toTheForm(page: Page, p: number) {
+  await scrollTo(page, p);
+  await expect(page.locator('section#contact form')).toBeVisible({ timeout: 20_000 });
+}
+
 /** Until the camera has come to rest at the end (the panel stops moving on the screen). */
 async function atRest(page: Page) {
   await expect
@@ -76,7 +85,7 @@ test('contacts and CV are there, also without WebGL', async ({ page }) => {
 
 test('the Send sign stays dark until the form is valid, and a press on it shows what is missing', async ({ page }) => {
   await gotoScene(page);
-  await scrollTo(page, 0.9);
+  await toTheForm(page, 0.9);
   const form = page.locator('section#contact form');
   const send = form.getByRole('button', { name: 'Send' });
   await expect(send).toHaveAttribute('data-ready', 'false');
@@ -96,9 +105,9 @@ test('the Send sign stays dark until the form is valid, and a press on it shows 
 // Review Focus 4
 test('keyboard focus reaches the contact links', async ({ page }) => {
   await gotoScene(page);
-  await scrollTo(page, 0.9);
   // the end state of the focus ring, not its 0.2 s fade
   await page.addStyleTag({ content: '*, *::after { transition: none !important; }' });
+  await toTheForm(page, 0.9);
   await page.locator('section#contact form').getByLabel('Message').focus();
   for (let i = 0; i < 6; i++) {
     await page.keyboard.press('Tab');
@@ -165,6 +174,83 @@ test('at the end on a laptop the billboard’s catwalk is in the frame, under th
   expect(x).toBeLessThan(1440);
   expect(y).toBeGreaterThan(rect.y + rect.height);
   expect(y).toBeLessThan(800);
+});
+
+// M4 round 1, note 2: the billboard is a screen, empty while the camera drives in
+test('the billboard’s screen stays empty while the camera drives in and switches on once it stops', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  const screen = page.locator('section[data-billboard]');
+  await scrollTo(page, 0.855);
+  await page.waitForTimeout(400);
+  await expect(screen).toBeHidden();
+  expect(await screen.evaluate((e) => (e as HTMLElement).inert)).toBe(true);
+  await scrollTo(page, 1);
+  await expect(screen).toHaveAttribute('data-screen', 'on');
+  await expect(screen).toBeVisible({ timeout: 1500 });
+  expect(await screen.evaluate((e) => (e as HTMLElement).inert)).toBe(false);
+  await scrollTo(page, 0.855);
+  await expect(screen).toHaveAttribute('data-screen', 'off');
+  await expect(screen).toBeHidden({ timeout: 1500 });
+});
+
+// a fast scroll runs ahead of the camera: the screen waits for the panel to stop, not for the scroll
+test('a fast scroll to the end switches the screen on only once the panel has stopped moving', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.8);
+  await page.waitForTimeout(2500);
+  await page.mouse.move(700, 400);
+  const atSwitch = page.evaluate(
+    () =>
+      new Promise<{ width: number }>((resolve) => {
+        const el = document.querySelector<HTMLElement>('section[data-billboard]')!;
+        new MutationObserver(() => {
+          if (el.dataset.screen === 'on') resolve((window.__portfolio.probe('billboard') as { rect: { width: number } }).rect);
+        }).observe(el, { attributes: true });
+      }),
+  );
+  for (let i = 0; i < 30; i++) {
+    await page.mouse.wheel(0, 120);
+    await page.waitForTimeout(40);
+  }
+  const at = await atSwitch;
+  await atRest(page);
+  const end = (await billboard(page))!.rect;
+  expect(Math.abs(at.width - end.width) / end.width).toBeLessThan(0.02);
+});
+
+// Review Focus 2: a fling across the arrival and straight back
+test('a fling to the end and straight back leaves the screen off, no glitch left running', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.7);
+  await page.evaluate(async () => {
+    window.__portfolio.scrollToProgress(1, true);
+    await new Promise((r) => setTimeout(r, 120));
+    window.__portfolio.scrollToProgress(0.8, true);
+  });
+  const screen = page.locator('section[data-billboard]');
+  await expect(screen).toHaveAttribute('data-screen', 'off');
+  await expect(screen).not.toHaveAttribute('data-glitch', /.*/, { timeout: 1500 });
+  await expect(screen).toBeHidden();
+});
+
+test('under reduced motion the screen is on as Contact begins, with no glitch', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await gotoScene(page);
+  await waitReady(page);
+  const screen = page.locator('section[data-billboard]');
+  await screen.evaluate((e) => {
+    new MutationObserver(() => {
+      if (e.hasAttribute('data-glitch')) (window as unknown as { glitched: boolean }).glitched = true;
+    }).observe(e, { attributes: true });
+  });
+  await scrollTo(page, 0.82);
+  await expect(screen).toBeVisible({ timeout: 1500 });
+  await scrollTo(page, 1);
+  await page.waitForTimeout(800);
+  expect(await page.evaluate(() => !!(window as unknown as { glitched?: boolean }).glitched)).toBe(false);
 });
 
 test('the billboard says it in the page’s language', async ({ page }) => {

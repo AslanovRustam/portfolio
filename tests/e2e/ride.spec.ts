@@ -35,8 +35,13 @@ test('after the intro the pole rides on the right', async ({ page }) => {
   await waitReady(page);
   await scrollTo(page, 0.7);
   await expect.poll(async () => (await pole(page))?.mode, { timeout: 10_000 }).toBe('ride');
-  await expect.poll(async () => (await pole(page))!.ndc[0], { timeout: 10_000 }).toBeGreaterThan(0.3);
-  expect((await pole(page))!.ndc[0]).toBeLessThan(1);
+  // it flies in from beyond the right edge: wait for it to come to its place inside the frame
+  await expect
+    .poll(async () => {
+      const x = (await pole(page))!.ndc[0];
+      return x > 0.3 && x < 1;
+    }, { timeout: 10_000 })
+    .toBe(true);
 });
 
 test('its signs still lead to their sections', async ({ page }) => {

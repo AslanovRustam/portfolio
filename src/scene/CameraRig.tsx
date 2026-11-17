@@ -7,9 +7,14 @@ import { activeSection, cameraPose, damp } from '@/experience/choreography';
 import { frameShift, sectionPresence } from '@/experience/panels';
 import { experienceStore } from '@/experience/store';
 import { registerProbe } from '@/dev/sceneProbe';
+import { END_FROM } from '@/experience/route';
 import { desiredCameraPose } from './cameraPose';
 
 const LAMBDA = 3;
+/** how near (m, position and aim together) the damped camera must be to its pose to count as at rest:
+ * at the billboard its panel is then within ~1.5 % of its final size on the screen */
+const AT_REST = 0.25;
+const goal = new Vector3();
 /** how quickly the frame slides aside for a section panel */
 const SHIFT_LAMBDA = 4;
 
@@ -45,6 +50,10 @@ export default function CameraRig() {
     const t = target.current;
     t.set(damp(t.x, pose.target[0], k, dt), damp(t.y, pose.target[1], k, dt), damp(t.z, pose.target[2], k, dt));
     camera.lookAt(t);
+    const lag = p.distanceTo(goal.set(...pose.position)) + t.distanceTo(goal.set(...pose.target));
+    // computed against this frame's progress: a jump to the end does not find a camera "at rest" from before it
+    const atBillboard = lag < AT_REST && progress >= END_FROM;
+    if (atBillboard !== experienceStore.getState().cameraAtBillboard) experienceStore.getState().setCameraAtBillboard(atBillboard);
 
     const section = activeSection(progress);
     const want = frameShift(section, section ? sectionPresence(progress, section) : 0, {

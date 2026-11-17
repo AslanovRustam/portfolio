@@ -1,4 +1,5 @@
 import { Color } from 'three';
+import { STATIONS } from '@/experience/route';
 import { mulberry32 } from './random';
 
 const PALETTE = ['#ffcf8a', '#ffb36b', '#9fd8ff', '#ff3d6e', '#35e0ff', '#ff7a1a', '#fff1d6'].map((c) => new Color(c));
@@ -9,6 +10,12 @@ const PALETTE = ['#ffcf8a', '#ffb36b', '#9fd8ff', '#ff3d6e', '#35e0ff', '#ff7a1a
  * gantry's posts. A block drawn nearer is moved out, the rest of the skyline left as it was.
  */
 export const SKYLINE_CLEAR = 9.5;
+
+const B = STATIONS.billboard;
+/** Between the end of the gantry and the billboard, in front of its panel and its title. */
+function beforeBillboard([x, y, z]: readonly number[]): boolean {
+  return z < -34 && Math.abs(x - B.x) < 9 && y < 12;
+}
 
 /** The far blocks and the defocused city lights, the same for a seed. */
 export function skylineLayout(seed: number) {
@@ -26,17 +33,25 @@ export function skylineLayout(seed: number) {
   }
   // defocused city lights: windows, shop neons, far headlights at street level
   const n = 140;
-  const pos = new Float32Array(n * 3);
-  const col = new Float32Array(n * 3);
-  const size = new Float32Array(n);
-  const phase = new Float32Array(n);
+  const lights: { pos: [number, number, number]; col: Color; size: number; phase: number }[] = [];
   for (let i = 0; i < n; i++) {
     const street = rand() < 0.25;
-    pos.set([(rand() - 0.5) * 70, street ? 0.4 + rand() * 2.5 : 2 + rand() * 24, -20 - rand() * 34], i * 3);
-    const c = PALETTE[Math.floor(rand() * PALETTE.length)];
-    col.set([c.r, c.g, c.b], i * 3);
-    size[i] = 0.35 + rand() * (street ? 1.1 : 0.7);
-    phase[i] = rand() * 6.283;
+    const pos: [number, number, number] = [(rand() - 0.5) * 70, street ? 0.4 + rand() * 2.5 : 2 + rand() * 24, -20 - rand() * 34];
+    const col = PALETTE[Math.floor(rand() * PALETTE.length)];
+    const size = 0.35 + rand() * (street ? 1.1 : 0.7);
+    const phase = rand() * 6.283;
+    // none hangs in front of the billboard's screen: the ride ends looking at it (M4 round 1)
+    if (!beforeBillboard(pos)) lights.push({ pos, col, size, phase });
   }
+  const pos = new Float32Array(lights.length * 3);
+  const col = new Float32Array(lights.length * 3);
+  const size = new Float32Array(lights.length);
+  const phase = new Float32Array(lights.length);
+  lights.forEach((l, i) => {
+    pos.set(l.pos, i * 3);
+    col.set([l.col.r, l.col.g, l.col.b], i * 3);
+    size[i] = l.size;
+    phase[i] = l.phase;
+  });
   return { blocks, bokeh: { pos, col, size, phase } };
 }

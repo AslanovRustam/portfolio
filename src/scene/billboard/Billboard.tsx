@@ -1,6 +1,6 @@
 'use client';
 
-import { useThree } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useTranslations } from 'next-intl';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -21,13 +21,15 @@ import {
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { registerProbe } from '@/dev/sceneProbe';
+import { GLITCH_MS, panelFlicker, screenOn } from '@/experience/billboardScreen';
 import type { Vec3 } from '@/experience/choreography';
+import { experienceStore } from '@/experience/store';
 import { NEON } from '@/ui/neon';
 import { revealUniforms } from '../reveal/registry';
 import { applyReveal } from '../reveal/revealMaterial';
 import { mulberry32 } from '../street/random';
 import { billboardRect } from './billboardRect';
-import { BILLBOARD, onBillboard } from './layout';
+import { BILLBOARD } from './layout';
 
 const P = BILLBOARD.panel;
 const F = BILLBOARD.frame;
@@ -144,7 +146,11 @@ function tube(): Piece[] {
   ];
 }
 
-/** The panel's face: near black, a faint glow from the tube along its edges, the lamps' warm light low on it. */
+/**
+ * The panel's face: a switched-off screen — near black with faint scanlines (one every 4 texels, ~8 cm:
+ * mipmapped away from far off, so they never shimmer) — a faint glow from the tube along its edges, the
+ * lamps' warm light low on it.
+ */
 function panelTexture(color: string): CanvasTexture {
   const c = document.createElement('canvas');
   c.width = 512;
@@ -152,6 +158,8 @@ function panelTexture(color: string): CanvasTexture {
   const g = c.getContext('2d')!;
   g.fillStyle = '#07070b';
   g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = 'rgba(255, 255, 255, 0.05)';
+  for (let y = 0; y < c.height; y += 4) g.fillRect(0, y, c.width, 1);
   // the three lamps under the edge light the lower part of the face
   for (const fx of [1 / 6, 1 / 2, 5 / 6]) {
     const warm = g.createRadialGradient(fx * c.width, c.height + 20, 4, fx * c.width, c.height + 20, 120);
@@ -369,6 +377,26 @@ export default function Billboard() {
       }),
     [camera, size, title, sign],
   );
+
+  // the screen switches with the page's form (billboardScreen.ts): the panel stutters up to its backlight
+  // or down to dark, the tube flickers along while it does
+  const tubeBase = useMemo(() => parts.tube.color.clone(), [parts]);
+  const screen = useRef<{ on: boolean | null; since: number }>({ on: null, since: 0 });
+  useFrame(({ clock }) => {
+    const { progress, reducedMotion, cameraAtBillboard } = experienceStore.getState();
+    const now = clock.elapsedTime * 1000;
+    const want = screenOn(progress, reducedMotion, cameraAtBillboard);
+    const s = screen.current;
+    if (want !== s.on) {
+      // the first state, or a cut under reduced motion, plays no switch
+      s.since = s.on === null || reducedMotion ? -Infinity : now;
+      s.on = want;
+    }
+    const ms = now - s.since;
+    const b = panelFlicker(ms, want);
+    parts.panel.color.setScalar(1 + 0.8 * b);
+    parts.tube.color.copy(tubeBase).multiplyScalar(ms < GLITCH_MS ? Math.max(0.35, b) : 1);
+  });
 
   return (
     <group name="billboard">

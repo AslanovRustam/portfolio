@@ -10,6 +10,7 @@ import { desiredCameraPose } from '@/scene/cameraPose';
 import { BOARD, LIGHT_Y } from '@/scene/pole/lightMount';
 import { gantryLayout } from '@/scene/stack/layout';
 import { ROAD, streetLayout } from '@/scene/street/layout';
+import { skylineLayout } from '@/scene/street/skylineLayout';
 
 const LAPTOPS: readonly [number, number][] = [
   [1440, 800],
@@ -195,4 +196,31 @@ describe('the support under the billboard', () => {
       expect(dist(at, catwalk), `p ${p.toFixed(3)}`).toBeGreaterThan(1);
     }
   });
+});
+
+// M4 round 1, note 2: the switched-off screen is empty — no defocused city light hangs over the panel
+it('on the way in, no city light’s bokeh disc lies over the dark panel', () => {
+  const { bokeh } = skylineLayout(7);
+  const smooth = (a: number, b: number, x: number) => {
+    const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+  };
+  for (let p = 0.78; p <= 1; p += 0.005) {
+    const pose = ridePose(p);
+    const cam = new PerspectiveCamera(35, 1440 / 800, 0.1, 200);
+    cam.position.set(...pose.position);
+    cam.lookAt(new Vector3(...pose.target));
+    cam.updateMatrixWorld();
+    const panel = billboardRect(cam, { x: 0, y: 0, width: 1440, height: 800 });
+    for (let i = 0; i < bokeh.pos.length / 3; i++) {
+      const at = new Vector3(bokeh.pos[i * 3], bokeh.pos[i * 3 + 1], bokeh.pos[i * 3 + 2]);
+      const dist = -at.clone().applyMatrix4(cam.matrixWorldInverse).z;
+      if (dist <= 0 || smooth(70, 22, dist) * smooth(6, 16, dist) < 0.05) continue;
+      const s = at.project(cam);
+      const x = ((s.x + 1) / 2) * 1440;
+      const y = ((1 - s.y) / 2) * 800;
+      const over = x > panel.x && x < panel.x + panel.width && y > panel.y && y < panel.y + panel.height;
+      expect(over, `bokeh ${i} at p ${p.toFixed(3)}`).toBe(false);
+    }
+  }
 });

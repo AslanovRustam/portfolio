@@ -31,6 +31,8 @@ export interface ExperienceState {
   caseOrigin: Rect | null;
   /** a project's case is open over the street (the wall's loop pauses under it) */
   caseOpen: boolean;
+  /** the damped camera has come to rest where the ride stops at the billboard (its screen waits for that) */
+  cameraAtBillboard: boolean;
   setProgress(p: number): void;
   setTier(t: Tier): void;
   setReducedMotion(v: boolean): void;
@@ -46,6 +48,7 @@ export interface ExperienceState {
   /** the origin for the case that is opening, once: it is cleared as it is read */
   takeCaseOrigin(): Rect | null;
   setCaseOpen(on: boolean): void;
+  setCameraAtBillboard(v: boolean): void;
 }
 
 export const experienceStore = createStore<ExperienceState>()((set, get) => ({
@@ -62,6 +65,7 @@ export const experienceStore = createStore<ExperienceState>()((set, get) => ({
   pendingCase: null,
   caseOrigin: null,
   caseOpen: false,
+  cameraAtBillboard: false,
   setProgress: (p) => set({ progress: Math.min(1, Math.max(0, p)) }),
   setTier: (tier) => set({ tier }),
   setReducedMotion: (reducedMotion) => set({ reducedMotion }),
@@ -69,6 +73,7 @@ export const experienceStore = createStore<ExperienceState>()((set, get) => ({
   setHoveredSign: (hoveredSign) => set({ hoveredSign }),
   setWebgl: (webgl) => set({ webgl }),
   setCaseOpen: (caseOpen) => set({ caseOpen }),
+  setCameraAtBillboard: (cameraAtBillboard) => set({ cameraAtBillboard }),
   setLoadProgress: (loadProgress) => set({ loadProgress }),
   setHighlight: (highlight) => set({ highlight }),
   setCelebrate: (celebrate) => set({ celebrate }),
