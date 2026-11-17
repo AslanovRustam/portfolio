@@ -1032,20 +1032,7 @@ body {
 }
 
 /* the loader's GO (src/ui/Loader.tsx): blinks while the scene compiles, under three flashes a second */
-@keyframes gauge-go {
-  0%,
-  55% {
-    opacity: 1;
-  }
-  56%,
-  100% {
-    opacity: 0.15;
-  }
-}
 @media (prefers-reduced-motion: no-preference) {
-  .gauge-go {
-    animation: gauge-go 0.6s steps(1, end) infinite;
-  }
 }
 
 /*
@@ -1215,4 +1202,138 @@ body {
 }
 html[data-in-screen] .top-fade {
   opacity: 0;
+}
+
+/*
+ * The loader: a neon sign while the street loads (M4 round 1; src/ui/Loader.tsx). A pink double tube, the
+ * label in it, the percent and a dotted bar in cyan, the log in the corner. At 100 the frame blinks while the
+ * scene compiles (one dip every 1.2 s); when the street is there the sign goes out like switched-off neon,
+ * then the whole loader fades. Reduced motion: no blink, no flicker, the fade only.
+ */
+.loader-sign {
+  background: radial-gradient(ellipse at 50% 55%, #2a0a22 0%, #12040f 45%, #050507 80%);
+  color: var(--cyan);
+  transition:
+    opacity 0.4s 0.5s,
+    visibility 0s 0.9s;
+}
+.loader-sign[data-phase='off'] {
+  opacity: 0;
+  visibility: hidden;
+}
+.loader-log {
+  position: absolute;
+  top: 72px;
+  left: 16px;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1.6;
+  color: #ff5a7a;
+  opacity: 0.85;
+  text-shadow: 0 0 6px rgb(255 61 110 / 0.55);
+  white-space: pre;
+  @media (width >= 40rem) {
+    left: 24px;
+    font-size: 10px;
+  }
+}
+.loader-frame {
+  width: min(560px, 78vw);
+  padding: clamp(18px, 4vw, 34px) clamp(18px, 4vw, 40px);
+  border: 2px solid var(--c);
+  outline: 1px solid var(--c);
+  outline-offset: 7px;
+  box-shadow:
+    0 0 12px var(--c),
+    inset 0 0 12px color-mix(in srgb, var(--c) 40%, transparent);
+  text-align: center;
+}
+.loader-title {
+  font-family: var(--font-plate);
+  font-weight: 300;
+  font-size: clamp(22px, 5vw, 38px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffd2ec;
+  text-shadow:
+    0 0 6px var(--c),
+    0 0 18px var(--c);
+}
+.loader-pct {
+  margin: 6px 0 12px;
+  font-family: var(--font-plate);
+  font-weight: 500;
+  font-size: clamp(16px, 3.4vw, 26px);
+  color: #d9f8ff;
+  text-shadow: 0 0 8px var(--cyan);
+  font-variant-numeric: tabular-nums;
+}
+.loader-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 18px;
+  text-shadow: 0 0 6px var(--cyan);
+}
+.loader-track {
+  position: relative;
+  flex: 1;
+  height: 8px;
+  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--cyan) 70%, transparent) 0 2px, transparent 2px 6px) center / 100% 2px no-repeat;
+}
+.loader-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #e9fcff;
+  box-shadow:
+    0 0 8px var(--cyan),
+    0 0 16px var(--cyan);
+  transition: width 0.3s ease-out;
+}
+@keyframes sign-blink {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 0.35;
+  }
+  80%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes sign-off {
+  0% {
+    opacity: 1;
+  }
+  15% {
+    opacity: 0.2;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  45% {
+    opacity: 0.1;
+  }
+  60%,
+  100% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .loader-sign[data-phase='compile'] .loader-frame {
+    animation: sign-blink 1.2s steps(1, end) infinite;
+  }
+  .loader-sign[data-phase='off'] :is(.loader-frame, .loader-log) {
+    animation: sign-off 0.5s steps(1, end) both;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loader-sign {
+    transition:
+      opacity 0.4s,
+      visibility 0s 0.4s;
+  }
 }

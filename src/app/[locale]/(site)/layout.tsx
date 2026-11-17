@@ -28,7 +28,6 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
     <>
       <ExperienceGate
         loaderLabel={t('loader.label')}
-        loaderUnit={t('loader.unit')}
         fallbackTitle={t('fallback.title')}
         fallbackBody={t('fallback.body')}
       />

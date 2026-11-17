@@ -9,8 +9,7 @@
     "line": "Five years of React and Next.js. I lead a front-end team and teach React at GoIT."
   },
   "loader": {
-    "label": "Rendering",
-    "unit": "km/h"
+    "label": "Rendering"
   },
   "notFound": {
     "line": "404 — there is no such road",

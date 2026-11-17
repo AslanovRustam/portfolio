@@ -2,6 +2,7 @@ import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import type { ProjectSlug } from '@/content/projects';
 import type { Rect } from '@/scene/tvwall/screenRects';
+import { itemName } from '@/ui/loaderLog';
 import type { SignId } from './signs';
 
 export type LightState = 'off' | 'red' | 'yellow' | 'green';
@@ -19,6 +20,8 @@ export interface ExperienceState {
   webgl: boolean;
   /** share of 3D assets loaded, 0..100 (drives the loader) */
   loadProgress: number;
+  /** the files the scene has loaded, by folder and name, the last few (the loader's log) */
+  loadItems: readonly string[];
   /** sticker key lit by the Stack panel (a chip under the pointer or focus) */
   highlight: string | null;
   /** a contact message was just sent: the green light pulses for a moment */
@@ -40,6 +43,8 @@ export interface ExperienceState {
   setHoveredSign(id: SignId | null): void;
   setWebgl(v: boolean): void;
   setLoadProgress(v: number): void;
+  /** a file is in (three's loading manager reports it done) */
+  pushLoadItem(url: string): void;
   setHighlight(key: string | null): void;
   setCelebrate(v: boolean): void;
   setHoveredScreen(stop: number | null): void;
@@ -59,6 +64,7 @@ export const experienceStore = createStore<ExperienceState>()((set, get) => ({
   hoveredSign: null,
   webgl: true,
   loadProgress: 0,
+  loadItems: [],
   highlight: null,
   celebrate: false,
   hoveredScreen: null,
@@ -75,6 +81,7 @@ export const experienceStore = createStore<ExperienceState>()((set, get) => ({
   setCaseOpen: (caseOpen) => set({ caseOpen }),
   setCameraAtBillboard: (cameraAtBillboard) => set({ cameraAtBillboard }),
   setLoadProgress: (loadProgress) => set({ loadProgress }),
+  pushLoadItem: (url) => set({ loadItems: [...get().loadItems, itemName(url)].slice(-12) }),
   setHighlight: (highlight) => set({ highlight }),
   setCelebrate: (celebrate) => set({ celebrate }),
   setHoveredScreen: (hoveredScreen) => set({ hoveredScreen }),

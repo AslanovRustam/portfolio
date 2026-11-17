@@ -31,35 +31,45 @@ test('loader goes away when the scene is ready', async ({ page }) => {
   await expect(page.locator('[data-loader]')).toBeHidden({ timeout: 30_000 });
 });
 
-test('the loader is a speedometer: the speed climbs with the load, GO at 100, then the street', async ({ page }) => {
-  await page.goto('/en');
-  const loader = page.locator('[data-loader]');
-  const speed = loader.locator('[data-speed]');
-  await expect(speed).toBeVisible();
-  await expect(loader.locator('[data-arc-fill]')).toBeVisible();
-  // screen readers hear the load as before
-  await expect(loader.getByRole('status')).toContainText(/Rendering \d+%/);
-  // the needle never goes back
-  let last = 0;
-  while ((await loader.getAttribute('data-phase')) !== 'go' && !(await page.evaluate(() => window.__portfolio?.state().ready))) {
-    const v = Number(await speed.textContent());
-    expect(v).toBeGreaterThanOrEqual(last);
-    last = v;
-    await page.waitForTimeout(100);
+// M4 round 1, note 5: a neon sign while the street loads, after Rustam's first pin
+test('the loader is a neon sign: its label, the percent climbing, a log of the files, then the street', async ({ page }) => {
+  for (const [path, label] of [
+    ['/en', 'Rendering'],
+    ['/ru', 'Загрузка'],
+    ['/uk', 'Завантаження'],
+  ] as const) {
+    await page.goto(path);
+    const loader = page.locator('[data-loader]');
+    await expect(loader.locator('.loader-title')).toHaveText(label);
+    // screen readers hear the label and the percent
+    await expect(loader.getByRole('status')).toContainText(new RegExp(`${label} \\d+%`));
+    // the percent never goes back
+    let last = 0;
+    while ((await loader.getAttribute('data-phase')) === 'load') {
+      const v = Number((await loader.locator('[data-percent]').textContent())?.replace('%', ''));
+      expect(v).toBeGreaterThanOrEqual(last);
+      last = v;
+      await page.waitForTimeout(100);
+    }
+    // the log names what came in
+    if (path === '/en') {
+      const log = (await loader.locator('[data-loader-log]').textContent()) ?? '';
+      expect(log.split('\n').length).toBeGreaterThanOrEqual(2);
+      expect(log).toMatch(/^\{ scene/);
+    }
+    await page.waitForFunction(() => window.__portfolio?.state().ready, undefined, { timeout: 30_000 });
+    await expect(loader).toHaveAttribute('data-phase', 'off');
+    await expect(loader).toBeHidden({ timeout: 5000 });
   }
-  await expect(loader).toHaveAttribute('data-phase', 'go', { timeout: 30_000 });
-  await expect(speed).toHaveText('100');
-  await expect(loader.getByText('GO', { exact: true })).toHaveCount(1);
-  await page.waitForFunction(() => window.__portfolio?.state().ready, undefined, { timeout: 30_000 });
-  await expect(loader).toBeHidden();
 });
 
-test('reduced motion: the loader keeps its digits and drops the moving arc', async ({ page }) => {
+test('reduced motion: the sign neither blinks nor flickers out', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/en');
-  const loader = page.locator('[data-loader]');
-  await expect(loader.locator('[data-speed]')).toBeVisible();
-  await expect(loader.locator('[data-arc-fill]')).toBeHidden();
+  const frame = page.locator('[data-loader] .loader-frame');
+  await expect(frame).toBeVisible();
+  await page.waitForFunction(() => window.__portfolio?.state().ready, undefined, { timeout: 30_000 });
+  expect(await frame.evaluate((el) => getComputedStyle(el).animationName)).toBe('none');
 });
 
 test('?webgl=0 shows the fallback and no canvas', async ({ page }) => {

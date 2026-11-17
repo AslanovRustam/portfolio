@@ -30,10 +30,13 @@ function BlueprintUnlessReduced() {
   return reduced ? null : <Blueprint />;
 }
 
-/** Feeds three's loading manager progress to the DOM loader. */
+/** Feeds three's loading manager progress, and each file it reports done, to the DOM loader. */
 function LoadProgress() {
-  const { progress } = useProgress();
+  const { progress, item } = useProgress();
   useEffect(() => experienceStore.getState().setLoadProgress(progress), [progress]);
+  useEffect(() => {
+    if (item) experienceStore.getState().pushLoadItem(item);
+  }, [item]);
   return null;
 }
 
