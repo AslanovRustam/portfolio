@@ -65,6 +65,8 @@ export interface BillboardProbe {
   rect: { x: number; y: number; width: number; height: number };
   /** the neon title as painted */
   title: string;
+  /** what it stands on: the catwalk's centre on the page (CSS px) */
+  support: { catwalk: [number, number] };
 }
 export const billboard = (page: Page) => page.evaluate(() => window.__portfolio.probe('billboard') as BillboardProbe | undefined);
 

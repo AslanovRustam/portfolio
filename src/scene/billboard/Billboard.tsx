@@ -85,16 +85,48 @@ function frame(): Piece[] {
   ];
 }
 
-/** Struts from the back of the leaning frame to the wall, in the street. */
-function struts(): Piece[] {
-  const out: Piece[] = [];
-  for (const y of [-P.height / 2 + 0.4, P.height / 2 - 0.4])
-    for (const x of [-P.width * 0.33, P.width * 0.33]) {
-      const back = onBillboard([x, y, -0.23]);
-      const len = back[2] - H.z0;
-      out.push({ at: [back[0], back[1], H.z0 + len / 2], size: [0.12, 0.12, len] });
-    }
+const S = BILLBOARD.support;
+/** the lamps' goosenecks run forward this high, under the panel's edge as the last frame sees it */
+const ARM_Y = 3.72;
+
+/**
+ * What the billboard stands on, in the street (layout.ts): the column, its head under the frame, two
+ * brackets out to the catwalk, the catwalk's deck, kick plate, rails and posts, and the lamps' goosenecks.
+ */
+function support(): Piece[] {
+  const { column: c, catwalk: w } = S;
+  const front = w.z + w.depth / 2;
+  const back = w.z - w.depth / 2;
+  const len = w.x1 - w.x0;
+  const mid = (w.x0 + w.x1) / 2;
+  const out: Piece[] = [
+    { at: [c.x, c.top / 2, c.z], size: [c.width, c.top, c.width] },
+    // the head: a beam along the frame's lower bar, carrying it
+    { at: [c.x, c.top - 0.12, c.z + c.width / 2 - 0.06], size: [P.width * 0.6, 0.24, 0.32] },
+    { at: [mid, w.y - 0.04, w.z], size: [len, 0.06, w.depth] },
+    { at: [mid, w.y + 0.08, front], size: [len, 0.18, 0.03] },
+    { at: [mid, w.y + w.rail, front], size: [len, 0.05, 0.05] },
+    { at: [mid, w.y + w.rail / 2, front], size: [len, 0.03, 0.03] },
+  ];
+  // brackets from the column's head out under the deck
+  for (const dx of [-3, 3]) {
+    const z0 = c.z + c.width / 2;
+    out.push({ at: [c.x + dx, w.y - 0.14, (z0 + front) / 2], size: [0.1, 0.14, front - z0] });
+  }
+  for (let x = w.x0; x <= w.x1 + 1e-6; x += len / 8) out.push({ at: [x, w.y + w.rail / 2, front], size: [0.05, w.rail, 0.05] });
+  for (const [x, , z] of S.lamps) {
+    out.push({ at: [x, (w.y + w.rail + ARM_Y) / 2, front], size: [0.05, ARM_Y - w.y - w.rail + 0.03, 0.05] });
+    out.push({ at: [x, ARM_Y, (front + z) / 2], size: [0.05, 0.05, z - front] });
+    out.push({ at: [x, ARM_Y - 0.05, z], size: [0.05, 0.1, 0.05] });
+  }
+  // the deck's back edge and the head are tied
+  out.push({ at: [c.x, w.y - 0.04, (back + c.z) / 2], size: [0.12, 0.08, back - c.z + 0.2] });
   return out;
+}
+
+/** The lamp heads, hanging from their goosenecks, their faces turned up to the panel. */
+function lampHeads(): Piece[] {
+  return S.lamps.map(([x, y, z]) => ({ at: [x, y, z], size: [0.42, 0.12, 0.24] }));
 }
 
 /** The neon tube run just inside the frame, relative to the panel's centre. */
@@ -112,7 +144,7 @@ function tube(): Piece[] {
   ];
 }
 
-/** The panel's face: near black, a faint glow from the tube along its edges. */
+/** The panel's face: near black, a faint glow from the tube along its edges, the lamps' warm light low on it. */
 function panelTexture(color: string): CanvasTexture {
   const c = document.createElement('canvas');
   c.width = 512;
@@ -120,6 +152,14 @@ function panelTexture(color: string): CanvasTexture {
   const g = c.getContext('2d')!;
   g.fillStyle = '#07070b';
   g.fillRect(0, 0, c.width, c.height);
+  // the three lamps under the edge light the lower part of the face
+  for (const fx of [1 / 6, 1 / 2, 5 / 6]) {
+    const warm = g.createRadialGradient(fx * c.width, c.height + 20, 4, fx * c.width, c.height + 20, 120);
+    warm.addColorStop(0, 'rgba(255, 214, 160, 0.16)');
+    warm.addColorStop(1, 'rgba(255, 214, 160, 0)');
+    g.fillStyle = warm;
+    g.fillRect(0, 0, c.width, c.height);
+  }
   g.globalAlpha = 0.16;
   for (const [x0, y0, x1, y1] of [
     [0, 0, 0, 40],
@@ -203,11 +243,11 @@ function windows(): { at: Vec3; lit: boolean }[] {
 const WINDOWS = windows();
 
 /**
- * Contact's billboard on the building across the end of the street (spec §10): a big dark panel in a steel
- * frame with a neon tube round it, the section's title in neon letters on top (in the visitor's language),
- * the pink light on the wall. On a laptop the page fits the contact form into the panel; on a phone the
- * panel stays dark and the form follows in the page. Unlit and merged (eight draw calls); it renders out
- * of the blueprint with the street.
+ * Contact's billboard before the building across the end of the street (spec §10): a big dark panel in a
+ * steel frame with a neon tube round it, the section's title in neon letters on top (in the visitor's
+ * language), the pink light on the wall; it stands on a steel column with a catwalk and three lamps lighting
+ * it from below (M4 round 1). On a laptop the page fits the contact form into the panel. Unlit and merged
+ * (ten draw calls); it renders out of the blueprint with the street.
  */
 export default function Billboard() {
   const title = useTranslations('contact')('title');
@@ -228,7 +268,11 @@ export default function Billboard() {
     () => ({
       building: merged([{ at: [(H.x0 + H.x1) / 2, H.height / 2, (H.z0 + H.z1) / 2], size: [H.x1 - H.x0, H.height, H.z0 - H.z1] }], -0.2),
       steel: merged(frame()),
-      struts: merged(struts()),
+      support: merged(support()),
+      lampHeads: merged(lampHeads()),
+      lampGlow: mergeGeometries(
+        S.lamps.map(([x, y, z]) => new PlaneGeometry(1.4, 0.7).translate(x, y + 0.12, z + 0.15)),
+      )!,
       tube: merged(tube()),
       window: new PlaneGeometry(1.3, 1.7),
     }),
@@ -238,9 +282,16 @@ export default function Billboard() {
     const pink = NEON.contact;
     const panelMap = panelTexture(pink);
     const glowMap = glowTexture(pink);
+    const lampGlowMap = glowTexture('#ffd9a0');
     return {
       panelMap,
       glowMap,
+      lampGlowMap,
+      lamp: applyReveal(new MeshBasicMaterial({ color: new Color('#ffe7c2').multiplyScalar(1.6), toneMapped: false }), reveal),
+      lampGlow: applyReveal(
+        new MeshBasicMaterial({ map: lampGlowMap, color: new Color(0.6, 0.6, 0.6), transparent: true, blending: AdditiveBlending, depthWrite: false }),
+        reveal,
+      ),
       building: applyReveal(new MeshBasicMaterial({ color: '#2a2b33', vertexColors: true }), reveal),
       steel: applyReveal(new MeshBasicMaterial({ color: '#4c5059', vertexColors: true }), reveal),
       panel: applyReveal(new MeshBasicMaterial({ map: panelMap }), reveal),
@@ -308,10 +359,14 @@ export default function Billboard() {
   const size = useThree((s) => s.size);
   useEffect(
     () =>
-      registerProbe('billboard', () => ({
-        rect: billboardRect(camera, { x: 0, y: 0, width: size.width, height: size.height }),
-        title: sign ? title : null,
-      })),
+      registerProbe('billboard', () => {
+        const c = new Vector3(BILLBOARD.panel.center[0], S.catwalk.y, S.catwalk.z).project(camera);
+        return {
+          rect: billboardRect(camera, { x: 0, y: 0, width: size.width, height: size.height }),
+          title: sign ? title : null,
+          support: { catwalk: [((c.x + 1) / 2) * size.width, ((1 - c.y) / 2) * size.height] as [number, number] },
+        };
+      }),
     [camera, size, title, sign],
   );
 
@@ -323,7 +378,9 @@ export default function Billboard() {
       <mesh material={parts.glow} position={[PX, PY + 1.2, H.z0 + 0.03]}>
         <planeGeometry args={[P.width * 1.9, P.height * 2.4]} />
       </mesh>
-      <mesh geometry={geo.struts} material={parts.steel} />
+      <mesh geometry={geo.support} material={parts.steel} />
+      <mesh geometry={geo.lampHeads} material={parts.lamp} />
+      <mesh geometry={geo.lampGlow} material={parts.lampGlow} />
       {/* the billboard leans forward to face the end of the ride */}
       <group position={P.center} rotation-x={BILLBOARD.tilt}>
         <mesh geometry={geo.steel} material={parts.steel} />

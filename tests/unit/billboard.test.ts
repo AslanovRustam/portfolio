@@ -1,7 +1,8 @@
 import { PerspectiveCamera, Vector3 } from 'three';
-import { expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { poleWorldPose } from '@/experience/poleRide';
 import { ridePose, STATIONS } from '@/experience/route';
+import { STACK_TO } from '@/experience/stackStops';
 import { BILLBOARD, onBillboard } from '@/scene/billboard/layout';
 import { billboardRect, endCamera } from '@/scene/billboard/billboardRect';
 import { billboardFit, CONTACT_DESIGN, projectPanel } from '@/scene/billboard/fit';
@@ -124,4 +125,74 @@ it('wherever the form goes into the billboard, it is whole on the screen and cle
   }
   // the usual laptop shapes still carry it on the billboard
   for (const [w, h] of LAPTOPS) expect(billboardFit({ w, h }), `${w}×${h}`).not.toBeNull();
+});
+
+// M4 round 1, note 1: the billboard hung in the air; it stands on a column with a catwalk and lamps
+describe('the support under the billboard', () => {
+  const { panel, building, frame } = BILLBOARD;
+  const S = BILLBOARD.support;
+  const bottom = onBillboard([0, -panel.height / 2, 0]);
+  const frameBack = onBillboard([0, -panel.height / 2 - frame, -0.23]);
+  const dist = ([x, y, z]: readonly number[], box: { min: number[]; max: number[] }) =>
+    Math.hypot(
+      Math.max(box.min[0] - x, 0, x - box.max[0]),
+      Math.max(box.min[1] - y, 0, y - box.max[1]),
+      Math.max(box.min[2] - z, 0, z - box.max[2]),
+    );
+  const column = {
+    min: [S.column.x - S.column.width / 2, 0, S.column.z - S.column.width / 2],
+    max: [S.column.x + S.column.width / 2, S.column.top, S.column.z + S.column.width / 2],
+  };
+  const catwalk = {
+    min: [S.catwalk.x0, S.catwalk.y - 0.1, S.catwalk.z - S.catwalk.depth / 2],
+    max: [S.catwalk.x1, S.catwalk.y + S.catwalk.rail, S.catwalk.z + S.catwalk.depth / 2],
+  };
+
+  it('one column stands on the ground behind the panel, in front of the wall, and reaches up to the frame', () => {
+    expect(S.column.top).toBeLessThanOrEqual(bottom[1]);
+    expect(S.column.top).toBeGreaterThan(bottom[1] - 0.4);
+    expect(S.column.z - S.column.width / 2).toBeGreaterThan(building.z0);
+    expect(S.column.z + S.column.width / 2).toBeLessThan(frameBack[2]);
+    expect(S.column.x).toBeGreaterThan(panel.center[0] - panel.width / 2);
+    expect(S.column.x).toBeLessThan(panel.center[0] + panel.width / 2);
+  });
+
+  it('a catwalk runs under the panel’s bottom edge, most of its width', () => {
+    expect(S.catwalk.y).toBeLessThan(bottom[1]);
+    expect(S.catwalk.x1 - S.catwalk.x0).toBeGreaterThanOrEqual((panel.width * 2) / 3);
+    expect(S.catwalk.x0).toBeGreaterThanOrEqual(panel.center[0] - panel.width / 2 - frame);
+    expect(S.catwalk.x1).toBeLessThanOrEqual(panel.center[0] + panel.width / 2 + frame);
+    expect(S.catwalk.z - S.catwalk.depth / 2).toBeLessThan(bottom[2]);
+    expect(S.catwalk.z + S.catwalk.depth / 2).toBeGreaterThan(bottom[2]);
+  });
+
+  it('three lamps rise from the catwalk in front of the panel, below its bottom edge', () => {
+    expect(S.lamps).toHaveLength(3);
+    for (const [x, y, z] of S.lamps) {
+      expect(x).toBeGreaterThan(S.catwalk.x0);
+      expect(x).toBeLessThan(S.catwalk.x1);
+      expect(y).toBeGreaterThan(S.catwalk.y);
+      expect(y).toBeLessThan(bottom[1]);
+      expect(z).toBeGreaterThan(bottom[2]);
+      expect(z).toBeLessThan(S.catwalk.z + S.catwalk.depth / 2 + 1);
+    }
+  });
+
+  it('in the last frame the railing and the lamps stay below the panel, clear of the form', () => {
+    for (const [w, h] of LAPTOPS) {
+      const cam = endCamera(w / h);
+      const y = (p: readonly number[]) => ((1 - new Vector3(p[0], p[1], p[2]).project(cam).y) / 2) * h;
+      const edge = y(bottom);
+      expect(y([panel.center[0], S.catwalk.y + S.catwalk.rail, S.catwalk.z + S.catwalk.depth / 2]), `${w}×${h}`).toBeGreaterThan(edge + 4);
+      for (const l of S.lamps) expect(y(l), `${w}×${h}`).toBeGreaterThan(edge + 4);
+    }
+  });
+
+  it('the ride from the last sign to the end keeps a metre from the column and the catwalk', () => {
+    for (let p = STACK_TO; p <= 1; p += 0.002) {
+      const at = ridePose(p).position;
+      expect(dist(at, column), `p ${p.toFixed(3)}`).toBeGreaterThan(1);
+      expect(dist(at, catwalk), `p ${p.toFixed(3)}`).toBeGreaterThan(1);
+    }
+  });
 });

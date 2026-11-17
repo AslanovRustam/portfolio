@@ -153,6 +153,20 @@ test('at the end on a laptop the form is fitted into the billboard, the green li
   expect(Math.abs(pole.lightNdc[1])).toBeLessThan(1);
 });
 
+// M4 round 1, note 1: the billboard hung in the air
+test('at the end on a laptop the billboard’s catwalk is in the frame, under the panel', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 1);
+  await atRest(page);
+  const { rect, support } = (await billboard(page))!;
+  const [x, y] = support.catwalk;
+  expect(x).toBeGreaterThan(0);
+  expect(x).toBeLessThan(1440);
+  expect(y).toBeGreaterThan(rect.y + rect.height);
+  expect(y).toBeLessThan(800);
+});
+
 test('the billboard says it in the page’s language', async ({ page }) => {
   await gotoScene(page, '/ru');
   await waitReady(page);
