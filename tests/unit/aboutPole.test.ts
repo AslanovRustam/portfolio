@@ -111,7 +111,6 @@ describe('About, the pole close up', () => {
       for (const speed of [600, 1200, 2400]) {
         const lengths = PIECE_IDS.map((id) => (id === 'about' ? 4000 : (DEFAULT_SVH[id] * h) / 100));
         setJourneyLengths(lengths);
-        const total = lengths.reduce((a, b) => a + b, 0);
         const before = lengths.slice(0, 3).reduce((a, b) => a + b, 0);
         // scroll px ↔ story progress: through toAbout (0.32..0.395) and About (0.395..0.565)
         const at = (px: number) =>
