@@ -841,6 +841,13 @@ html:not([data-tier='low']) .nbox {
       margin-left: auto;
       margin-right: auto;
     }
+    /* a smaller landscape window: at most three quarters of its height, on the pole (aboutPole.ts billsWidth) */
+    @media (max-width: 1023.98px) and (min-aspect-ratio: 1/1) {
+      width: min(calc(100% - 2rem), 75svh);
+      margin-left: auto;
+      margin-right: auto;
+      padding: 0;
+    }
   }
   #about.flow-piece > [data-flow] > .paper-poster {
     align-self: center;
@@ -1188,7 +1195,12 @@ body {
  * its first line meets the frame's top as the dive ends; until then it is hidden (and inert).
  */
 @layer components {
+  /* the screen's content, centred in its frame in any window (ContactScreen's picture lays out the same) */
   #contact.flow-piece[data-dive] > [data-flow] {
+    width: auto;
+    max-width: calc(40rem + 48px);
+    margin-left: auto;
+    margin-right: auto;
     padding: 0 24px;
   }
   #contact.flow-piece[data-dive]:not([data-stage='inside']) > [data-flow] {

@@ -10,8 +10,9 @@ import { experienceStore } from '@/experience/store';
 const TAN = Math.tan(((35 / 2) * Math.PI) / 180);
 
 /**
- * About close to the pole on a laptop (M4 round 1, spec §6): the street on either side of the pole, out of
- * focus — blurred where the GPU affords it, darkened everywhere. A phone needs none: the pole fills its width.
+ * About close to the pole (M4 round 1, spec §6): the street on either side of the pole, out of focus —
+ * blurred where the GPU affords it, darkened everywhere — wherever the pole is narrower than the window (a
+ * portrait phone's pole fills it).
  */
 export default function AboutBackdrop() {
   const ref = useRef<HTMLDivElement>(null);
@@ -22,13 +23,13 @@ export default function AboutBackdrop() {
       const { progress, webgl } = experienceStore.getState();
       const w = innerWidth;
       const h = innerHeight;
-      const wide = w >= 1024 && w / h >= 1;
-      const v = webgl && wide ? sectionPresence(progress, 'about') : 0;
+      const presence = webgl ? sectionPresence(progress, 'about') : 0;
+      const { distance } = aboutCloseUp({ w, h, aboutPx: pieceSpanPx('about', h), billsPx: billsWidth(w, h) });
+      const pole = (2 * POLE.radius * (h / 2)) / (distance * TAN);
+      const v = pole < w ? presence : 0;
       el.style.opacity = String(v);
       el.style.visibility = v > 0.001 ? 'visible' : 'hidden';
-      if (v <= 0.001) return;
-      const { distance } = aboutCloseUp({ w, h, aboutPx: pieceSpanPx('about', h), billsPx: billsWidth(w, h) });
-      el.style.setProperty('--pole', `${(2 * POLE.radius * (h / 2)) / (distance * TAN)}px`);
+      if (v > 0.001) el.style.setProperty('--pole', `${pole}px`);
     };
     apply();
     const off = experienceStore.subscribe(apply);

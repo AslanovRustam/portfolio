@@ -8,9 +8,8 @@ import { frameShift, sectionPresence } from '@/experience/panels';
 import { experienceStore } from '@/experience/store';
 import { registerProbe } from '@/dev/sceneProbe';
 import { END_FROM } from '@/experience/route';
-import { desiredCameraPose, lockedAxes } from './cameraPose';
+import { cameraLambdas, desiredCameraPose } from './cameraPose';
 
-const LAMBDA = 3;
 /** how near (m, position and aim together) the damped camera must be to its pose to count as at rest:
  * at the billboard its panel is then within ~1.5 % of its final size on the screen */
 const AT_REST = 0.25;
@@ -43,9 +42,8 @@ export default function CameraRig() {
   useFrame((_, dt) => {
     const { progress, reducedMotion } = experienceStore.getState();
     const pose = desiredCameraPose(progress, { w: size.width, h: size.height }, reducedMotion);
-    const k = reducedMotion ? Infinity : LAMBDA;
-    // in About's hold the height follows the scroll exactly: the bills ride the page, the pole must keep up
-    const ky = lockedAxes(progress, reducedMotion) === 'y' ? Infinity : k;
+    // in About's hold the camera follows the scroll exactly: the bills ride the page, the pole must keep up
+    const { xz: k, y: ky } = cameraLambdas(progress, reducedMotion);
     const p = camera.position;
     p.set(damp(p.x, pose.position[0], k, dt), damp(p.y, pose.position[1], ky, dt), damp(p.z, pose.position[2], k, dt));
     const t = target.current;

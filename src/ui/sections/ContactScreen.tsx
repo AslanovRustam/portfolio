@@ -79,7 +79,8 @@ export default function ContactScreen() {
       const { progress, reducedMotion, cameraAtBillboard } = experienceStore.getState();
       const w = innerWidth;
       const h = innerHeight;
-      if (w !== layout.w || Math.abs(h - layout.h) > 0.15 * layout.h) layout = { w, h };
+      // a turn changes the width; a keyboard or an address bar only the height, and must not move the form
+      if (w !== layout.w) layout = { w, h };
       pinDiveHeight(layout.h);
       // the first box starts where the frame's content does once the dive is over (or at once, with no dive)
       const entry = (reducedMotion ? 0 : ((DIVE.arriveSvh + DIVE.diveSvh) * layout.h) / 100) + TOP + PAD;
@@ -125,8 +126,8 @@ export default function ContactScreen() {
       }
       if (showPicture && rect) {
         // the picture is the frame's content window pinned to the panel's centre, at the panel's scale now
-        const s = rect.width / BILLBOARD.panel.width / diveScale(h);
-        const W = w - 2 * INSET;
+        const s = rect.width / BILLBOARD.panel.width / diveScale(h, w / h);
+        const W = w;
         const H = h - TOP - INSET;
         const cx = rect.x + rect.width / 2;
         const cy = rect.y + rect.height / 2 + ((TOP - INSET) / 2) * s;
@@ -172,7 +173,8 @@ export default function ContactScreen() {
         className="screen-content pointer-events-none fixed left-0 top-0 z-[25] origin-top-left overflow-hidden"
         style={{ visibility: 'hidden', ...neonStyle('contact') }}
       >
-        <div className="space-y-7" style={{ padding: `${PAD}px ${PAD}px` }}>
+        {/* laid out as the content in the frame: centred, as wide as the page's column at most */}
+        <div className="mx-auto space-y-7" style={{ maxWidth: 'calc(40rem + 48px)', padding: `${PAD}px 24px` }}>
           <p className="text-sm leading-relaxed text-[#e8f7ff]/85">{t('lead')}</p>
           <div className="space-y-4">
             {(['name', 'email', 'message'] as const).map((k) => (

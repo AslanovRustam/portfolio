@@ -5,7 +5,7 @@ import { aboutCloseUp, aboutPose, type AboutView, billsWidth } from '@/experienc
 import { DEFAULT_SVH, PIECE_IDS, resetJourneyLengths, setJourneyLengths } from '@/experience/journey';
 import { STATIONS } from '@/experience/route';
 import { POLE } from '@/experience/signs';
-import { desiredCameraPose } from '@/scene/cameraPose';
+import { cameraLambdas, desiredCameraPose } from '@/scene/cameraPose';
 
 const SCREENS: readonly [number, number][] = [
   [1440, 800],
@@ -13,6 +13,10 @@ const SCREENS: readonly [number, number][] = [
   [1920, 1080],
   [412, 839],
   [360, 740],
+  // final review: landscape windows under 1024 px left the bills hanging off the pole
+  [839, 412],
+  [900, 600],
+  [1000, 700],
 ];
 const ABOUT_PX = [2600, 4000, 7000];
 /** About's hold: its piece of the journey (story progress) */
@@ -39,6 +43,9 @@ describe('About, the pole close up', () => {
     expect(billsWidth(412, 839)).toBe(380);
     // a portrait or narrow window lays the column out like a phone
     expect(billsWidth(900, 1200)).toBe(868);
+    // a landscape window under 1024 px keeps it to three quarters of its height, so the pole can be wider
+    expect(billsWidth(839, 412)).toBe(309);
+    expect(billsWidth(900, 600)).toBe(450);
   });
 
   for (const [w, h] of SCREENS)
@@ -47,6 +54,8 @@ describe('About, the pole close up', () => {
       const view: AboutView = { w, h, aboutPx, billsPx: billsWidth(w, h) };
 
       it(`the pole’s surface moves up the screen pixel for pixel with the scroll (${at})`, () => {
+        // too long for the stretch even from the nearest the camera comes: the ledger notes such screens
+        if (aboutCloseUp(view).clamped) return;
         for (const p of [0.42, 0.48, 0.54]) {
           const a = aboutPose(p, view);
           const d = 0.01;
@@ -72,8 +81,9 @@ describe('About, the pole close up', () => {
         const y = pose.target[1];
         const left = screen([STATIONS.pole.x - POLE.radius, y, STATIONS.pole.z])[0];
         const right = screen([STATIONS.pole.x + POLE.radius, y, STATIONS.pole.z])[0];
-        if (w >= 1024) expect(right - left, at).toBeGreaterThanOrEqual(view.billsPx);
-        else expect(right - left, at).toBeGreaterThanOrEqual(w);
+        // the bills lie on the pole; a portrait phone's pole fills its width
+        expect(right - left, at).toBeGreaterThanOrEqual(view.billsPx);
+        if (w < h) expect(right - left, at).toBeGreaterThanOrEqual(w);
       });
     }
 
@@ -88,5 +98,40 @@ describe('About, the pole close up', () => {
       expect(desiredCameraPose(0.38, { w, h }, true)).toEqual(aboutPose(HOLD[0], view));
       expect(desiredCameraPose(0.58, { w, h }, true)).toEqual(aboutPose(HOLD[1], view));
     }
+  });
+
+  // final review: x and z stayed damped through the turn in, so at a normal scroll speed the camera was still
+  // metres out when the first bill came up, and the bills slid over a pole still zooming in
+  it('the damped camera is at the pole’s face by the time the first bill comes up, even scrolled briskly', () => {
+    const damp = (c: number, t: number, k: number, dt: number) => (k === Infinity ? t : c + (t - c) * (1 - Math.exp(-k * Math.min(dt, 0.1))));
+    for (const [w, h] of [
+      [1440, 800],
+      [412, 839],
+    ] as const)
+      for (const speed of [600, 1200, 2400]) {
+        const lengths = PIECE_IDS.map((id) => (id === 'about' ? 4000 : (DEFAULT_SVH[id] * h) / 100));
+        setJourneyLengths(lengths);
+        const total = lengths.reduce((a, b) => a + b, 0);
+        const before = lengths.slice(0, 3).reduce((a, b) => a + b, 0);
+        // scroll px ↔ story progress: through toAbout (0.32..0.395) and About (0.395..0.565)
+        const at = (px: number) =>
+          px < before ? 0.32 + ((px - (before - lengths[2])) / lengths[2]) * 0.075 : 0.395 + ((px - before) / lengths[3]) * 0.17;
+        const dt = 1 / 60;
+        let px = before - lengths[2];
+        const cam = desiredCameraPose(at(px), { w, h }, false);
+        const pos = [...cam.position];
+        let worst = 0;
+        while (at(px) < 0.47) {
+          px += speed * dt;
+          const p = at(px);
+          const want = desiredCameraPose(p, { w, h }, false);
+          const k = cameraLambdas(p, false);
+          pos[0] = damp(pos[0], want.position[0], k.xz, dt);
+          pos[1] = damp(pos[1], want.position[1], k.y, dt);
+          pos[2] = damp(pos[2], want.position[2], k.xz, dt);
+          if (p >= 0.395) worst = Math.max(worst, Math.hypot(pos[0] - want.position[0], pos[1] - want.position[1], pos[2] - want.position[2]));
+        }
+        expect(worst, `${w}×${h} at ${speed} px/s`).toBeLessThan(0.01);
+      }
   });
 });

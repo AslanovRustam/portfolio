@@ -11,7 +11,7 @@ import { registerProbe } from '@/dev/sceneProbe';
 import EdgesOverlay from '../reveal/EdgesOverlay';
 import { revealUniforms } from '../reveal/registry';
 import { applyReveal } from '../reveal/revealMaterial';
-import { desiredCameraPose, divesIntoScreen } from '../cameraPose';
+import { cameraLambdas, desiredCameraPose, divesIntoScreen } from '../cameraPose';
 import { wallWeight } from '../tvwall/camera';
 import { LIGHT_Y } from './lightMount';
 import { usePoleMaterials } from './materials';
@@ -142,7 +142,8 @@ export default function Pole({ children }: { children?: ReactNode }) {
     );
     const want = poleWorldPose(progress, cam, aspect, parked, reducedMotion);
     mode.current = want.mode;
-    const k = reducedMotion ? Infinity : RIDE_LAMBDA;
+    // into About it catches up with its spot as hard as the camera does: the bills are pasted on it
+    const k = reducedMotion ? Infinity : Math.max(RIDE_LAMBDA, cameraLambdas(progress, false).xz);
     r.position.set(
       damp(r.position.x, want.position[0], k, dt),
       damp(r.position.y, want.position[1], k, dt),

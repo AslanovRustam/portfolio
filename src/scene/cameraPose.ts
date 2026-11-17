@@ -27,13 +27,31 @@ function aboutView(v: Viewport): AboutView {
   return { w: v.w, h: v.h, aboutPx: pieceSpanPx('about', v.h), billsPx: billsWidth(v.w, v.h) };
 }
 
+/** CameraRig's usual damping rate (1/s). */
+export const LAMBDA = 3;
+/** how hard the camera catches up at the end of the turn into About: it must be at the pole's face by then */
+const CATCH_UP = 60;
+
+const ramp = (p: number, a: number, b: number) => {
+  const t = Math.min(1, Math.max(0, (p - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
 /**
- * Which of the camera's axes follow the pose undamped: in About's hold its height, so the pole's face moves
- * with the bills pixel for pixel (CameraRig damps everything else).
+ * How fast the camera follows its pose (CameraRig's damping rates, 1/s; Infinity: exactly), across the plane
+ * and in height. In About's hold it follows exactly — the bills ride the page and the pole's face must move
+ * with them pixel for pixel — and over the end of the turn in it catches up harder and harder, so a brisk
+ * scroll finds it at the face, not metres out, when the first bill comes up; on the turn out it eases back.
  */
-export function lockedAxes(p: number, reduced: boolean): 'none' | 'y' {
+export function cameraLambdas(p: number, reduced: boolean): { xz: number; y: number } {
+  if (reduced) return { xz: Infinity, y: Infinity };
   const [from, to] = holdWindow('about');
-  return !reduced && p >= from && p <= to ? 'y' : 'none';
+  if (p >= from && p <= to) return { xz: Infinity, y: Infinity };
+  const k =
+    p < from
+      ? LAMBDA + (CATCH_UP - LAMBDA) * ramp(p, ABOUT_TURN.from + 0.015, from - 0.008)
+      : CATCH_UP + (LAMBDA - CATCH_UP) * ramp(p, to, ABOUT_TURN.to);
+  return { xz: k, y: k };
 }
 
 /** Backed off along the view line on narrow (portrait) screens, so the horizontal field still holds a sign. */
@@ -68,7 +86,7 @@ export function desiredCameraPose(p: number, viewport: Viewport, reduced: boolea
   }
   if (divesIntoScreen(viewport)) {
     if (reduced) {
-      if (activeSection(p) === 'contact') return diveEnd();
+      if (activeSection(p) === 'contact') return diveEnd(aspect);
     } else if (p >= CONTACT_FROM) {
       return divePose(p, { w: viewport.w, h: viewport.h, contactPx: pieceSpanPx('contact', viewport.h) });
     } else if (p > DIVE_TURN[0]) {

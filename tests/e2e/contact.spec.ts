@@ -319,6 +319,19 @@ test('a small landscape window dives into the billboard’s screen and the form 
   await expect(page.locator('section[data-billboard]')).toHaveCount(0);
 });
 
+// final review: an iPad on its side dives too, and Contact sat in a narrow column at the frame's left
+test('in a wide window that dives, Contact is centred in the frame', async ({ page }) => {
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
+  await insideTheScreen(page);
+  const form = (await page.locator('#journey section#contact form').boundingBox())!;
+  const frame = (await screenTube(page).boundingBox())!;
+  expect(Math.abs(form.x + form.width / 2 - (frame.x + frame.width / 2))).toBeLessThan(4);
+  expect(form.width).toBeGreaterThan(500);
+});
+
 // Review Focus 3: a tablet turned between the billboard and the dive in the middle of Contact
 test('turning a tablet between the dive and the billboard keeps what was typed, never a half-lit frame', async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 1024 });
@@ -348,9 +361,15 @@ test('typing the message with the keyboard up keeps the field inside the frame, 
   const message = page.locator('section#contact form').getByLabel('Message');
   await message.focus();
   const size = page.viewportSize()!;
+  // a keyboard (or an address bar) changes the height only: Contact is not laid out again under the
+  // visitor's fingers (final review) — only a turn, which changes the width, does that
+  const layout = () =>
+    page.locator('#journey section#contact').evaluate((e) => [(e as HTMLElement).style.getPropertyValue('--entry'), (e as HTMLElement).style.minHeight]);
+  const before = await layout();
   await page.setViewportSize({ width: size.width, height: Math.round(size.height * 0.6) });
   await page.waitForTimeout(1000);
   await expect(page.locator('#journey section#contact')).toHaveAttribute('data-stage', 'inside');
+  expect(await layout()).toEqual(before);
   await message.pressSequentially('Hello');
   expect(within((await message.boundingBox())!, (await screenTube(page).boundingBox())!, 2)).toBe(true);
   await page.setViewportSize(size);

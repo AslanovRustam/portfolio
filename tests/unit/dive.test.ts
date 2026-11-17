@@ -16,6 +16,10 @@ const SCREENS: readonly [number, number][] = [
   [360, 740],
   [768, 1024],
   [900, 600],
+  // final review: wider than ~2.7:1 the panel's height alone never covered the window's width
+  [1440, 500],
+  [844, 190],
+  [1180, 820],
 ];
 /** Contact's piece, in screens: a short one, a usual one, a long one. */
 const PIECES = [1.6, 2.5, 4];

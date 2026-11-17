@@ -28,10 +28,15 @@ const NEAREST = 0.15;
 /** The window, About's piece of the journey (px) and the bills' column width (px). */
 export type AboutView = { w: number; h: number; aboutPx: number; billsPx: number };
 
-/** As globals.css lays the bills' column out: min(32rem, 44vw) beside the scene on a laptop, the width less 2rem otherwise. */
+/**
+ * As globals.css lays the bills' column out: min(32rem, 44vw) on a laptop; in a smaller landscape window at
+ * most three quarters of its height (the pole cannot come near enough to be wider than ~0.9 of it); on a
+ * phone the width less 2rem.
+ */
 export function billsWidth(w: number, h: number): number {
   const wide = w >= 1024 && w / h >= 1;
-  return wide ? Math.min(512, 0.44 * w) : w - 32;
+  if (wide) return Math.min(512, 0.44 * w);
+  return w >= h ? Math.min(w - 32, 0.75 * h) : w - 32;
 }
 
 /**
@@ -39,9 +44,9 @@ export function billsWidth(w: number, h: number): number {
  * pole a little wider than the bills' column on a laptop, wider than the screen on a phone; nearer still
  * if About is too long for the stretch below the signs, never nearer than NEAREST.
  */
-export function aboutCloseUp(view: AboutView): { distance: number; top: number; bottom: number } {
-  const wide = view.w >= 1024 && view.w / view.h >= 1;
-  const poleW = Math.max(1.15 * view.billsPx, wide ? 0 : 1.25 * view.w);
+export function aboutCloseUp(view: AboutView): { distance: number; top: number; bottom: number; clamped: boolean } {
+  // a little wider than the bills; a portrait phone's pole fills its width
+  const poleW = Math.max(1.15 * view.billsPx, view.w < view.h ? 1.25 * view.w : 0);
   const half = view.h / 2;
   // the pole's width on the screen from D off its axis is 2r · half / (D · TAN)
   let D = (2 * POLE.radius * half) / (poleW * TAN);
@@ -49,7 +54,10 @@ export function aboutCloseUp(view: AboutView): { distance: number; top: number; 
   const descent = (d: number) => (view.aboutPx * (d - POLE.radius) * TAN) / half;
   if (TOP - descent(D) < FLOOR) D = POLE.radius + ((TOP - FLOOR) * half) / (view.aboutPx * TAN);
   D = Math.max(D, POLE.radius + NEAREST);
-  return { distance: D, top: TOP, bottom: Math.max(FLOOR, TOP - descent(D)) };
+  // an About too long for the stretch even from NEAREST: the camera stops at the floor and the last bills
+  // slide over the pole there (a very long About in a short window)
+  const clamped = TOP - descent(D) < FLOOR - 1e-9;
+  return { distance: D, top: TOP, bottom: Math.max(FLOOR, TOP - descent(D)), clamped };
 }
 
 const smootherstep = (t: number) => {

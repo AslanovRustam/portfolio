@@ -282,3 +282,19 @@ test('after a resize inside About the bills are still pasted on the pole', async
   expect(Math.abs(moved.bill - 400)).toBeLessThan(3);
   expect(Math.abs(moved.pin - 400)).toBeLessThan(3);
 });
+
+// final review: a landscape window under 1024 px left the bills hanging in the air beside the pole
+test('in a small landscape window the bills still lie on the pole', async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 600 });
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.47);
+  const settled = async () => {
+    const a = (await poleFace(page))!.width;
+    await page.waitForTimeout(250);
+    return Math.abs((await poleFace(page))!.width - a) < 0.5;
+  };
+  await expect.poll(settled, { timeout: 15_000 }).toBe(true);
+  const column = (await page.locator('#about [data-flow]').boundingBox())!;
+  expect((await poleFace(page))!.width).toBeGreaterThanOrEqual(column.width);
+});
