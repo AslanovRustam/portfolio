@@ -14,6 +14,11 @@ export const DIVE = {
   arriveSvh: 20,
   /** then drives into it over this much (svh) */
   diveSvh: 60,
+  /**
+   * then stays inside this much before Contact's text reaches the frame's top (svh): a little scroll back
+   * while filling the form in moves the text down inside the frame, not the camera out (Plan 4c)
+   */
+  backSvh: 33,
   /** the frame's tube runs this far inside the window's edges (px) */
   frameInset: 8,
   /** the interior's height over the window's at the end: it overfills it a little */
@@ -50,9 +55,9 @@ export function diveStage(p: number, view: DiveView): { stage: DiveStage; t: num
   return { stage: 'inside', t: 1 };
 }
 
-/** Story progress where the dive ends and the form's start shows inside the frame (Contact links land here). */
+/** Story progress where Contact's text starts at the frame's top, a little past the dive's end (Contact links land here). */
 export function contactLanding(view: DiveView): number {
   // with no dive, the form starts in the frame where Contact begins
   if (view.still) return CONTACT_FROM;
-  return Math.min(1, CONTACT_FROM + (px(DIVE.arriveSvh + DIVE.diveSvh, view) / view.contactPx) * SPAN);
+  return Math.min(1, CONTACT_FROM + (px(DIVE.arriveSvh + DIVE.diveSvh + DIVE.backSvh, view) / view.contactPx) * SPAN);
 }

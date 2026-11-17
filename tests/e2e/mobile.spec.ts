@@ -417,3 +417,49 @@ test('in About a phone is right at the pole: it is wider than the screen', async
   const vw = page.viewportSize()!.width;
   await expect.poll(async () => (await poleFace(page))?.width ?? 0, { timeout: 15_000 }).toBeGreaterThanOrEqual(vw);
 });
+
+// Plan 4c, A: the form in the screen stays in reach on a phone
+test('the form’s fields on a phone are 16 px and at least 48 px tall: iOS does not zoom the page in', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
+  await insideTheScreen(page);
+  // the visitor's fields (not the honeypot, off-screen for bots)
+  const fields = page.locator('#journey section#contact form').locator('.nfield:visible');
+  expect(await fields.count()).toBeGreaterThan(0);
+  for (const f of await fields.all()) {
+    const [size, height] = await f.evaluate((el) => [getComputedStyle(el).fontSize, el.getBoundingClientRect().height]);
+    expect(size).toBe('16px');
+    expect(height).toBeGreaterThanOrEqual(48);
+  }
+});
+
+test('a little scroll up inside the screen keeps the form there', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
+  await insideTheScreen(page);
+  const p = await progress(page);
+  const lengths = (await page.evaluate(() => window.__portfolio.probe('journey'))) as number[];
+  await scrollTo(page, p - (60 / lengths[lengths.length - 1]) * 0.14);
+  await page.waitForTimeout(800);
+  await expect(page.locator('#journey section#contact')).toHaveAttribute('data-stage', 'inside');
+  await expect(page.locator('#journey section#contact form')).toBeVisible();
+});
+
+// Review Focus 2: the keyboard up (a phone's covers ~45 % of the screen without resizing the page): the form's
+// button can be scrolled up into the part of the screen the keyboard leaves
+test('with the keyboard up the form’s button can be brought above its edge', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
+  await insideTheScreen(page);
+  const vh = page.viewportSize()!.height;
+  await scrollTo(page, 1);
+  await page.waitForTimeout(800);
+  await expect(page.locator('#journey section#contact')).toHaveAttribute('data-stage', 'inside');
+  const button = page.locator('#journey section#contact form button[type="submit"], #journey section#contact form [data-step-next]').filter({ visible: true }).first();
+  const box = (await button.boundingBox())!;
+  expect(box.y + box.height).toBeLessThanOrEqual(0.55 * vh);
+  expect(box.y).toBeGreaterThan(64);
+});

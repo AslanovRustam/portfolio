@@ -352,6 +352,13 @@ html {
   textarea.nfield {
     resize: none;
   }
+  /* a phone: 16 px, or iOS zooms the page in on a field; tall enough to hit with a thumb (Plan 4c) */
+  @media (max-width: 639.98px) {
+    .nfield {
+      font-size: 16px;
+      min-height: 48px;
+    }
+  }
   .nfield:focus {
     border-color: var(--c);
     box-shadow:
@@ -1195,6 +1202,10 @@ body {
  * its first line meets the frame's top as the dive ends; until then it is hidden (and inert).
  */
 @layer components {
+  /* room under the screen's content: the form and its button scroll up above a phone's keyboard (Plan 4c) */
+  #contact.flow-piece[data-dive] {
+    padding-bottom: 50svh;
+  }
   /* the screen's content, centred in its frame in any window (ContactScreen's picture lays out the same) */
   #contact.flow-piece[data-dive] > [data-flow] {
     width: auto;

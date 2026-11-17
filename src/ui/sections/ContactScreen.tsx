@@ -82,8 +82,8 @@ export default function ContactScreen() {
       // a turn changes the width; a keyboard or an address bar only the height, and must not move the form
       if (w !== layout.w) layout = { w, h };
       pinDiveHeight(layout.h);
-      // the first box starts where the frame's content does once the dive is over (or at once, with no dive)
-      const entry = (reducedMotion ? 0 : ((DIVE.arriveSvh + DIVE.diveSvh) * layout.h) / 100) + TOP + PAD;
+      // the first box reaches the frame's top a little past the dive's end (or at once, with no dive)
+      const entry = (reducedMotion ? 0 : ((DIVE.arriveSvh + DIVE.diveSvh + DIVE.backSvh) * layout.h) / 100) + TOP + PAD;
       section.style.setProperty('--entry', `${Math.round(entry)}px`);
       // Contact is the last piece: the page scrolls only its height less a screen, and that must hold the
       // whole dive, however short the content is
