@@ -27,7 +27,6 @@ const SHIFT_LAMBDA = 4;
 export default function CameraRig() {
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
-  const aspect = size.width / Math.max(1, size.height);
   const target = useRef(new Vector3(...cameraPose(0).target));
   const shift = useRef({ x: 0, y: 0 });
 
