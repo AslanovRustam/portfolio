@@ -63,6 +63,34 @@ test('the loader is a neon sign: its label, the percent climbing, a log of the f
   }
 });
 
+// gate M4 round 1: the loader in pink before a blue blueprint looked like two sites — it is the blueprint's sign
+test('the loader is drawn in the blueprint’s colours: its paper, its grid and its line', async ({ page }) => {
+  await page.goto('/en');
+  const colours = await page.evaluate(() => {
+    const probe = document.createElement('div');
+    document.body.append(probe);
+    const resolve = (v: string) => {
+      probe.style.color = `var(${v})`;
+      return getComputedStyle(probe).color;
+    };
+    const out = { paper: resolve('--blueprint'), line: resolve('--blueprint-line') };
+    probe.remove();
+    return out;
+  });
+  const loader = page.locator('[data-loader]');
+  await expect(loader).toBeVisible();
+  const seen = await loader.evaluate((el) => {
+    const sign = getComputedStyle(el);
+    const frame = getComputedStyle(el.querySelector('.loader-frame')!);
+    const log = getComputedStyle(el.querySelector('.loader-log')!);
+    return { background: sign.backgroundColor, image: sign.backgroundImage, frame: frame.borderTopColor, log: log.color };
+  });
+  expect(seen.background).toBe(colours.paper);
+  expect(seen.image).toContain('linear-gradient');
+  expect(seen.frame).toBe(colours.line);
+  expect(seen.log).not.toMatch(/rgba?\(255, 90, 122/);
+});
+
 test('reduced motion: the sign neither blinks nor flickers out', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/en');

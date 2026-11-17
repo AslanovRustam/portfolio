@@ -1217,13 +1217,23 @@ html[data-in-screen] .top-fade {
 }
 
 /*
- * The loader: a neon sign while the street loads (M4 round 1; src/ui/Loader.tsx). A pink double tube, the
- * label in it, the percent and a dotted bar in cyan, the log in the corner. At 100 the frame blinks while the
+ * The loader: a neon sign while the street loads (M4 round 1; src/ui/Loader.tsx), drawn in the blueprint's
+ * colours — its paper, its grid, its line (gate: a pink sign before a blue drawing looked like two sites):
+ * a double tube of the line's cyan, the label in it, the percent and a dotted bar, the log in the corner. At 100 the frame blinks while the
  * scene compiles (one dip every 1.2 s); when the street is there the sign goes out like switched-off neon,
  * then the whole loader fades. Reduced motion: no blink, no flicker, the fade only.
  */
 .loader-sign {
-  background: radial-gradient(ellipse at 50% 55%, #2a0a22 0%, #12040f 45%, #050507 80%);
+  /* the blueprint's paper and grid, a little lighter where the sign glows */
+  background-color: var(--blueprint);
+  background-image:
+    radial-gradient(ellipse at 50% 55%, rgb(127 227 255 / 0.1) 0%, transparent 60%),
+    linear-gradient(#24486f55 1px, transparent 1px),
+    linear-gradient(90deg, #24486f55 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    24px 24px,
+    24px 24px;
   color: var(--cyan);
   transition:
     opacity 0.4s 0.5s,
@@ -1241,9 +1251,9 @@ html[data-in-screen] .top-fade {
   font-family: var(--font-mono);
   font-size: 9px;
   line-height: 1.6;
-  color: #ff5a7a;
-  opacity: 0.85;
-  text-shadow: 0 0 6px rgb(255 61 110 / 0.55);
+  color: var(--c);
+  opacity: 0.7;
+  text-shadow: 0 0 6px color-mix(in srgb, var(--c) 55%, transparent);
   white-space: pre;
   @media (width >= 40rem) {
     left: 24px;
@@ -1267,7 +1277,7 @@ html[data-in-screen] .top-fade {
   font-size: clamp(22px, 5vw, 38px);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #ffd2ec;
+  color: #e3f8ff;
   text-shadow:
     0 0 6px var(--c),
     0 0 18px var(--c);

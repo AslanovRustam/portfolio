@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react';
 import { experienceStore, useExperience } from '@/experience/store';
 import { percentFor } from './loaderGauge';
 import { logLines } from './loaderLog';
-import { NEON } from './neon';
 
 /**
- * A neon sign while the street loads (M4 round 1, spec §7; after Rustam's first pin): a pink double neon
- * frame on the dark, the label in its tubes ("Rendering", "Загрузка", "Завантаження"), the percent in cyan
- * and a bar in brackets, filled bright and dotted where it is still to go; in the corner a log of the files
+ * A neon sign while the street loads (M4 round 1, spec §7; after Rustam's first pin), in the blueprint's
+ * colours the street starts from: a double neon frame of its line's cyan on its gridded paper, the label in
+ * its tubes ("Rendering", "Загрузка", "Завантаження"), the percent and a bar in brackets, filled bright and
+ * dotted where it is still to go; in the corner a log of the files
  * the scene has loaded. At 100 the frame blinks while the scene compiles, then the sign goes out like
  * switched-off neon and the street is there. Screen readers hear the label and the percent. Reduced motion:
  * no blink, no flicker, a fade. It sits under the title block, so the name paints first, and hides once the
@@ -40,7 +40,7 @@ export default function Loader({ label }: { label: string }) {
       data-phase={phase}
       aria-hidden={ready}
       className="loader-sign fixed inset-0 z-[5] grid place-items-center"
-      style={{ '--c': NEON.name, '--cyan': NEON.about } as React.CSSProperties}
+      style={{ '--c': 'var(--blueprint-line)', '--cyan': 'var(--blueprint-line)' } as React.CSSProperties}
     >
       <pre data-loader-log aria-hidden="true" className="loader-log hidden sm:block">
         {logLines(items, pct, 7).join('\n')}
