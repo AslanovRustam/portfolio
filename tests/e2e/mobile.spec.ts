@@ -6,6 +6,7 @@ import {
   HOLD,
   innerScrollers,
   insideTheScreen,
+  poleFace,
   intoContact,
   progress,
   screenPicture,
@@ -95,7 +96,9 @@ test('the menu lights the sections and takes you there', async ({ page }) => {
   await expect(dialog.getByRole('button', { name: 'Work', exact: true })).toHaveAttribute('aria-current', 'true');
   await dialog.getByRole('button', { name: 'About', exact: true }).click();
   await expect(dialog).toHaveCount(0);
-  await expect.poll(() => progress(page), { timeout: 10_000 }).toBeCloseTo(HOLD.about[0], 2);
+  // About lands where its first bill has come up the screen (M4 round 1), inside its stretch
+  await expect.poll(() => progress(page), { timeout: 10_000 }).toBeGreaterThan(HOLD.about[0]);
+  expect(await progress(page)).toBeLessThan(HOLD.about[1]);
 });
 
 test('Esc closes the menu and the picker, and focus goes back to their buttons', async ({ page }) => {
@@ -404,4 +407,13 @@ test('under reduced motion the menu’s Contact lands inside the lit frame, with
   expect(lead.y).toBeGreaterThan(frame.y);
   expect(lead.y).toBeLessThan(frame.y + 80);
   expect(await page.evaluate(() => !!(window as unknown as { glitched?: boolean }).glitched)).toBe(false);
+});
+
+// M4 round 1, note 3: on a phone the pole fills the screen's width in About
+test('in About a phone is right at the pole: it is wider than the screen', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.48);
+  const vw = page.viewportSize()!.width;
+  await expect.poll(async () => (await poleFace(page))?.width ?? 0, { timeout: 15_000 }).toBeGreaterThanOrEqual(vw);
 });

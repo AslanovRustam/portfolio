@@ -44,6 +44,10 @@ it('snap pulls a resting scroll onto the nearest stop, only inside Work', () => 
 it('Work links land on the first project; hashes carry the stop', () => {
   expect(sectionTarget('work')).toBeCloseTo(0.18, 9);
   expect(sectionTarget('about')).toBeCloseTo(0.395, 9); // where About's text begins, the turn just done
+  // with the page measured, About lands where its first bill (a screen below at first) has risen to 30 %
+  // of the screen: 0.7 of a screen into About's piece (M4 round 1)
+  expect(sectionTarget('about', undefined, { h: 800, aboutPx: 4000 })).toBeCloseTo(0.395 + (560 / 4000) * 0.17, 9);
+  expect(sectionTarget('about', undefined, { h: 800, aboutPx: 400 })).toBe(0.565);
   // Stack opens on its first sign, as Work opens on its first project
   expect(sectionTarget('stack')).toBeCloseTo(stackStopProgress(0), 9);
   // Contact opens the end of the road: the billboard with the form, the green light

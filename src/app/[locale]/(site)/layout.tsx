@@ -16,6 +16,7 @@ import StackSection from '@/ui/sections/StackSection';
 import ContactSection from '@/ui/sections/ContactSection';
 import ContactBillboard from '@/ui/sections/ContactBillboard';
 import ContactScreen from '@/ui/sections/ContactScreen';
+import AboutBackdrop from '@/ui/sections/AboutBackdrop';
 
 /**
  * The persistent experience: scene, scroll, header and sections. It wraps both the home page and the
@@ -46,6 +47,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       />
       <main className="relative z-10">
         <SmoothScroll />
+        <AboutBackdrop />
         <HooksMount />
         <Hero name={t('hero.name')} role={t('hero.role')} line={t('hero.line')} />
         {/* the scroll track the whole journey is measured against; About's and Contact's text rides along it */}

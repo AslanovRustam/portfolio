@@ -99,6 +99,17 @@ it('in About it stands at its spot in the middle of the frame, faced to the came
   expect(pole.facing).toBeCloseTo(0, 6);
 });
 
+// M4 round 1: the camera is at the pole's face as About's text begins: the pole must be at its spot by then
+it('it stands at its spot when About’s text begins', () => {
+  for (const aspect of [LAPTOP, PHONE]) {
+    const cam = desiredCameraPose(0.395, { w: aspect * 1000, h: 1000 }, false);
+    const { position, mode } = poleWorldPose(0.395, cam, aspect, 0);
+    expect(mode).toBe('centre');
+    expect(position[0]).toBeCloseTo(STATIONS.pole.x, 6);
+    expect(position[2]).toBeCloseTo(STATIONS.pole.z, 6);
+  }
+});
+
 it('its signs turn with the camera: a camera looking left down the street turns them a quarter', () => {
   const cam: Pose = { position: [0, 2.5, -10], target: [-10, 2.5, -10] };
   expect(poleWorldPose(0.7, cam, LAPTOP).facing).toBeCloseTo(Math.PI / 2, 6);
@@ -166,7 +177,8 @@ it('reduced motion: within a section the pole stands still in the frame; it only
         const at = `${s.id} aspect ${aspect.toFixed(2)} p ${p.toFixed(3)}`;
         expect(here.right, at).toBeCloseTo(first.right, 6);
         expect(here.ahead, at).toBeCloseTo(first.ahead, 6);
-        expect(here.y, at).toBeCloseTo(first.y, 6);
+        // in About the camera goes down the pole with the page (M4 round 1): the bills are pasted on it
+        if (s.id !== 'about') expect(here.y, at).toBeCloseTo(first.y, 6);
       }
     }
 });

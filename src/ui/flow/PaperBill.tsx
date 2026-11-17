@@ -3,8 +3,8 @@ import { tornEdge } from './tornEdge';
 
 /**
  * A paper bill pasted on the pole (About, spec §8): printed paper torn at the top and the bottom, held by
- * two strips of tape, each one tilted its own way. It rides the page scroll over the pole and swings in like
- * the poster (data-swing on the bill).
+ * two strips of tape, each one tilted its own way. It rides the page's scroll, and the camera goes down the
+ * pole with it, so it stays pasted on the pole (M4 round 1).
  */
 export default function PaperBill({ children, seed }: { children: ReactNode; seed: number }) {
   // a small tilt of its own, from −1.8° to 1.8°, the same on every render

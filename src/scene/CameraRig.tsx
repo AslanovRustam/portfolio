@@ -8,7 +8,7 @@ import { frameShift, sectionPresence } from '@/experience/panels';
 import { experienceStore } from '@/experience/store';
 import { registerProbe } from '@/dev/sceneProbe';
 import { END_FROM } from '@/experience/route';
-import { desiredCameraPose } from './cameraPose';
+import { desiredCameraPose, lockedAxes } from './cameraPose';
 
 const LAMBDA = 3;
 /** how near (m, position and aim together) the damped camera must be to its pose to count as at rest:
@@ -44,10 +44,12 @@ export default function CameraRig() {
     const { progress, reducedMotion } = experienceStore.getState();
     const pose = desiredCameraPose(progress, { w: size.width, h: size.height }, reducedMotion);
     const k = reducedMotion ? Infinity : LAMBDA;
+    // in About's hold the height follows the scroll exactly: the bills ride the page, the pole must keep up
+    const ky = lockedAxes(progress, reducedMotion) === 'y' ? Infinity : k;
     const p = camera.position;
-    p.set(damp(p.x, pose.position[0], k, dt), damp(p.y, pose.position[1], k, dt), damp(p.z, pose.position[2], k, dt));
+    p.set(damp(p.x, pose.position[0], k, dt), damp(p.y, pose.position[1], ky, dt), damp(p.z, pose.position[2], k, dt));
     const t = target.current;
-    t.set(damp(t.x, pose.target[0], k, dt), damp(t.y, pose.target[1], k, dt), damp(t.z, pose.target[2], k, dt));
+    t.set(damp(t.x, pose.target[0], k, dt), damp(t.y, pose.target[1], ky, dt), damp(t.z, pose.target[2], k, dt));
     camera.lookAt(t);
     const lag = p.distanceTo(goal.set(...pose.position)) + t.distanceTo(goal.set(...pose.target));
     // computed against this frame's progress: a jump to the end does not find a camera "at rest" from before

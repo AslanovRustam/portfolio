@@ -36,11 +36,23 @@ export const STORY_CUTS: readonly number[] = [
   1,
 ];
 
+/**
+ * The turn from Work's last TV into About's close-up of the pole (svh): the camera comes up to the pole's
+ * face now (M4 round 1), ~15 m from the shop window, and keeps under 0.5 m per svh doing it.
+ */
+const TO_ABOUT_SVH = 100;
+
 /** Scroll length of each piece (svh) until the page has measured itself: the old 1000 svh story, Work and Stack a stop track each. */
 export const DEFAULT_SVH: Readonly<Record<PieceId, number>> = Object.fromEntries(
   PIECE_IDS.map((id, i) => [
     id,
-    id === 'work' ? WORK_STOPS * STOP_SVH : id === 'stack' ? STACK_STOPS * STOP_SVH : Math.round((STORY_CUTS[i + 1] - STORY_CUTS[i]) * 1000),
+    id === 'work'
+      ? WORK_STOPS * STOP_SVH
+      : id === 'stack'
+        ? STACK_STOPS * STOP_SVH
+        : id === 'toAbout'
+          ? TO_ABOUT_SVH
+          : Math.round((STORY_CUTS[i + 1] - STORY_CUTS[i]) * 1000),
   ]),
 ) as Record<PieceId, number>;
 

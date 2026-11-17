@@ -13,9 +13,10 @@ export type PoleMode = 'start' | 'ride' | 'parked' | 'centre';
 const FOV = 35;
 /** the pole leaves its spot and joins the ride over this stretch of the story */
 const RIDE_IN: readonly [number, number] = [INTRO_END, 0.19];
-/** About: into its spot at the start of the section, back to the ride before Stack */
-const ABOUT_IN: readonly [number, number] = [0.37, 0.4];
-const ABOUT_OUT: readonly [number, number] = [0.565, 0.59];
+/** About: into its spot by the time About's text begins (the camera is at its face then), back to the ride before Stack */
+const ABOUT_IN: readonly [number, number] = [0.37, 0.395];
+// back out with the camera's turn out of About (aboutPole.ts), not ahead of it in front of the camera
+const ABOUT_OUT: readonly [number, number] = [0.565, 0.6];
 /** Contact: the light, turning green, takes over from the signs as what the frame keeps in view */
 const LIGHT_IN: readonly [number, number] = [0.8, 0.88];
 /** the middle of the signs' band on the pole (their centres from CV to STACK) */

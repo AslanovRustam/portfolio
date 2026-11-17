@@ -113,6 +113,38 @@ export async function intoContact(page: Page, px: number): Promise<number> {
   return 0.86 + (px / lengths[lengths.length - 1]) * 0.14;
 }
 
+/** The pole's face in About (M4 round 1): a point on it 1.2 m up, on the page (px), and the pole's width there. */
+export const poleFace = (page: Page) =>
+  page.evaluate(() => (window.__portfolio.probe('pole') as { face: { pin: number; width: number } | null }).face);
+
+/**
+ * Scrolls `px` further through About and checks the pole's face and the first bill on the screen moved up by
+ * as much (the bills are pasted on the pole): returns how far each moved.
+ */
+export async function scrollAbout(page: Page, px: number): Promise<{ pin: number; bill: number }> {
+  const bill = page.locator('#about [data-flow] > :is(.paper-bill, .paper-poster)');
+  const vh = await page.evaluate(() => innerHeight);
+  const onScreen = async () => {
+    const tops = await bill.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
+    return tops.findIndex((t) => t > 120 && t < vh - 120 - px);
+  };
+  const settled = async () => {
+    const a = (await poleFace(page))!.pin;
+    await page.waitForTimeout(250);
+    return Math.abs((await poleFace(page))!.pin - a) < 0.5;
+  };
+  await expect.poll(settled, { timeout: 15_000 }).toBe(true);
+  const i = await onScreen();
+  expect(i, 'a bill on the screen with room to rise').toBeGreaterThanOrEqual(0);
+  const pin0 = (await poleFace(page))!.pin;
+  const y0 = (await bill.nth(i).boundingBox())!.y;
+  const lengths = (await page.evaluate(() => window.__portfolio.probe('journey'))) as number[];
+  const p0 = await progress(page);
+  await scrollTo(page, p0 + (px / lengths[3]) * 0.17);
+  await expect.poll(settled, { timeout: 15_000 }).toBe(true);
+  return { pin: pin0 - (await poleFace(page))!.pin, bill: y0 - (await bill.nth(i).boundingBox())!.y };
+}
+
 /** Switches the language through the header's language tube and the sign it drops. */
 export async function switchLanguage(page: Page, to: 'EN' | 'RU' | 'UK'): Promise<void> {
   const header = page.locator('header[data-ui]');

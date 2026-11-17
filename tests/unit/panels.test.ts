@@ -31,7 +31,9 @@ it('the scene steps aside for the panel', () => {
   // the ride frames About, Stack and Contact itself, the pole riding on the right: nothing steps aside
   for (const id of ['about', 'stack', 'contact'] as const) expect(frameShift(id, 1, wide)).toEqual({ x: 0, y: 0 });
   expect(frameShift('work', 0.5, wide)).toEqual({ x: 0.04, y: 0 }); // clear of the caption in the corner
-  expect(frameShift('about', 1, phone)).toEqual({ x: 0, y: 0.2 });
+  // About close to the pole frames itself (M4 round 1); Stack's caption still lifts the scene
+  expect(frameShift('about', 1, phone)).toEqual({ x: 0, y: 0 });
+  expect(frameShift('stack', 1, phone)).toEqual({ x: 0, y: 0.2 });
   // a narrow window dives into the billboard's screen for Contact: the dive frames it (M4 round 1)
   expect(frameShift('contact', 1, { w: 900, h: 700 })).toEqual({ x: 0, y: 0 });
   expect(frameShift('contact', 1, phone)).toEqual({ x: 0, y: 0 });

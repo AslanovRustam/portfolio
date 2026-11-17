@@ -53,18 +53,8 @@ export default function JourneyTrack({ about, contact }: { about: ReactNode; con
     ScrollTrigger.addEventListener('refreshInit', measure);
     const unprobe = registerProbe('journey', () => [...journeyLengths()]);
 
-    // About's poster and bills swing in as they reach the screen (and again after leaving it)
-    const swing = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) (e.target as HTMLElement).dataset.swing = e.isIntersecting ? 'in' : 'out';
-      },
-      { rootMargin: '0px 0px -8% 0px' },
-    );
-    for (const t of el.querySelectorAll('#about [data-flow] > .paper-poster, #about [data-flow] > .paper-bill')) swing.observe(t);
-
     return () => {
       alive = false;
-      swing.disconnect();
       ro.disconnect();
       ScrollTrigger.removeEventListener('refreshInit', measure);
       unprobe();

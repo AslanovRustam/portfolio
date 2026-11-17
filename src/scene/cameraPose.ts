@@ -1,7 +1,8 @@
+import { ABOUT_TURN, aboutPose, type AboutView, billsWidth } from '@/experience/aboutPole';
 import { activeSection, cameraPose, fitDistance, type Pose, reducedCameraPose, type Vec3 } from '@/experience/choreography';
 import { diveArrival, diveEnd, divePose } from '@/experience/dive';
 import { pieceSpanPx } from '@/experience/journey';
-import { CONTACT_FROM } from '@/experience/sections';
+import { CONTACT_FROM, holdWindow } from '@/experience/sections';
 import { billboardFit } from './billboard/fit';
 import { onWall } from './tvwall/camera';
 
@@ -19,6 +20,20 @@ let fitCache: { w: number; h: number; dive: boolean } | null = null;
 export function divesIntoScreen(v: Viewport): boolean {
   if (!fitCache || fitCache.w !== v.w || fitCache.h !== v.h) fitCache = { w: v.w, h: v.h, dive: billboardFit(v) === null };
   return fitCache.dive;
+}
+
+/** About as this window lays it out: its piece of the journey (px) and the bills' column. */
+function aboutView(v: Viewport): AboutView {
+  return { w: v.w, h: v.h, aboutPx: pieceSpanPx('about', v.h), billsPx: billsWidth(v.w, v.h) };
+}
+
+/**
+ * Which of the camera's axes follow the pose undamped: in About's hold its height, so the pole's face moves
+ * with the bills pixel for pixel (CameraRig damps everything else).
+ */
+export function lockedAxes(p: number, reduced: boolean): 'none' | 'y' {
+  const [from, to] = holdWindow('about');
+  return !reduced && p >= from && p <= to ? 'y' : 'none';
 }
 
 /** Backed off along the view line on narrow (portrait) screens, so the horizontal field still holds a sign. */
@@ -43,6 +58,14 @@ const mix = (a: Vec3, b: Vec3, s: number): Vec3 => [a[0] + (b[0] - a[0]) * s, a[
  */
 export function desiredCameraPose(p: number, viewport: Viewport, reduced: boolean): Pose {
   const aspect = viewport.w / viewport.h;
+  // About: close to the pole's face, going down it with the bills (aboutPole.ts); under reduced motion it
+  // cuts there and still goes down with the page inside the hold
+  const [aboutFrom, aboutTo] = holdWindow('about');
+  if (reduced ? activeSection(p) === 'about' : p > ABOUT_TURN.from && p < ABOUT_TURN.to) {
+    if (reduced) return aboutPose(Math.min(aboutTo, Math.max(aboutFrom, p)), aboutView(viewport));
+    // the turns in and out start from where the camera would be without About (in front of the TVs, say)
+    return aboutPose(p, aboutView(viewport), onWall(p, fitted(cameraPose(p), aspect), aspect, false));
+  }
   if (divesIntoScreen(viewport)) {
     if (reduced) {
       if (activeSection(p) === 'contact') return diveEnd();

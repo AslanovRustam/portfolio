@@ -98,8 +98,26 @@ export default function Pole({ children }: { children?: ReactNode }) {
       }
       return x0 === Infinity ? null : { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
     };
+    // About close up (M4 round 1): where a point on the pole's face, 1.2 m up, is on the page (CSS px), and
+    // how wide the pole is there — the bills must move with that point
+    const face = () => {
+      const r = ride.current;
+      if (!r) return null;
+      const axis = new Vector3(0, 1.2, 0);
+      r.localToWorld(axis);
+      const toward = new Vector3(camera.position.x - axis.x, 0, camera.position.z - axis.z).normalize();
+      const side = new Vector3(-toward.z, 0, toward.x).multiplyScalar(POLE.radius);
+      const px = (p: Vector3) => {
+        const s = p.clone().project(camera);
+        return [((s.x + 1) / 2) * size.width, ((1 - s.y) / 2) * size.height] as const;
+      };
+      const pin = px(axis.clone().addScaledVector(toward, POLE.radius))[1];
+      const width = Math.abs(px(axis.clone().add(side))[0] - px(axis.clone().sub(side))[0]);
+      return { pin, width };
+    };
     return registerProbe('pole', () => ({
       ndc: toNdc(2.6),
+      face: face(),
       lightNdc: toNdc(LIGHT_Y),
       mode: mode.current,
       light: lightState(experienceStore.getState().progress),

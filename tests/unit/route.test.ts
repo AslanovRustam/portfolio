@@ -54,36 +54,41 @@ it('reduced motion: one still pose per section, at the same places', () => {
   for (const id of ['work', 'about', 'stack', 'contact'] as const) expect(looksAt(stationPose(id), id), id).toBe(true);
 });
 
-it('in About the camera rises along the pole, looking at it all the way', () => {
-  let y = -Infinity;
+// M4 round 1: the camera now comes close to the pole and descends with the bills (aboutPole.test.ts); the
+// route's own About keys only carry the turns in and out of it
+it('in About the route looks at the pole all the way', () => {
   for (let p = 0.4; p <= 0.565; p += 0.005) {
     const pose = ridePose(p);
-    expect(pose.position[1]).toBeGreaterThanOrEqual(y - 1e-9);
-    y = pose.position[1];
     expect(Math.abs(pose.target[0] - STATIONS.pole.x)).toBeLessThan(0.05);
     expect(Math.abs(pose.target[2] - STATIONS.pole.z)).toBeLessThan(0.05);
   }
-  expect(ridePose(0.565).position[1] - ridePose(0.4).position[1]).toBeGreaterThan(2);
 });
 
 // final review: the drive to the billboard ended inside Contact's short stretch of scroll (a laptop puts the
 // form on the billboard, and that stretch is short) — its last metres went by in one wheel notch
 it('the camera never surges: at most 0.5 m per svh of scroll anywhere on the ride, on a laptop and in a phone’s dive', () => {
-  const cases: { w: number; h: number; contact: number; from?: number }[] = [
+  const cases: { w: number; h: number; contact: number; about?: number; from?: number; to?: number }[] = [
     // a laptop: the form on the billboard (a short Contact), or in the page
     { w: 1440, h: 800, contact: CONTACT_ON_BILLBOARD_SCROLL },
     { w: 1440, h: 800, contact: DEFAULT_SVH.contact },
     // a phone diving into the screen, Contact 1.6 to 4 screens long: from the gantry on (the phone's ride
     // before it, backed off along the view line, is Plan 4's and unchanged here)
     ...[160, 250, 400].map((contact) => ({ w: 412, h: 839, contact, from: STACK_TO })),
+    // About close to the pole: a short and a long About, in and out of it (M4 round 1)
+    ...[2600, 7000].flatMap((about) => [
+      { w: 1440, h: 800, contact: CONTACT_ON_BILLBOARD_SCROLL, about, from: 0.33, to: 0.62 },
+      { w: 412, h: 839, contact: 250, about, from: 0.33, to: 0.62 },
+    ]),
   ];
-  for (const { w, h, contact, from = 0.15 } of cases) {
-    // the page measures its pieces in px: svh × h / 100
-    const lengths = PIECE_IDS.map((id) => ((id === 'contact' ? contact : DEFAULT_SVH[id]) * h) / 100);
+  for (const { w, h, contact, about, from = 0.15, to = 0.999 } of cases) {
+    // the page measures its pieces in px: svh × h / 100 (About given in px)
+    const lengths = PIECE_IDS.map((id) =>
+      id === 'about' && about ? about : ((id === 'contact' ? contact : DEFAULT_SVH[id]) * h) / 100,
+    );
     setJourneyLengths(lengths);
     const total = lengths.reduce((a, b) => a + b, 0);
     let worst = { v: 0, p: 0 };
-    for (let p = from; p < 0.999; p += 0.0005) {
+    for (let p = from; p < to; p += 0.0005) {
       const svh = ((scrollFromStory(p + 0.0005) - scrollFromStory(p)) * total * 100) / h;
       const v = dist(desiredCameraPose(p, { w, h }, false).position, desiredCameraPose(p + 0.0005, { w, h }, false).position) / svh;
       if (v > worst.v) worst = { v, p };

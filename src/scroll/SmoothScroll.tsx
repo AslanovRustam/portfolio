@@ -83,9 +83,12 @@ function diveView(): DiveView | undefined {
   return { ...v, contactPx: pieceSpanPx('contact', innerHeight), still: reducedMotion };
 }
 
+/** About as this window lays it out: a link lands where its first bill has come up the screen. */
+const aboutView = () => ({ h: innerHeight, aboutPx: pieceSpanPx('about', innerHeight) });
+
 /** Scrolls to a section (Work: its first project); glides unless the visitor prefers reduced motion. */
 export function scrollToSection(id: SectionId): void {
-  scrollToProgress(sectionTarget(id, diveView()), experienceStore.getState().reducedMotion);
+  scrollToProgress(sectionTarget(id, diveView(), aboutView()), experienceStore.getState().reducedMotion);
 }
 
 /** How long the page has to rest inside Work before it settles on the nearest project. */
@@ -214,14 +217,14 @@ export default function SmoothScroll() {
     // scene is ready, or straight away on the no-WebGL fallback, which never becomes ready.
     // after a language switch, the exact place inside that section (the text is longer or shorter now)
     const hash = location.hash.slice(1);
-    const hashed = parseHash(hash, diveView());
+    const hashed = parseHash(hash, diveView(), aboutView());
     const placed = hashed === null ? null : takePlace(hashed);
     let stopDeepLink = () => {};
     if (hashed !== null) {
       const go = (s: { ready: boolean; webgl: boolean }) => {
         if (!s.ready && s.webgl) return false;
         // asked again now that the page has measured itself: the dive's landing depends on Contact's length
-        scrollToProgress(placed ?? parseHash(hash, diveView()) ?? hashed, experienceStore.getState().reducedMotion);
+        scrollToProgress(placed ?? parseHash(hash, diveView(), aboutView()) ?? hashed, experienceStore.getState().reducedMotion);
         return true;
       };
       if (!go(experienceStore.getState())) {

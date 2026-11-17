@@ -6,7 +6,7 @@ const EDGE = tornEdge(11, 14);
 
 /**
  * Rustam's portrait as a street poster pasted up in About's flow: a neon-duotone print with torn top and
- * bottom edges, two strips of tape, tilted a little. It swings in like the boxes (data-swing on the figure).
+ * bottom edges, two strips of tape, tilted a little, pasted on the pole like the bills.
  */
 export default function PaperPoster({ src, alt }: { src: string; alt: string }) {
   return (

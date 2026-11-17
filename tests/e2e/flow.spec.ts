@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoScene, HOLD, innerScrollers, insideTheScreen, progress, screenTube, scrollTo, stackStop, stop, switchLanguage, waitReady } from './helpers';
+import { gotoScene, HOLD, innerScrollers, insideTheScreen, poleFace, progress, screenTube, scrollAbout, scrollTo, stackStop, stop, switchLanguage, waitReady } from './helpers';
 
 const firstBox = (page: Page, id: string) => page.locator(`#${id} [data-flow] > *`).first();
 const yaw = (page: Page) => page.evaluate(() => window.__portfolio.probe('poleYaw') as number);
@@ -35,11 +35,12 @@ test('a header link lands where the text begins, with the first box on screen', 
   await gotoScene(page);
   await waitReady(page);
   await page.getByRole('button', { name: 'About', exact: true }).click();
-  await expect.poll(() => progress(page), { timeout: 8000 }).toBeCloseTo(HOLD.about[0], 2);
+  // About's text starts below the screen (the camera reaches the pole first): the link lands once the
+  // first bill has come up a third of the screen (M4 round 1)
+  await expect.poll(() => progress(page), { timeout: 8000 }).toBeGreaterThan(HOLD.about[0]);
+  await expect.poll(async () => (await firstBox(page, 'about').boundingBox())!.y, { timeout: 8000 }).toBeLessThan(0.35 * page.viewportSize()!.height);
   const box = (await firstBox(page, 'about').boundingBox())!;
-  const vh = page.viewportSize()!.height;
-  expect(box.y).toBeGreaterThan(0);
-  expect(box.y).toBeLessThan(vh);
+  expect(box.y).toBeGreaterThan(0.25 * page.viewportSize()!.height);
 });
 
 test('the last box has left before the pole turns', async ({ page }) => {
@@ -131,26 +132,6 @@ test('the measured pieces add up to the scroll track', async ({ page }) => {
   expect(Math.abs(range)).toBeLessThan(2);
 });
 
-// Review Focus 1
-test('the empty part of a section lets the signs be hovered', async ({ page }) => {
-  await gotoScene(page);
-  await waitReady(page);
-  // the start of About: the ABOUT sign above the poster (further on, the bills are pasted over the pole)
-  await scrollTo(page, HOLD.about[0]);
-  // the pole and camera ease into place: aim at where the sign is now, until the pointer is on it
-  await expect
-    .poll(
-      async () => {
-        const { x, y } = (await page.evaluate(() => window.__portfolio.probe('signScreen:about'))) as { x: number; y: number };
-        await page.mouse.move(x, y);
-        await page.waitForTimeout(200);
-        return page.evaluate(() => window.__portfolio.state().hoveredSign);
-      },
-      { timeout: 15_000 },
-    )
-    .toBe('about');
-});
-
 // Review Focus 2
 test('a resize inside About keeps the place', async ({ page }) => {
   await gotoScene(page);
@@ -185,23 +166,18 @@ test('without WebGL every section is still there', async ({ page }) => {
   await expect(page.locator('section#stack').getByRole('heading', { level: 3 })).toHaveText('State');
 });
 
-test("About's bills swing in as they reach the screen", async ({ page }) => {
+// M4 round 1: the bills are pasted on the pole, which moves with them — nothing swings in any more
+test("About's bills and poster are pasted: they ride the page without swinging in", async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
-  await scrollTo(page, HOLD.about[0] + 0.005);
-  const vh = page.viewportSize()!.height;
-  const bills = page.locator('#about [data-flow] > .paper-bill');
-  const state = () =>
-    bills.evaluateAll((els, h) => els.map((el) => ({ swing: (el as HTMLElement).dataset.swing, top: el.getBoundingClientRect().top, below: el.getBoundingClientRect().top > h })), vh);
-  const hidden = (await state()).filter((b) => b.below);
-  expect(hidden.length).toBeGreaterThan(0);
-  expect(hidden.every((b) => b.swing === 'out')).toBe(true);
-  // further on, the bills that were below have reached the screen and swung in
   await scrollTo(page, HOLD.about[0] + 0.06);
-  await expect.poll(async () => (await state()).filter((b) => !b.below && b.top > 0).every((b) => b.swing === 'in')).toBe(true);
-  expect((await state()).filter((b) => !b.below && b.top > 0).length).toBeGreaterThan(0);
-  const name = await page.locator('#about .paper-bill[data-swing="in"]').first().evaluate((el) => getComputedStyle(el).animationName);
-  expect(name).toBe('swing-in');
+  const sheets = page.locator('#about [data-flow] > :is(.paper-bill, .paper-poster)');
+  expect(await sheets.count()).toBeGreaterThan(3);
+  const names = await sheets.evaluateAll((els) => els.map((el) => [(el as HTMLElement).dataset.swing ?? '', getComputedStyle(el).animationName]));
+  for (const [swing, animation] of names) {
+    expect(swing).toBe('');
+    expect(animation).toBe('none');
+  }
 });
 
 // ── the About poster (Plan 3, Task 6) ─────────────────────────────────────────────────────────
@@ -221,15 +197,6 @@ test("About opens with Rustam's poster, named in the page's language", async ({ 
   const width = await page.locator('#about .paper-poster').evaluate((el) => (el as HTMLElement).offsetWidth);
   expect(width).toBeLessThanOrEqual(300);
   expect(width).toBeGreaterThan(150);
-});
-
-test('the poster swings in like the boxes', async ({ page }) => {
-  await gotoScene(page);
-  await waitReady(page);
-  const poster = page.locator('#about .paper-poster');
-  await expect(poster).toHaveAttribute('data-swing', 'out');
-  await page.getByRole('button', { name: 'About', exact: true }).click();
-  await expect.poll(() => poster.getAttribute('data-swing'), { timeout: 8000 }).toBe('in');
 });
 
 test('reduced motion: the poster is simply there', async ({ page }) => {
@@ -271,4 +238,44 @@ test('reduced motion: the bills are simply there', async ({ page }) => {
   const bills = await page.locator('#about .paper-bill').evaluateAll((els) => els.map((el) => [getComputedStyle(el).opacity, getComputedStyle(el).animationName]));
   expect(bills.length).toBe(5);
   for (const [o, a] of bills) expect([o, a]).toEqual(['1', 'none']);
+});
+
+// ── About close to the pole (M4 round 1, note 3) ──────────────────────────────────────────────
+
+test('About begins with the camera at the pole’s face, before any bill is on the screen', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, HOLD.about[0]);
+  const near = async () => {
+    const cam = (await page.evaluate(() => window.__portfolio.probe('camera'))) as { position: number[] };
+    return Math.hypot(cam.position[0] - 1.4, cam.position[2] + 30);
+  };
+  await expect.poll(near, { timeout: 15_000 }).toBeLessThan(0.5);
+  const vh = page.viewportSize()!.height;
+  const tops = await page.locator('#about [data-flow] > :is(.paper-bill, .paper-poster)').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
+  expect(Math.min(...tops)).toBeGreaterThanOrEqual(vh - 2);
+  // the pole is a little wider than the bills' column
+  const column = (await page.locator('#about [data-flow]').boundingBox())!;
+  expect((await poleFace(page))!.width).toBeGreaterThanOrEqual(column.width);
+});
+
+test('the bills stay pasted on the pole: its face moves up the screen with them, pixel for pixel', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.47);
+  const moved = await scrollAbout(page, 400);
+  expect(Math.abs(moved.bill - 400)).toBeLessThan(3);
+  expect(Math.abs(moved.pin - 400)).toBeLessThan(3);
+});
+
+// Review Focus 4: a laptop window resized inside About
+test('after a resize inside About the bills are still pasted on the pole', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.47);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.waitForTimeout(1500);
+  const moved = await scrollAbout(page, 400);
+  expect(Math.abs(moved.bill - 400)).toBeLessThan(3);
+  expect(Math.abs(moved.pin - 400)).toBeLessThan(3);
 });

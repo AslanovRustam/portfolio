@@ -40,11 +40,12 @@ it('the e2e mirror of the holds matches', () => {
   }
 });
 
-it('by default Work and Stack get 40 svh a stop and every other piece its old length', () => {
+it('by default Work and Stack get 40 svh a stop, the turn into About 100, and every other piece its old length', () => {
   expect(DEFAULT_SVH).toEqual({
     intro: 180,
     work: WORK_STOPS * STOP_SVH,
-    toAbout: 75,
+    // the camera comes up to the pole's face now (M4 round 1): a longer turn keeps it under 0.5 m per svh
+    toAbout: 100,
     about: 170,
     toStack: 50,
     stack: STACK_STOPS * STOP_SVH,
