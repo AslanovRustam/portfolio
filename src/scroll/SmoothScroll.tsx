@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import type { DiveView } from '@/experience/diveStages';
 import { pieceSpanPx, scrollFromStory, storyFromScroll } from '@/experience/journey';
 import { takePlace } from '@/experience/place';
+import { CONTACT_FROM } from '@/experience/sections';
 import type { SectionId } from '@/experience/signs';
 import { experienceStore } from '@/experience/store';
 import { stackSnapTarget } from '@/experience/stackStops';
@@ -155,10 +156,34 @@ export default function SmoothScroll() {
         holding = false;
       }, 1000);
     };
+    // In Contact, the last piece, a re-measure while the visitor is inside the billboard's screen (the form's
+    // content grew or shrank: a step, an error line, a status) keeps them as far into the piece as they were,
+    // in px: the same share of a longer piece would move them out of the screen (Plan 4c). Only when the lengths
+    // in use were measured in this window's width with the form in the same place: after a resize, or the form
+    // moving between the billboard and the screen, the old lengths say nothing about the new piece, and the
+    // story progress is kept as above.
+    const contactPiece = () =>
+      [...document.querySelectorAll<HTMLElement>('#journey section#contact')].find((e) => e.getClientRects().length > 0);
+    const layoutKey = () => `${innerWidth}:${contactPiece()?.hasAttribute('data-dive') ? 'screen' : 'board'}`;
+    /** the layout the lengths in use were measured in, and Contact's length among them (px) */
+    let measuredIn = '';
+    let contactSpan = 0;
+    let tail: number | null = null;
     const onRefreshInit = () => {
-      if (!holding) saved = experienceStore.getState().progress;
+      if (holding) {
+        tail = null;
+        return;
+      }
+      saved = experienceStore.getState().progress;
+      const inside = contactPiece()?.dataset.stage === 'inside';
+      tail =
+        inside && layoutKey() === measuredIn && saved >= CONTACT_FROM
+          ? ((saved - CONTACT_FROM) / (1 - CONTACT_FROM)) * contactSpan
+          : null;
     };
     const onRefresh = () => {
+      measuredIn = layoutKey();
+      contactSpan = pieceSpanPx('contact', innerHeight);
       // a site-made glide under way (a contact link heading for the green light) carries on to its end
       if (programmatic && heading !== null) {
         const to = heading;
@@ -167,8 +192,10 @@ export default function SmoothScroll() {
         scrollToProgress(to);
         return;
       }
-      scrollToProgress(saved, true);
-      experienceStore.getState().setProgress(saved);
+      const at = tail === null ? saved : Math.min(1, CONTACT_FROM + (tail / contactSpan) * (1 - CONTACT_FROM));
+      tail = null;
+      scrollToProgress(at, true);
+      experienceStore.getState().setProgress(at);
       holding = false;
       clearTimeout(release);
     };

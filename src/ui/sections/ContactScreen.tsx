@@ -12,6 +12,7 @@ import { BILLBOARD } from '@/scene/billboard/layout';
 import type { Rect } from '@/scene/tvwall/screenRects';
 import { NEON, neonStyle } from '../neon';
 import { useContactMode } from './useContactMode';
+import { useNarrow } from './useNarrow';
 
 /** The frame's tube runs this far from the window's top: under the header (px). */
 const TOP = 64;
@@ -43,6 +44,7 @@ function glitch(el: HTMLElement, kind: 'on' | 'off', done?: () => void): number 
  */
 export default function ContactScreen() {
   const mode = useContactMode();
+  const narrow = useNarrow();
   const t = useTranslations('contact');
   const picture = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLDivElement>(null);
@@ -176,15 +178,31 @@ export default function ContactScreen() {
         {/* laid out as the content in the frame: centred, as wide as the page's column at most */}
         <div className="mx-auto space-y-7" style={{ maxWidth: 'calc(40rem + 48px)', padding: `${PAD}px 24px` }}>
           <p className="text-sm leading-relaxed text-[#e8f7ff]/85">{t('lead')}</p>
-          <div className="space-y-4">
-            {(['name', 'email', 'message'] as const).map((k) => (
-              <div key={k}>
-                <span className="nfield-label">{t(k)}</span>
-                <div className="nfield" style={{ height: k === 'message' ? 110 : 42 }} />
+          {narrow ? (
+            // a phone's form starts at its first step
+            <div className="space-y-4">
+              <p className="nstep-count">1 / 3</p>
+              <div>
+                <span className="nfield-label">{t('name')}</span>
+                <div className="nfield" style={{ height: 48 }} />
               </div>
-            ))}
-            <span className="nsend">{t('send')}</span>
-          </div>
+              <div className="flex">
+                <span className="nsend ml-auto" data-ready="true">
+                  {t('next')} →
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {(['name', 'email', 'message'] as const).map((k) => (
+                <div key={k}>
+                  <span className="nfield-label">{t(k)}</span>
+                  <div className="nfield" style={{ height: k === 'message' ? 110 : 42 }} />
+                </div>
+              ))}
+              <span className="nsend">{t('send')}</span>
+            </div>
+          )}
         </div>
       </div>
       <div ref={frame} data-screen-frame="" aria-hidden="true" className="pointer-events-none fixed inset-0 z-[25]" style={{ visibility: 'hidden' }}>

@@ -352,6 +352,30 @@ html {
   textarea.nfield {
     resize: none;
   }
+  /* a phone's form, one field at a time (Plan 4c): the step counter and Back */
+  .nstep-count {
+    font-family: var(--font-plate);
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: var(--c);
+    text-shadow: 0 0 6px color-mix(in srgb, var(--c) 60%, transparent);
+  }
+  .nstep-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    min-height: 2.75rem;
+    padding: 0 0.25rem;
+    font-family: var(--font-plate);
+    font-size: 1.05rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #ffd2ec;
+  }
+  .nstep-back:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--c) 70%, #fff);
+    outline-offset: 3px;
+  }
   /* a phone: 16 px, or iOS zooms the page in on a field; tall enough to hit with a thumb (Plan 4c) */
   @media (max-width: 639.98px) {
     .nfield {
@@ -1222,6 +1246,12 @@ body {
     scroll-margin-top: 96px;
     scroll-margin-bottom: 24px;
   }
+}
+/* inside the screen the fields' own margins are the whole clearance: the page's anchor padding would add to
+   them and move the form under the visitor when a step's field takes the focus back */
+html[data-in-screen] {
+  scroll-padding-top: 0;
+  scroll-padding-bottom: 0;
 }
 html[data-in-screen] .top-fade {
   opacity: 0;

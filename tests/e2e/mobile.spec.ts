@@ -350,7 +350,8 @@ test('after the dive the form scrolls inside the screen’s neon frame, the fram
   expect(frame.y).toBeGreaterThanOrEqual(header.y + header.height);
   const form = page.locator('section#contact form');
   await expect(form).toBeVisible();
-  for (const label of ['Name', 'Email']) expect(within((await form.getByLabel(label).boundingBox())!, frame)).toBe(true);
+  // a phone fills the form in steps (Plan 4c): the first step's field is the one showing
+  expect(within((await form.getByLabel('Name').boundingBox())!, frame)).toBe(true);
   // the page scrolls on to its end, the form rides up inside the frame by as much
   const y0 = (await form.boundingBox())!.y;
   const s0 = await page.evaluate(() => scrollY);
@@ -462,4 +463,127 @@ test('with the keyboard up the form’s button can be brought above its edge', a
   const box = (await button.boundingBox())!;
   expect(box.y + box.height).toBeLessThanOrEqual(0.55 * vh);
   expect(box.y).toBeGreaterThan(64);
+});
+
+// Plan 4c, B: a phone fills the form in one field at a time
+const contactForm = (page: import('@playwright/test').Page) => page.locator('#journey section#contact[data-dive] form');
+
+test('a phone fills the form in one field at a time: name, email, message, then Send', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
+  await insideTheScreen(page);
+  const form = contactForm(page);
+  await expect(form.getByText('1 / 3')).toBeVisible();
+  await expect(form.getByLabel('Name')).toBeVisible();
+  await expect(form.getByLabel('Email')).toBeHidden();
+  await expect(form.getByLabel('Message')).toBeHidden();
+  await expect(form.getByText('Step 1 of 3')).toBeAttached();
+  // nothing typed: the step holds
+  await form.getByRole('button', { name: 'Next' }).click();
+  await expect(form.getByText('Enter a name, 2 to 80 characters.')).toBeVisible();
+  await expect(form.getByText('1 / 3')).toBeVisible();
+  // the keyboard's Enter moves on, the cursor goes along
+  await form.getByLabel('Name').fill('Ann');
+  await form.getByLabel('Name').press('Enter');
+  await expect(form.getByText('2 / 3')).toBeVisible();
+  await expect(form.getByLabel('Email')).toBeFocused();
+  await expect(form.getByText('Step 2 of 3')).toBeAttached();
+  await form.getByLabel('Email').fill('ann@');
+  await form.getByRole('button', { name: 'Next' }).click();
+  await expect(form.getByText('Enter a valid email.')).toBeVisible();
+  await expect(form.getByText('2 / 3')).toBeVisible();
+  // back keeps what was typed — and the visitor inside the screen, though the form got shorter and the page
+  // measured itself again
+  await form.getByRole('button', { name: 'Back' }).click();
+  await expect(form.getByLabel('Name')).toHaveValue('Ann');
+  await page.waitForTimeout(1500);
+  await expect(page.locator('#journey section#contact')).toHaveAttribute('data-stage', 'inside');
+  await form.getByRole('button', { name: 'Next' }).click();
+  await form.getByLabel('Email').fill('ann@example.com');
+  await form.getByRole('button', { name: 'Next' }).click();
+  await expect(form.getByText('3 / 3')).toBeVisible();
+  await expect(form.getByRole('button', { name: 'Next' })).toHaveCount(0);
+  await form.getByLabel('Message').fill('Hello, I have a front-end role for you.');
+  const posted = page.waitForRequest((r) => r.method() === 'POST');
+  await form.getByRole('button', { name: 'Send' }).click();
+  await posted;
+  await expect(page.locator('#journey section#contact')).toContainText(/sent|thanks/i);
+  await expect(form.getByText('1 / 3')).toBeVisible();
+  await expect(form.getByLabel('Name')).toHaveValue('');
+});
+
+// Review Focus 1: turned to landscape and back, and the language switched, in the middle of the steps
+test('turning the phone or switching the language in the middle of the steps keeps the step and the text', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
+  await insideTheScreen(page);
+  await contactForm(page).getByLabel('Name').fill('Ann');
+  await contactForm(page).getByRole('button', { name: 'Next' }).click();
+  await expect(contactForm(page).getByText('2 / 3')).toBeVisible();
+  const size = page.viewportSize()!;
+  // landscape is wider than a phone's 640 px: the whole form, with the name in it
+  await page.setViewportSize({ width: size.height, height: size.width });
+  await insideTheScreen(page);
+  await expect(contactForm(page).getByLabel('Name')).toBeVisible();
+  await expect(contactForm(page).getByLabel('Name')).toHaveValue('Ann');
+  await expect(contactForm(page).getByText('2 / 3')).toHaveCount(0);
+  await page.setViewportSize(size);
+  await insideTheScreen(page);
+  await expect(contactForm(page).getByText('2 / 3')).toBeVisible();
+  await expect(contactForm(page).getByLabel('Email')).toBeVisible();
+  await switchLanguage(page, 'RU');
+  await expect(page).toHaveURL(/\/ru/);
+  await waitReady(page);
+  await insideTheScreen(page);
+  await expect(contactForm(page).getByText('2 / 3')).toBeVisible();
+  await contactForm(page).getByRole('button', { name: 'Назад' }).click();
+  await expect(contactForm(page).getByLabel('Имя')).toHaveValue('Ann');
+});
+
+// Review Focus 5: reduced motion on a phone
+test('under reduced motion the steps work as well', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await gotoScene(page);
+  await waitReady(page);
+  await contactByMenu(page);
+  await insideTheScreen(page);
+  await contactForm(page).getByLabel('Name').fill('Ann');
+  await contactForm(page).getByRole('button', { name: 'Next' }).click();
+  await expect(contactForm(page).getByText('2 / 3')).toBeVisible();
+  await expect(contactForm(page).getByLabel('Email')).toBeFocused();
+});
+
+// an error line appearing must not push Next down from under the visitor's finger
+test('an error under a step’s field leaves Next where it was', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
+  await insideTheScreen(page);
+  const form = contactForm(page);
+  const next = form.getByRole('button', { name: 'Next' });
+  const y0 = (await next.boundingBox())!.y;
+  await next.click();
+  await expect(form.getByText('Enter a name, 2 to 80 characters.')).toBeVisible();
+  await page.waitForTimeout(800);
+  expect(Math.abs((await next.boundingBox())!.y - y0)).toBeLessThan(1);
+});
+
+// inside the screen, Contact's content growing below the visitor (a status line, an error) must not move it
+test('content growing under the visitor inside the screen leaves the screen where it is', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
+  await insideTheScreen(page);
+  const lead = page.locator('#journey section#contact').getByText(/^Tell me about a role/);
+  const y0 = (await lead.boundingBox())!.y;
+  await page.evaluate(() => {
+    const block = document.createElement('div');
+    block.style.height = '300px';
+    document.querySelector('#journey section#contact [data-flow]')!.append(block);
+  });
+  await page.waitForTimeout(1500);
+  await expect(page.locator('#journey section#contact')).toHaveAttribute('data-stage', 'inside');
+  expect(Math.abs((await lead.boundingBox())!.y - y0)).toBeLessThan(3);
 });
