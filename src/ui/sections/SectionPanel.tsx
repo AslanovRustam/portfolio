@@ -74,10 +74,13 @@ export default function SectionPanel({
   );
 }
 
-/** The panel's title, lit in its section's colour. */
+/**
+ * The panel's title: it names the section for screen readers (and the page's outline) but is not shown —
+ * on the street the shop's WORK sign and the gantry say it (gate M4 round 2: the neon title looked out of place).
+ */
 export function PanelTitle({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <h2 id={id} className="flow-title mb-3 text-[clamp(1.35rem,2.2vw,2rem)]">
+    <h2 id={id} className="sr-only">
       {children}
     </h2>
   );

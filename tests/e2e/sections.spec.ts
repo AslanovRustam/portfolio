@@ -171,3 +171,22 @@ test("the wheel over a section's text carries on along the street", async ({ pag
   }
   await expect.poll(() => progress(page), { timeout: 8000 }).toBeGreaterThan(0.5);
 });
+
+// gate M4 round 2: the captions' titles ("Examples of work", "Stack") looked out of place — they are gone from
+// the screen, kept for screen readers
+test('the Work and Stack captions show no title, but still name their sections for screen readers', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  for (const [p, id, name] of [
+    [stop(3), 'work', 'Examples of work'],
+    [stackStop(1), 'stack', 'Stack'],
+  ] as const) {
+    await scrollTo(page, p);
+    const caption = page.locator(`section#${id}`);
+    await expect(caption).toBeVisible({ timeout: 10_000 });
+    const title = caption.getByRole('heading', { level: 2, name });
+    await expect(title).toHaveCount(1);
+    const box = (await title.boundingBox())!;
+    expect(box.width * box.height, id).toBeLessThanOrEqual(1);
+  }
+});
