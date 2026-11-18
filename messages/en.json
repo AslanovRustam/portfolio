@@ -1,7 +1,10 @@
 {
   "meta": {
     "title": "Rustam Aslanov — Front-end engineer",
-    "description": "Portfolio of Rustam Aslanov, front-end engineer: React, Next.js, three.js."
+    "description": "Portfolio of Rustam Aslanov, front-end engineer: React, Next.js, three.js.",
+    "name": "Rustam Aslanov",
+    "altName": "Рустам Асланов",
+    "role": "Front-end engineer"
   },
   "hero": {
     "name": "Rustam Aslanov",

@@ -18,3 +18,7 @@ it('ru and uk have exactly the en keys', () => {
 it('no message is empty', () => {
   for (const m of [en, ru, uk]) for (const v of values(m)) expect(String(v).trim()).not.toBe('');
 });
+
+it('meta.name is the name meta.title starts with, and meta.role what follows it', () => {
+  for (const m of [en, ru, uk]) expect(m.meta.title).toBe(`${m.meta.name} — ${m.meta.role}`);
+});

@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
+import { hasLocale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { PROJECTS, projectBySlug } from '@/content/projects';
 import { routing } from '@/i18n/routing';
+import { pageMeta } from '@/i18n/site';
 import CaseOverlay from '@/ui/sections/CaseOverlay';
 
 export function generateStaticParams() {
@@ -13,15 +15,15 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<'/[locale]/work/[slug]'>): Promise<Metadata> {
   const { locale, slug } = await params;
   const project = projectBySlug(slug);
-  if (!project) return {};
+  if (!project || !hasLocale(routing.locales, locale)) return {};
   const t = await getTranslations({ locale });
-  return {
-    title: `${t(`projects.${project.slug}.title`)} — ${t('hero.name')}`,
+  return pageMeta({
+    locale,
+    path: `/work/${project.slug}`,
+    title: `${t(`projects.${project.slug}.title`)} — ${t('meta.name')}`,
     description: t(`projects.${project.slug}.summary`),
-    alternates: {
-      languages: Object.fromEntries(routing.locales.map((l) => [l, `/${l}/work/${project.slug}`])),
-    },
-  };
+    siteName: t('meta.name'),
+  });
 }
 
 async function Case({ params }: Pick<PageProps<'/[locale]/work/[slug]'>, 'params'>) {

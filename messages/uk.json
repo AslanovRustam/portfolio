@@ -1,7 +1,10 @@
 {
   "meta": {
     "title": "Рустам Асланов — Front-end розробник",
-    "description": "Портфоліо Рустама Асланова, front-end розробника: React, Next.js, three.js."
+    "description": "Портфоліо Рустама Асланова, front-end розробника: React, Next.js, three.js.",
+    "name": "Рустам Асланов",
+    "altName": "Rustam Aslanov",
+    "role": "Front-end розробник"
   },
   "hero": {
     "name": "Rustam Aslanov",
