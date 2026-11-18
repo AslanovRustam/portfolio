@@ -391,3 +391,24 @@ test('a laptop’s billboard and a tablet’s screen keep the whole form, no ste
   for (const label of ['Name', 'Email', 'Message']) await expect(screen.getByLabel(label)).toBeVisible();
   await expect(screen.getByText('1 / 3')).toHaveCount(0);
 });
+
+// M6 minor 5: at the billboard's smallest scale its 12 px hints came out at 9 px
+test('on a small laptop the billboard’s hints read at 11 px or more', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await gotoScene(page);
+  await waitReady(page);
+  await toTheForm(page, 1);
+  await atRest(page);
+  const board = page.locator('section#contact[data-billboard]');
+  const scale = await board.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
+  expect(scale, 'the billboard at its smallest scale').toBeLessThan(0.8);
+  // the field errors show up under a Send with nothing filled in
+  await board.getByRole('button', { name: 'Send' }).click();
+  await expect(board.locator('form [id$="-error"]').first()).toBeVisible();
+  const sizes = await board.locator('.text-xs').evaluateAll((els, s) =>
+    els.filter((e) => (e as HTMLElement).offsetParent !== null && e.textContent?.trim()).map((e) => parseFloat(getComputedStyle(e).fontSize) * s),
+  scale);
+  expect(sizes.length).toBeGreaterThan(0);
+  // (11 px divided by the scale and multiplied back is 10.99998 in floats)
+  for (const px of sizes) expect(px).toBeGreaterThanOrEqual(10.99);
+});

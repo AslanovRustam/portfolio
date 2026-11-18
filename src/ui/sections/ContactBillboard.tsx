@@ -24,6 +24,8 @@ export default function ContactBillboard() {
     const node = el.current;
     if (!node || !fit) return;
     node.style.transform = `translate(${fit.rect.x}px, ${fit.rect.y}px) scale(${fit.scale})`;
+    // the hints keep a readable size on the screen however small the billboard is drawn (globals.css)
+    node.style.setProperty('--fit', String(fit.scale));
     let on: boolean | null = null;
     let timer = 0;
     const show = (v: boolean) => {
