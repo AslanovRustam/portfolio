@@ -18,6 +18,11 @@ export function siteUrl(env: Env = process.env): URL {
 /** Open Graph's names for the site's languages. */
 export const OG_LOCALE: Readonly<Record<Locale, string>> = { en: 'en_US', ru: 'ru_RU', uk: 'uk_UA' };
 
+/** The same page in every language, x-default on English: paths relative to siteUrl(). */
+export function languagePaths(path: string): Record<string, string> {
+  return { ...Object.fromEntries(routing.locales.map((l) => [l, `/${l}${path}`])), 'x-default': `/en${path}` };
+}
+
 /**
  * A page's metadata in one language: its own canonical, the same page in every language with x-default on
  * English, Open Graph and a large Twitter card. `path` is '' for home, '/work/<slug>' for a case.
@@ -30,7 +35,7 @@ export function pageMeta(o: { locale: Locale; path: string; title: string; descr
     description: o.description,
     alternates: {
       canonical: at(o.locale),
-      languages: { ...Object.fromEntries(routing.locales.map((l) => [l, at(l)])), 'x-default': at('en') },
+      languages: languagePaths(o.path),
     },
     openGraph: {
       type: 'website',

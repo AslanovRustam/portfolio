@@ -51,3 +51,49 @@ test('the home page carries a Person in JSON-LD without the email', async ({ pag
   expect(person.jobTitle).toBe(ru.meta.role);
   expect(person.sameAs).toHaveLength(3);
 });
+
+// ——— the preview image, sitemap and robots ———
+
+const png = (b: Buffer) => ({ width: b.readUInt32BE(16), height: b.readUInt32BE(20), sig: b.subarray(1, 4).toString() });
+
+test('each language’s preview image is a 1200×630 PNG', async ({ page, request }) => {
+  const bodies: Buffer[] = [];
+  for (const lang of ['en', 'ru', 'uk']) {
+    await page.goto(`/${lang}`);
+    const url = await meta(page, 'property', 'og:image');
+    expect(url).toMatch(/^https?:\/\//);
+    expect(await meta(page, 'property', 'og:image:width')).toBe('1200');
+    // the absolute URL names the production host; fetch the same path from this server
+    const res = await request.get(new URL(url!).pathname + new URL(url!).search, { maxRedirects: 0 });
+    expect(res.status()).toBe(200);
+    expect(res.headers()['content-type']).toBe('image/png');
+    const body = await res.body();
+    expect(png(body)).toEqual({ width: 1200, height: 630, sig: 'PNG' });
+    bodies.push(body);
+  }
+  expect(bodies[0].equals(bodies[1])).toBe(false);
+});
+
+test('sitemap lists the home and every case in three languages, with alternates', async ({ request }) => {
+  const { PROJECTS } = await import('../../src/content/projects');
+  const res = await request.get('/sitemap.xml', { maxRedirects: 0 });
+  expect(res.status()).toBe(200);
+  expect(res.headers()['content-type']).toContain('xml');
+  const xml = await res.text();
+  const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  for (const l of ['en', 'ru', 'uk']) {
+    expect(locs.some((u) => new RegExp(`^https?://[^/]+/${l}$`).test(u))).toBe(true);
+    for (const p of PROJECTS) expect(locs.some((u) => u.endsWith(`/${l}/work/${p.slug}`))).toBe(true);
+  }
+  expect(locs.every((u) => /^https?:\/\//.test(u))).toBe(true);
+  expect(xml).toContain('hreflang="uk"');
+  expect(xml).toContain('hreflang="x-default"');
+});
+
+test('robots allows everything and points at the sitemap', async ({ request }) => {
+  const res = await request.get('/robots.txt', { maxRedirects: 0 });
+  expect(res.status()).toBe(200);
+  const txt = await res.text();
+  expect(txt).toMatch(/Allow: \/\s/);
+  expect(txt).toMatch(/Sitemap: https?:\/\/[^/]+\/sitemap\.xml/);
+});
