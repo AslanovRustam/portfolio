@@ -23,6 +23,8 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/work/[sl
     title: `${t(`projects.${project.slug}.title`)} — ${t('meta.name')}`,
     description: t(`projects.${project.slug}.summary`),
     siteName: t('meta.name'),
+    // the locale's preview ([locale]/opengraph-image.tsx): this page's openGraph would drop it otherwise
+    image: { url: `/${locale}/opengraph-image`, alt: t('meta.title') },
   });
 }
 

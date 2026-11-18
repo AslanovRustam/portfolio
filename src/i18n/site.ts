@@ -27,7 +27,18 @@ export function languagePaths(path: string): Record<string, string> {
  * A page's metadata in one language: its own canonical, the same page in every language with x-default on
  * English, Open Graph and a large Twitter card. `path` is '' for home, '/work/<slug>' for a case.
  */
-export function pageMeta(o: { locale: Locale; path: string; title: string; description: string; siteName: string }): Metadata {
+export function pageMeta(o: {
+  locale: Locale;
+  path: string;
+  title: string;
+  description: string;
+  siteName: string;
+  /**
+   * The preview image, for a page below the one whose opengraph-image file draws it: Next merges metadata
+   * shallowly, so a page's own openGraph replaces the layout's, image and all.
+   */
+  image?: { url: string; alt: string };
+}): Metadata {
   const at = (l: Locale) => `/${l}${o.path}`;
   return {
     metadataBase: siteUrl(),
@@ -45,6 +56,7 @@ export function pageMeta(o: { locale: Locale; path: string; title: string; descr
       siteName: o.siteName,
       locale: OG_LOCALE[o.locale],
       alternateLocale: routing.locales.filter((l) => l !== o.locale).map((l) => OG_LOCALE[l]),
+      ...(o.image && { images: [{ url: o.image.url, width: 1200, height: 630, alt: o.image.alt }] }),
     },
     twitter: { card: 'summary_large_image', title: o.title, description: o.description },
   };

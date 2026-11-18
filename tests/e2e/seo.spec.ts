@@ -40,6 +40,17 @@ test('a case page names itself, not the home page', async ({ page }) => {
   expect(await href(page, 'link[rel="alternate"][hreflang="x-default"]')).toMatch(/\/en\/work\/gipper$/);
 });
 
+// final review: a case's own openGraph replaced the layout's, and with it the preview image
+test('a shared case link unfurls with the preview image of its language', async ({ page, request }) => {
+  await page.goto('/uk/work/gipper');
+  const og = await meta(page, 'property', 'og:image');
+  expect(og).toMatch(/^https?:\/\/[^/]+\/uk\/opengraph-image/);
+  expect(await meta(page, 'name', 'twitter:image')).toBe(og);
+  const res = await request.get(new URL(og!).pathname + new URL(og!).search, { maxRedirects: 0 });
+  expect(res.status()).toBe(200);
+  expect(res.headers()['content-type']).toBe('image/png');
+});
+
 test('the home page carries a Person in JSON-LD without the email', async ({ page }) => {
   await page.goto('/ru');
   const raw = await page.locator('script[type="application/ld+json"]').first().textContent();

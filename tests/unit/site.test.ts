@@ -41,3 +41,9 @@ it('the Person in JSON-LD has both spellings, the role and the profiles, never t
   expect(JSON.stringify(p)).not.toContain(CONTACTS.email);
   expect(JSON.stringify(p)).not.toContain('@gmail');
 });
+
+it('a page below the preview image’s own carries it in Open Graph', () => {
+  const m = pageMeta({ locale: 'uk', path: '/work/gipper', title: 'T', description: 'D', siteName: 'S', image: { url: '/uk/opengraph-image', alt: 'A' } });
+  expect((m.openGraph as { images: unknown }).images).toEqual([{ url: '/uk/opengraph-image', width: 1200, height: 630, alt: 'A' }]);
+  expect((pageMeta({ locale: 'uk', path: '', title: 'T', description: 'D', siteName: 'S' }).openGraph as { images?: unknown }).images).toBeUndefined();
+});
