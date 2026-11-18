@@ -65,6 +65,12 @@ test('the loader is a neon sign: its label, the percent climbing, a log of the f
 
 // gate M4 round 1: the loader in pink before a blue blueprint looked like two sites — it is the blueprint's sign
 test('the loader is drawn in the blueprint’s colours: its paper, its grid and its line', async ({ page }) => {
+  // the scene's models and textures held back: from a warm cache the scene can be ready, and the loader gone,
+  // before its colours are read
+  await page.route(/\/(models|textures|hdri)\//, async (route) => {
+    await new Promise((r) => setTimeout(r, 10_000));
+    await route.continue().catch(() => {});
+  });
   await page.goto('/en');
   const colours = await page.evaluate(() => {
     const probe = document.createElement('div');
