@@ -56,7 +56,8 @@ export default function ContactForm({ compact = false, steps = false }: { compac
   const [local, setLocal] = useState<Partial<Record<ContactField, true>> | null>(null);
   const [ready, setReady] = useState(() => invalidFields({ ...draft }) === null);
   // a sent message empties the form, so the sign goes dark again (adjusted while rendering the new answer)
-  const [current, setCurrent] = useState(() => (steps ? step : 0));
+  // the saved step even when the form opens whole (landscape): turned back to a phone, it goes on from there
+  const [current, setCurrent] = useState(() => step);
   // a move to another step puts the cursor in its field (not on the first render)
   const moved = useRef(false);
   const go = (n: number) => {
@@ -97,6 +98,12 @@ export default function ContactForm({ compact = false, steps = false }: { compac
   useEffect(() => {
     if (steps) step = current;
   }, [steps, current]);
+  // the server named a field: the cursor goes to it, on its step (shown by now), as Next takes it along
+  useEffect(() => {
+    if (!steps || state.status !== 'invalid' || !state.fields) return;
+    const s = firstStepWith(state.fields);
+    if (s !== null) (form.current?.elements.namedItem(STEPS[s]) as HTMLElement | null)?.focus();
+  }, [state, steps]);
   useEffect(() => {
     if (!moved.current) return;
     moved.current = false;

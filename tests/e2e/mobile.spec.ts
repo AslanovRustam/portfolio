@@ -587,3 +587,49 @@ test('content growing under the visitor inside the screen leaves the screen wher
   await expect(page.locator('#journey section#contact')).toHaveAttribute('data-stage', 'inside');
   expect(Math.abs((await lead.boundingBox())!.y - y0)).toBeLessThan(3);
 });
+
+// Final review (Plan 4c): a server answer naming a field takes the form, and the cursor, back to its step
+test('a server answer naming the email takes the phone’s form back to step 2 with the cursor in the email', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
+  await insideTheScreen(page);
+  // the server sees an email the browser did not (a deploy in between): it names the email
+  await page.route('**/*', async (route) => {
+    const req = route.request();
+    const body = req.method() === 'POST' ? req.postData() : null;
+    if (body?.includes('ann@example.com')) await route.continue({ postData: body.replace('ann@example.com', 'ann@') });
+    else await route.continue();
+  });
+  const form = contactForm(page);
+  await form.getByLabel('Name').fill('Ann');
+  await form.getByLabel('Name').press('Enter');
+  await form.getByLabel('Email').fill('ann@example.com');
+  await form.getByLabel('Email').press('Enter');
+  await form.getByLabel('Message').fill('Hello, I have a front-end role for you.');
+  await form.getByRole('button', { name: 'Send' }).click();
+  await expect(form.getByText('2 / 3')).toBeVisible();
+  await expect(form.getByLabel('Email')).toBeFocused();
+});
+
+// Final review (Plan 4c): the step survives a form that mounts in landscape (a language switch there)
+test('a language switch in landscape in the middle of the steps keeps the step for the phone turned back', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
+  await insideTheScreen(page);
+  await contactForm(page).getByLabel('Name').fill('Ann');
+  await contactForm(page).getByRole('button', { name: 'Next' }).click();
+  await expect(contactForm(page).getByText('2 / 3')).toBeVisible();
+  const size = page.viewportSize()!;
+  await page.setViewportSize({ width: size.height, height: size.width });
+  await insideTheScreen(page);
+  await switchLanguage(page, 'RU');
+  await expect(page).toHaveURL(/\/ru/);
+  await waitReady(page);
+  await insideTheScreen(page);
+  await page.setViewportSize(size);
+  await insideTheScreen(page);
+  await expect(contactForm(page).getByText('2 / 3')).toBeVisible();
+  await expect(contactForm(page).getByLabel('Email')).toBeVisible();
+});
