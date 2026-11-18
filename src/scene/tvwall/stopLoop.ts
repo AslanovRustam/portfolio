@@ -32,11 +32,16 @@ export class StopLoopPlayer {
   private created = 0;
   /** stops whose loop failed (a bad file, a refused autoplay): they keep their stills from now on */
   private readonly failed = new Set<number>();
+  /** the stop asked for and since when (ms): a video is made once it has been asked for dwellMs */
+  private wanted: { stop: number; since: number } | null = null;
 
   constructor(
     private readonly show: (stop: number, texture: VideoTexture | null) => void,
     /** where video elements come from (a stand-in in the unit tests) */
     private readonly createVideo: () => HTMLVideoElement = () => document.createElement('video'),
+    /** how long a stop must be asked for before its video is made: a scroll through Work starts none */
+    private readonly dwellMs = 300,
+    private readonly now: () => number = () => performance.now(),
   ) {}
 
   /** What is playing on the wall (for the test probe): the stop and the video's time, once it is shown. */
@@ -63,7 +68,13 @@ export class StopLoopPlayer {
     if (stop !== null && (this.failed.has(stop) || !src)) stop = null;
     if (stop === this.stop) return;
     this.release();
-    if (stop === null || !src) return;
+    if (stop === null || !src) {
+      this.wanted = null;
+      return;
+    }
+    const t = this.now();
+    if (this.wanted?.stop !== stop) this.wanted = { stop, since: t };
+    if (t - this.wanted.since < this.dwellMs) return;
     this.stop = stop;
     const video = this.createVideo();
     video.muted = true;
@@ -91,12 +102,13 @@ export class StopLoopPlayer {
     // the first decoded frame, not just 'playing': a texture before it would show black
     if (typeof video.requestVideoFrameCallback === 'function') video.requestVideoFrameCallback(() => reveal());
     else (video as HTMLVideoElement).addEventListener('playing', reveal, { once: true });
-    const fail = () => {
+    const fail = (e?: unknown) => {
       if (!mine()) return;
-      this.failed.add(stop);
+      // an aborted play (the tab was hidden before it started) is no verdict on the file: try again later
+      if (!(e instanceof DOMException && e.name === 'AbortError')) this.failed.add(stop);
       this.release();
     };
-    video.addEventListener('error', fail, { once: true });
+    video.addEventListener('error', () => fail(), { once: true });
     video.play().catch(fail);
   }
 
