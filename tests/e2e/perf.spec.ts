@@ -185,13 +185,12 @@ async function standing(page: Page, p: number, name: string) {
   return report;
 }
 
-// The end of the intro (the pole close up, the whole street behind it) is measured, not gated: it runs at
-// 35–41 ms on medium on this machine on main (before the ride) as here, with or without the shop, the
-// gantry and the billboard — a Plan 5 item.
-test('the end of the intro, measured', async ({ page }) => {
+// The end of the intro (the pole close up, the whole street behind it) ran a vsync step over budget on medium
+// (34.7 ms) until Plan 5 drew the intro at a lower pixel ratio there (quality.ts dprFor)
+test('standing at the end of the intro keeps at least 30 fps', async ({ page }) => {
   test.setTimeout(120_000);
   const r = await standing(page, 0.12, 'intro');
-  test.info().annotations.push({ type: 'perf', description: `intro end median ${r.medianMs} ms (not gated, Plan 5)` });
+  expect(r.medianMs).toBeLessThanOrEqual(33.4);
 });
 
 // the phone's dive (M4 round 1): inside the billboard's screen, the form in its frame

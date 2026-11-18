@@ -1,7 +1,8 @@
 'use client';
 
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useState, useSyncExternalStore } from 'react';
+import { registerProbe } from '@/dev/sceneProbe';
 import { experienceStore } from '@/experience/store';
 
 /** Live numbers written by PerfProbe (inside the canvas) and read by PerfPanel (DOM). */
@@ -20,6 +21,9 @@ function useDebugFlag() {
 /** Inside the Canvas: frame rate over half-second windows and the renderer's draw stats. */
 export function PerfProbe() {
   const debug = useDebugFlag();
+  // look-dev and perf captures (tests/e2e/_scratch) switch parts of the live scene off through this
+  const { scene, gl } = useThree();
+  useEffect(() => registerProbe('three', () => ({ scene, gl })), [scene, gl]);
   useFrame((state, dt) => {
     if (!debug) return;
     win.t += dt;

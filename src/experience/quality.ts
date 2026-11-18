@@ -1,3 +1,4 @@
+import { INTRO_END } from './sections';
 import type { Tier } from './store';
 
 export interface TierSettings {
@@ -16,6 +17,19 @@ export const TIER: Record<Tier, TierSettings> = {
   medium: { dpr: 1.25, reflectorResolution: 512, ao: false, aoHalfRes: false, bloom: true, noise: false, particles: 300 },
   low: { dpr: 1, reflectorResolution: 256, ao: false, aoHalfRes: false, bloom: true, noise: false, particles: 120 },
 };
+
+/**
+ * The intro (the pole up close, the whole lit street behind it) fills the GPU more than any other stretch:
+ * on the integrated GPU it ran a vsync step over budget at 1.25 (34.7 ms), at 1.15 it is back in (27.8).
+ * Plan 5 measured it; only medium drops, and only until the intro ends.
+ */
+export const INTRO_DPR = 1.15;
+
+/** The pixel ratio to draw story progress p at, on this tier. */
+export function dprFor(tier: Tier, p: number): number {
+  const base = TIER[tier].dpr;
+  return tier === 'medium' && p < INTRO_END ? Math.min(base, INTRO_DPR) : base;
+}
 
 export interface DeviceProbe {
   renderer: string;

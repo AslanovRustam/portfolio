@@ -2,7 +2,7 @@
 
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useLayoutEffect, useRef } from 'react';
-import { createFrameSampler, type DeviceProbe, pickTier, qualityOverride, stepDown, TIER } from '@/experience/quality';
+import { createFrameSampler, type DeviceProbe, dprFor, pickTier, qualityOverride, stepDown } from '@/experience/quality';
 import { experienceStore, type Tier, useExperience } from '@/experience/store';
 import { registerProbe } from '@/dev/sceneProbe';
 import { globalReveal } from './reveal/registry';
@@ -41,7 +41,18 @@ export default function QualityGovernor() {
     experienceStore.getState().setTier(pickTier(probe(gl.getContext()), chosen.current));
   }, [gl]);
 
-  useEffect(() => setDpr(TIER[tier].dpr), [tier, setDpr]);
+  // the tier's pixel ratio, lower through the intro on medium (dprFor); set only when it changes
+  useEffect(() => {
+    let applied = 0;
+    const apply = () => {
+      const dpr = dprFor(tier, experienceStore.getState().progress);
+      if (dpr === applied) return;
+      applied = dpr;
+      setDpr(dpr);
+    };
+    apply();
+    return experienceStore.subscribe(apply);
+  }, [tier, setDpr]);
   useEffect(() => registerProbe('dpr', () => gl.getPixelRatio()), [gl]);
   useEffect(() => registerProbe('gpuTextures', () => gl.info.memory.textures), [gl]);
 

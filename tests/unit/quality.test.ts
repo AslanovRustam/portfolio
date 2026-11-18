@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import {
   createFrameSampler,
+  dprFor,
   type DeviceProbe,
   forcedNoWebGL,
   pickTier,
@@ -10,6 +11,7 @@ import {
   TIER,
 } from '@/experience/quality';
 import type { Tier } from '@/experience/store';
+import { INTRO_END } from '@/experience/sections';
 
 const desk: DeviceProbe = {
   renderer: 'ANGLE (NVIDIA GeForce RTX 3060)',
@@ -68,4 +70,13 @@ it('a hidden tab restarts the sample', () => {
   expect(s.push({ now: 0.2, dtMs: 10, settled: true, hidden: false })).toBeNull();
   expect(s.push({ now: 0.3, dtMs: 10, settled: true, hidden: false })).toBeNull();
   expect(s.push({ now: 0.4, dtMs: 10, settled: true, hidden: false })).toBe('ok');
+});
+
+it('the intro draws at a lower pixel ratio on medium, and only there (its whole street fills the GPU)', () => {
+  expect(dprFor('medium', 0)).toBe(1.15);
+  expect(dprFor('medium', 0.12)).toBe(1.15);
+  expect(dprFor('medium', INTRO_END)).toBe(TIER.medium.dpr);
+  expect(dprFor('medium', 0.5)).toBe(TIER.medium.dpr);
+  expect(dprFor('high', 0.12)).toBe(TIER.high.dpr);
+  expect(dprFor('low', 0.12)).toBe(TIER.low.dpr);
 });
