@@ -350,7 +350,6 @@ test('after the dive the form scrolls inside the screen’s neon frame, the fram
   expect(frame.y).toBeGreaterThanOrEqual(header.y + header.height);
   const form = page.locator('section#contact form');
   await expect(form).toBeVisible();
-  // a phone fills the form in steps (Plan 4c): the first step's field is the one showing
   expect(within((await form.getByLabel('Name').boundingBox())!, frame)).toBe(true);
   // the page scrolls on to its end, the form rides up inside the frame by as much
   const y0 = (await form.boundingBox())!.y;
@@ -459,115 +458,67 @@ test('with the keyboard up the form’s button can be brought above its edge', a
   await scrollTo(page, 1);
   await page.waitForTimeout(800);
   await expect(page.locator('#journey section#contact')).toHaveAttribute('data-stage', 'inside');
-  const button = page.locator('#journey section#contact form button[type="submit"], #journey section#contact form [data-step-next]').filter({ visible: true }).first();
+  const button = page.locator('#journey section#contact form button[type="submit"]');
   const box = (await button.boundingBox())!;
   expect(box.y + box.height).toBeLessThanOrEqual(0.55 * vh);
   expect(box.y).toBeGreaterThan(64);
 });
 
-// Plan 4c, B: a phone fills the form in one field at a time
+// the form in the screen on a phone
 const contactForm = (page: import('@playwright/test').Page) => page.locator('#journey section#contact[data-dive] form');
 
-test('a phone fills the form in one field at a time: name, email, message, then Send', async ({ page }) => {
+// M4 round 2: a phone gets the whole form, as a tablet does, not one field at a time
+test('a phone fills the whole form at once: name, email and message, then Send', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
   await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
   await insideTheScreen(page);
   const form = contactForm(page);
-  await expect(form.getByText('1 / 3')).toBeVisible();
-  await expect(form.getByLabel('Name')).toBeVisible();
-  await expect(form.getByLabel('Email')).toBeHidden();
-  await expect(form.getByLabel('Message')).toBeHidden();
-  await expect(form.getByText('Step 1 of 3')).toBeAttached();
-  // nothing typed: the step holds
-  await form.getByRole('button', { name: 'Next' }).click();
-  await expect(form.getByText('Enter a name, 2 to 80 characters.')).toBeVisible();
-  await expect(form.getByText('1 / 3')).toBeVisible();
-  // the keyboard's Enter moves on, the cursor goes along
-  await form.getByLabel('Name').fill('Ann');
-  await form.getByLabel('Name').press('Enter');
-  await expect(form.getByText('2 / 3')).toBeVisible();
-  await expect(form.getByLabel('Email')).toBeFocused();
-  await expect(form.getByText('Step 2 of 3')).toBeAttached();
-  await form.getByLabel('Email').fill('ann@');
-  await form.getByRole('button', { name: 'Next' }).click();
-  await expect(form.getByText('Enter a valid email.')).toBeVisible();
-  await expect(form.getByText('2 / 3')).toBeVisible();
-  // back keeps what was typed — and the visitor inside the screen, though the form got shorter and the page
-  // measured itself again
-  await form.getByRole('button', { name: 'Back' }).click();
-  await expect(form.getByLabel('Name')).toHaveValue('Ann');
-  await page.waitForTimeout(1500);
-  await expect(page.locator('#journey section#contact')).toHaveAttribute('data-stage', 'inside');
-  await form.getByRole('button', { name: 'Next' }).click();
-  await form.getByLabel('Email').fill('ann@example.com');
-  await form.getByRole('button', { name: 'Next' }).click();
-  await expect(form.getByText('3 / 3')).toBeVisible();
+  for (const label of ['Name', 'Email', 'Message']) await expect(form.getByLabel(label)).toBeVisible();
+  await expect(form.getByRole('button', { name: 'Send' })).toBeVisible();
   await expect(form.getByRole('button', { name: 'Next' })).toHaveCount(0);
-  await form.getByLabel('Message').fill('Hello, I have a front-end role for you.');
-  const posted = page.waitForRequest((r) => r.method() === 'POST');
-  await form.getByRole('button', { name: 'Send' }).click();
-  await posted;
-  await expect(page.locator('#journey section#contact')).toContainText(/sent|thanks/i);
-  await expect(form.getByText('1 / 3')).toBeVisible();
-  await expect(form.getByLabel('Name')).toHaveValue('');
+  await expect(form.getByText('1 / 3')).toHaveCount(0);
 });
 
-// Review Focus 1: turned to landscape and back, and the language switched, in the middle of the steps
-test('turning the phone or switching the language in the middle of the steps keeps the step and the text', async ({ page }) => {
+// M4 round 2: as the frame lights, the text is near its top, not a third of the screen down
+test('while the frame is lit, Contact’s text never sits far below its top', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
   await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
   await insideTheScreen(page);
-  await contactForm(page).getByLabel('Name').fill('Ann');
-  await contactForm(page).getByRole('button', { name: 'Next' }).click();
-  await expect(contactForm(page).getByText('2 / 3')).toBeVisible();
-  const size = page.viewportSize()!;
-  // landscape is wider than a phone's 640 px: the whole form, with the name in it
-  await page.setViewportSize({ width: size.height, height: size.width });
-  await insideTheScreen(page);
-  await expect(contactForm(page).getByLabel('Name')).toBeVisible();
-  await expect(contactForm(page).getByLabel('Name')).toHaveValue('Ann');
-  await expect(contactForm(page).getByText('2 / 3')).toHaveCount(0);
-  await page.setViewportSize(size);
-  await insideTheScreen(page);
-  await expect(contactForm(page).getByText('2 / 3')).toBeVisible();
-  await expect(contactForm(page).getByLabel('Email')).toBeVisible();
-  await switchLanguage(page, 'RU');
-  await expect(page).toHaveURL(/\/ru/);
-  await waitReady(page);
-  await insideTheScreen(page);
-  await expect(contactForm(page).getByText('2 / 3')).toBeVisible();
-  await contactForm(page).getByRole('button', { name: 'Назад' }).click();
-  await expect(contactForm(page).getByLabel('Имя')).toHaveValue('Ann');
+  const vh = page.viewportSize()!.height;
+  const lengths = (await page.evaluate(() => window.__portfolio.probe('journey'))) as number[];
+  const len = lengths[lengths.length - 1];
+  const land = await progress(page);
+  const section = page.locator('#journey section#contact');
+  const lead = section.getByText(/^Tell me about a role/);
+  let worst = 0;
+  // scroll back from the landing until the camera leaves the screen
+  for (let back = 0.03; back < 0.6; back += 0.03) {
+    await scrollTo(page, land - ((back * vh) / len) * 0.14);
+    if ((await section.getAttribute('data-stage')) !== 'inside') break;
+    const frame = await screenTube(page).boundingBox();
+    if (!frame) break;
+    worst = Math.max(worst, (await lead.boundingBox())!.y - frame.y);
+  }
+  expect(worst).toBeGreaterThan(0);
+  expect(worst).toBeLessThanOrEqual(0.15 * vh + 24);
 });
 
-// Review Focus 5: reduced motion on a phone
-test('under reduced motion the steps work as well', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await gotoScene(page);
-  await waitReady(page);
-  await contactByMenu(page);
-  await insideTheScreen(page);
-  await contactForm(page).getByLabel('Name').fill('Ann');
-  await contactForm(page).getByRole('button', { name: 'Next' }).click();
-  await expect(contactForm(page).getByText('2 / 3')).toBeVisible();
-  await expect(contactForm(page).getByLabel('Email')).toBeFocused();
-});
-
-// an error line appearing must not push Next down from under the visitor's finger
-test('an error under a step’s field leaves Next where it was', async ({ page }) => {
+// M4 round 2: at the page's end the content reaches down the frame, no half a screen of black under it (the
+// room left is what the keyboard test above needs to bring Send above a phone's keyboard)
+test('at the end of the page the screen’s content leaves under a third of the frame empty under it', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);
   await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
   await insideTheScreen(page);
-  const form = contactForm(page);
-  const next = form.getByRole('button', { name: 'Next' });
-  const y0 = (await next.boundingBox())!.y;
-  await next.click();
-  await expect(form.getByText('Enter a name, 2 to 80 characters.')).toBeVisible();
+  await scrollTo(page, 1);
   await page.waitForTimeout(800);
-  expect(Math.abs((await next.boundingBox())!.y - y0)).toBeLessThan(1);
+  await expect(page.locator('#journey section#contact')).toHaveAttribute('data-stage', 'inside');
+  const vh = page.viewportSize()!.height;
+  const frame = (await screenTube(page).boundingBox())!;
+  const content = (await page.locator('#journey section#contact [data-ui]').first().boundingBox())!;
+  expect(frame.y + frame.height - (content.y + content.height)).toBeLessThanOrEqual(0.3 * vh);
 });
 
 // inside the screen, Contact's content growing below the visitor (a status line, an error) must not move it
@@ -586,50 +537,4 @@ test('content growing under the visitor inside the screen leaves the screen wher
   await page.waitForTimeout(1500);
   await expect(page.locator('#journey section#contact')).toHaveAttribute('data-stage', 'inside');
   expect(Math.abs((await lead.boundingBox())!.y - y0)).toBeLessThan(3);
-});
-
-// Final review (Plan 4c): a server answer naming a field takes the form, and the cursor, back to its step
-test('a server answer naming the email takes the phone’s form back to step 2 with the cursor in the email', async ({ page }) => {
-  await gotoScene(page);
-  await waitReady(page);
-  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
-  await insideTheScreen(page);
-  // the server sees an email the browser did not (a deploy in between): it names the email
-  await page.route('**/*', async (route) => {
-    const req = route.request();
-    const body = req.method() === 'POST' ? req.postData() : null;
-    if (body?.includes('ann@example.com')) await route.continue({ postData: body.replace('ann@example.com', 'ann@') });
-    else await route.continue();
-  });
-  const form = contactForm(page);
-  await form.getByLabel('Name').fill('Ann');
-  await form.getByLabel('Name').press('Enter');
-  await form.getByLabel('Email').fill('ann@example.com');
-  await form.getByLabel('Email').press('Enter');
-  await form.getByLabel('Message').fill('Hello, I have a front-end role for you.');
-  await form.getByRole('button', { name: 'Send' }).click();
-  await expect(form.getByText('2 / 3')).toBeVisible();
-  await expect(form.getByLabel('Email')).toBeFocused();
-});
-
-// Final review (Plan 4c): the step survives a form that mounts in landscape (a language switch there)
-test('a language switch in landscape in the middle of the steps keeps the step for the phone turned back', async ({ page }) => {
-  await gotoScene(page);
-  await waitReady(page);
-  await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
-  await insideTheScreen(page);
-  await contactForm(page).getByLabel('Name').fill('Ann');
-  await contactForm(page).getByRole('button', { name: 'Next' }).click();
-  await expect(contactForm(page).getByText('2 / 3')).toBeVisible();
-  const size = page.viewportSize()!;
-  await page.setViewportSize({ width: size.height, height: size.width });
-  await insideTheScreen(page);
-  await switchLanguage(page, 'RU');
-  await expect(page).toHaveURL(/\/ru/);
-  await waitReady(page);
-  await insideTheScreen(page);
-  await page.setViewportSize(size);
-  await insideTheScreen(page);
-  await expect(contactForm(page).getByText('2 / 3')).toBeVisible();
-  await expect(contactForm(page).getByLabel('Email')).toBeVisible();
 });

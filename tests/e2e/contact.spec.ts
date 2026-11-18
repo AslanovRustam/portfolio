@@ -358,14 +358,8 @@ test('typing the message with the keyboard up keeps the field inside the frame, 
   await waitReady(page);
   await page.evaluate(() => window.__portfolio.scrollToSection('contact'));
   await insideTheScreen(page);
-  // a phone fills the form in steps (Plan 4c): the message is the third
-  const form = page.locator('#journey section#contact form');
-  await form.getByLabel('Name').fill('Ann');
-  await form.getByLabel('Name').press('Enter');
-  await form.getByLabel('Email').fill('ann@example.com');
-  await form.getByLabel('Email').press('Enter');
-  const message = form.getByLabel('Message');
-  await expect(message).toBeFocused();
+  const message = page.locator('section#contact form').getByLabel('Message');
+  await message.focus();
   const size = page.viewportSize()!;
   // a keyboard (or an address bar) changes the height only: Contact is not laid out again under the
   // visitor's fingers (final review) — only a turn, which changes the width, does that
@@ -381,7 +375,7 @@ test('typing the message with the keyboard up keeps the field inside the frame, 
   await page.setViewportSize(size);
 });
 
-// Plan 4c: only a phone gets the steps — the billboard and a tablet's screen keep the whole form
+// the billboard and a tablet's screen show the whole form
 test('a laptop’s billboard and a tablet’s screen keep the whole form, no steps', async ({ page }) => {
   await gotoScene(page);
   await waitReady(page);

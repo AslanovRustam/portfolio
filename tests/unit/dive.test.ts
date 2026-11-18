@@ -61,10 +61,10 @@ describe('the dive into the billboard’s screen', () => {
       expect(diveStage(arrived + 1e-4, view).stage).toBe('dive');
       expect(diveStage((arrived + inside) / 2, view).t).toBeCloseTo(0.5, 2);
       expect(diveStage(inside + 1e-4, view).stage).toBe('inside');
-      // Contact's links land a third of a screen past the dive's end (Plan 4c): a little scroll back keeps
-      // the camera inside the screen
-      expect(contactLanding(view)).toBeCloseTo(0.86 + (1.13 / k) * 0.14, 6);
-      expect(diveStage(contactLanding(view) - (0.3 / k) * 0.14, view).stage).toBe('inside');
+      // Contact's links land an eighth of a screen past the dive's end: a little scroll back keeps the camera
+      // inside the screen, and the frame does not light over a third of a screen of black (M4 round 2)
+      expect(contactLanding(view)).toBeCloseTo(0.86 + (0.92 / k) * 0.14, 6);
+      expect(diveStage(contactLanding(view) - (0.1 / k) * 0.14, view).stage).toBe('inside');
       // a link lands exactly there: that is inside, whatever the rounding
       for (const h of [839, 844, 740, 1024, 600]) {
         const v = { w: 412, h, contactPx: k * h + 0.37 };
@@ -112,8 +112,8 @@ describe('the dive into the billboard’s screen', () => {
           expect(d, `${at} p ${p.toFixed(3)}`).toBeLessThanOrEqual(last + 1e-9);
           last = d;
         }
-        // the dive's end: a third of a screen before where Contact's links land
-        const diveEnd = contactLanding(view) - ((0.33 * h) / view.contactPx) * 0.14;
+        // the dive's end: an eighth of a screen before where Contact's links land
+        const diveEnd = contactLanding(view) - ((0.12 * h) / view.contactPx) * 0.14;
         for (const q of [0.83, 0.86, diveEnd]) {
           const a = desiredCameraPose(q - 1e-7, { w, h }, false).position;
           const b = desiredCameraPose(q + 1e-7, { w, h }, false).position;

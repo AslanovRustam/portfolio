@@ -10,7 +10,6 @@ import { neonStyle } from '../neon';
 import ContactForm from './ContactForm';
 import NeonBox from '../flow/NeonBox';
 import { useContactMode } from './useContactMode';
-import { useNarrow } from './useNarrow';
 
 const tube = 'neon text-[15px] sm:text-base';
 
@@ -91,8 +90,6 @@ function Links() {
 export default function ContactSection({ fitted = false }: { fitted?: boolean }) {
   const t = useTranslations('contact');
   const mode = useContactMode();
-  // a phone fills the form in one field at a time (Plan 4c)
-  const narrow = useNarrow();
 
   if (!fitted && mode === 'dive')
     return (
@@ -101,7 +98,7 @@ export default function ContactSection({ fitted = false }: { fitted?: boolean })
           {t('title')}
         </h2>
         <p className="text-sm leading-relaxed text-[#e8f7ff]/85">{t('lead')}</p>
-        <ContactForm steps={narrow} />
+        <ContactForm />
         <Links />
       </div>
     );

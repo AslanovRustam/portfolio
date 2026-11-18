@@ -16,9 +16,10 @@ export const DIVE = {
   diveSvh: 60,
   /**
    * then stays inside this much before Contact's text reaches the frame's top (svh): a little scroll back
-   * while filling the form in moves the text down inside the frame, not the camera out (Plan 4c)
+   * while filling the form in moves the text down inside the frame, not the camera out (Plan 4c); little
+   * enough that the frame does not light over a band of black (M4 round 2)
    */
-  backSvh: 33,
+  backSvh: 12,
   /** the frame's tube runs this far inside the window's edges (px) */
   frameInset: 8,
   /** the interior's height over the window's at the end: it overfills it a little */
