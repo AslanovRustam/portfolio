@@ -42,6 +42,8 @@ import WallStreaks from './WallStreaks';
 const LAYOUT = wallLayout();
 const STOPS = stopSlots(LAYOUT);
 const MODELS: readonly TvModel[] = ['tv1', 'tv2'];
+/** each project's loop files, worked out once (the wall asks for them every frame) */
+const SOURCES = PROJECTS.map(loopSources);
 const FILLERS: Record<TvModel, TvSlot[]> = {
   tv1: LAYOUT.filter((s) => s.content.kind === 'filler' && s.model === 'tv1'),
   tv2: LAYOUT.filter((s) => s.content.kind === 'filler' && s.model === 'tv2'),
@@ -285,8 +287,14 @@ export default function TvWall() {
   // the current stop's live loop: one video for the whole wall, its texture in place of that screen's still
   const player = useRef<StopLoopPlayer | null>(null);
   const loopEnv = useRef({ saveData: false, disabled: false });
+  const allowedFor = useRef<{ tier: string | null; reducedMotion: boolean | null; allowed: boolean }>({
+    tier: null,
+    reducedMotion: null,
+    allowed: false,
+  });
   useEffect(() => {
     loopEnv.current = { saveData: saveDataOn(), disabled: loopsDisabled(location.search) };
+    allowedFor.current = { tier: null, reducedMotion: null, allowed: false };
     const p = new StopLoopPlayer((stop, texture) => {
       const { stopMats, pictures } = live.current;
       const u = stopMats[stop]?.uniforms;
@@ -346,9 +354,13 @@ export default function TvWall() {
     const loops = player.current;
     if (loops) {
       const { tier, caseOpen } = experienceStore.getState();
-      const allowed = loopAllowed({ place: 'wall', tier, reducedMotion, ...loopEnv.current });
-      const target = loopTarget({ current, inWork, allowed, caseOpen, projects: PROJECTS });
-      loops.update(target, target === null ? null : loopSources(PROJECTS[target]));
+      // worked out again only when what it depends on changes, not every frame
+      const a = allowedFor.current;
+      if (a.tier !== tier || a.reducedMotion !== reducedMotion) {
+        allowedFor.current = { tier, reducedMotion, allowed: loopAllowed({ place: 'wall', tier, reducedMotion, ...loopEnv.current }) };
+      }
+      const target = loopTarget({ current, inWork, allowed: allowedFor.current.allowed, caseOpen, projects: PROJECTS });
+      loops.update(target, target === null ? null : SOURCES[target]);
       // rebuilt materials (a tier change) start from the still: keep the playing video on its screen
       const shown = loops.shown;
       if (shown && stopMats[shown.stop] && stopMats[shown.stop].uniforms.uMap.value !== shown.texture) {
