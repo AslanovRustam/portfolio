@@ -1,0 +1,70 @@
+# Plan 5 — rulings and deferred items
+
+Copied from the execution ledger (git-ignored `.superpowers/sdd/`, deleted after the merge to main on 2026-11-18). Every deviation from the plan, why, and its cost if wrong; the notes; the final review's outcome; then the minors it deferred.
+
+Plan: `docs/superpowers/plans/2026-11-18-portfolio-plan-5-polish.md` · Spec: `docs/superpowers/specs/2026-11-18-polish-design.md`
+
+- Spec: docs/superpowers/specs/2026-11-18-polish-design.md
+- Pre-flight: Task 1 → Task 2: store eggOpen/setEggOpen (produced in T1, consumed in T2) — match.
+- Pre-flight: Task 3 → Task 4: siteUrl() and messages meta.name/meta.role (T3) consumed by OG image/sitemap (T4) — match.
+- Pre-flight: Task 3 ↔ Task 4: x-default/hreflang alternates in sitemap must use the same paths as pageMeta — match (/<l><path>, x-default /en<path>).
+- Task 1: Ruling: stickers were curved to the pole's TOP radius, but the pole is a cone 6 % wider at the foot, so every sticker below ~2.6 m sat inside it — invisible in About (spec of M4 round 1 said they show round the bills). Fixed: stickerRadius() = poleRadiusAt(sticker's foot) + lift, POLE_TAPER shared with Pole.tsx; unit test RED→GREEN — cost if wrong: About now shows the lower stack stickers (React etc.) up close, a visible change to the look Rustam approved without them.
+- Task 1: Ruling: the egg is 0.10 m × 0.055 m (a logo sticker's width), not the text stickers' 0.15 m — at 0.15 it wraps 140° round the pole and reads as a band at the About close-up — cost if wrong: a smaller target to find.
+- Task 1: Ruling: 'a click through HTML' finds any HTML over the egg (on a laptop the header, not a bill: the first bill never reaches it before it leaves the screen) — cost if wrong: none, same guard (overUi).
+- Task 1: note: the dev server served stale CSS (no loader rules: the loader stayed over the scene in screenshots); restarted with .next/dev deleted (task bpwwjcf2j).
+- Task 1: note: the phone tests were written after the probe existed (not watched failing on their own); they share eggInSight with the desktop ones, which were.
+- Task 1: complete (commits 59defb2..c53c6f6, tests: npx vitest run →    Duration  1.27s (import 36%, tests 30%, transform 30%, worker 3%))
+- Task 2: Ruling: the UK line uses the apostrophe uk.json uses everywhere (U+2019 ’), not the spec's ASCII ' — cost if wrong: one character.
+- Task 2: Ruling: the alt is read with t.raw — next-intl's ICU parser takes `</>` for a tag and returned the key "egg.alt" — cost if wrong: none.
+- Task 2: Ruling: an explicit Tab loop inside the dialog besides `inert` on the rest of <body>: with one focusable, Tab left for the browser's own bar (activeElement = body) — cost if wrong: none.
+- Task 2: Ruling: Review Focus 1 needed no extra code: the hidden page's copy renders no second visible dialog (test passes) — cost if wrong: two dialogs after a language switch on some other React build; the test would catch it.
+- Task 2: note: the dev server served stale CSS again after the globals.css edit; restarted (task b4efzigmf). Statue WebP: q80 → 56 KB.
+- Task 2: complete (commits c53c6f6..36a7fae, tests: npx vitest run →    Duration  1.45s (import 38%, tests 31%, transform 28%, worker 3%))
+- Task 3: Ruling: pageMeta takes siteName too (og:site_name = meta.name of the locale) — the plan's signature named the value but not the parameter — cost if wrong: none.
+- Task 3: Ruling: the og:image assertion moved to Task 4 (the image route is Task 4's); the plan put the e2e after the implementation, so RED was watched by stashing the three page files: 4/4 failed, then 4/4 green — cost if wrong: none.
+- Task 3: Ruling: case titles now end in meta.name (Cyrillic in RU/UK) instead of hero.name (Latin everywhere), as the spec has the name follow meta.title — cost if wrong: a RU case tab reads «… — Рустам Асланов».
+- Task 3: Ruling: JSON-LD's `<` escape is built with String.fromCharCode(92) — the editing tools turned a literal backslash-u escape into the bare character — cost if wrong: none (unit + e2e parse it).
+- Task 3: complete (commits 36a7fae..64a15c0, tests: npx vitest run →    Duration  1.47s (import 43%, tests 33%, transform 20%, worker 3%))
+- Task 4: Ruling: the frame is the street's last shot (story 1.0): the billboard under LET'S GO with the green light and the STACK sign; the name and role are set on the billboard's screen — cost if wrong: one re-capture.
+- Task 4: Ruling: Oswald 700 from @fontsource/oswald@5.2.5 (WOFF, latin + cyrillic) with its OFL in brand/fonts; the Cyrillic file gets its own family name (satori used only the first same-named face and fell back for Cyrillic) — cost if wrong: none.
+- Task 4: Ruling: the image route stays dynamic (ƒ): generateStaticParams in the image file did not make Next 16 prerender it; it renders in ~1 s and previews are fetched rarely — cost if wrong: a function call per preview fetch.
+- Task 4: note: prod build ok, prod.spec 2/2; on a local `next start` canonical/hreflang/og:url/og:image are absolute (localhost:3000 without env; Vercel's VERCEL_PROJECT_PRODUCTION_URL there).
+- Task 4: complete (commits 64a15c0..d18a9de, tests: npx vitest run →    Duration  1.40s (import 37%, tests 33%, transform 26%, worker 4%))
+- Task 5: measured (perf project, alone): intro end 34.8 / 34.7 / 34.6 ms medians. Candidates at p 0.12 (scratch, live scene through a new dev-only 'three' probe): shadows off 34.7, reflector (not matched by the toggle) —, each instanced/points part off 34.6–34.7, all point lights off 27.7, all points+instanced off 27.8, DPR 1.25→1.2 28.0, →1.15 27.8, →1.1 27.7, →1 20.9. Fill-bound: no single part. The whole intro (0–0.15) is 34.6, from 0.15 on 27.8.
+- Task 5: Ruling: medium draws the whole intro (p < INTRO_END 0.15) at DPR 1.15 instead of 1.25, not only 0.10–0.14 as the spec says — the measurement shows the whole intro over budget, and one switch at its end is less visible than two inside it; before/after crops at 0.12 look the same to me — cost if wrong: the first screen on a medium laptop is 8 % softer per axis.
+- Task 5: gate RED on the stashed governor (34.7) → GREEN 27.8 ×3; whole perf project 9/9 (journey 27.8, work 27.8, about 27.8, intro 27.8, dive 6.9, stack 27.7, contact 20.9).
+- Task 5: note: the 'three' probe (scene + renderer) stays in DebugPerf.tsx for scratch perf/look-dev captures; readable only with test hooks.
+- Task 5: complete (commits d18a9de..50630cc, tests: npx vitest run →    Duration  1.27s (import 37%, tests 32%, transform 27%, worker 4%))
+- Task 6: Ruling: minors 2 and 3 share one commit (both in stopLoop.ts); the dwell takes an injected clock, and the old texture-version test passes dwellMs 0 — cost if wrong: none.
+- Task 6: Ruling: minor 4's planned fix (measure from max(from, STACK_FROM)) changes nothing — along() already clamps — so a gesture that starts outside the signs settles on the nearest sign; one from a sign (first and last included, ±1e-6) still goes on — two unit tests, both RED first — cost if wrong: a fling from About that rests 0.6 of a gap past sign 0 lands on sign 1 (the nearest), not on sign 0.
+- Task 6: Ruling: minor 6 is tested through the shared plateFontReady (weight, sample, fallback on failure); Shop's repaint itself is not unit-tested (an R3F effect) — cost if wrong: the sign keeps the fallback face.
+- Task 6: note: the TvWall part of minor 10 (permission and loop files once) went with Task 6 as the plan says; checked by loops/tvwall/work e2e (30/30), no unit test (frame-loop allocation).
+- Task 6: complete (commits 50630cc..e15afa2, tests: npx vitest run →    Duration  1.27s (import 35%, tests 31%, transform 30%, worker 4%))
+- Task 7: Ruling: minor 5's hint test allows 10.99 px (11 px / scale × scale is 10.99998 in floats) — cost if wrong: none.
+- Task 7: Ruling: minor 7 gates the frame on the live scale ≥ 0.99; the test reads the picture's last drawn scale, one update before the lighting one, so it checks ≥ 0.985 (it was 0.88; 3/3 green with --repeat-each) — cost if wrong: up to ~1 % growth under the glitch.
+- Task 7: Ruling: minor 8 marks a link's target in SmoothScroll (takeArrival), cleared by the visitor's own wheel/touch/key; ContactScreen focuses #contact-title (tabIndex −1) when the dive lands inside on that arrival — cost if wrong: a stale arrival could focus the heading after a later manual scroll into Contact only if no input came in between.
+- Task 7: Ruling: minor 10 watches the billboard's rect from story 0.79 (WATCH_FROM) and writes --entry/min-height/stage/inert/data-in-screen only on change; AboutBackdrop skips unchanged progress and writes on change; a 'screenRectWanted' probe in liveScreen.ts — phone tests RED (232–292 mutations/s) → GREEN; the laptop test passed at once (nothing was rewritten there at rest before either) — cost if wrong: none.
+- Task 7: Ruling: minor 9 checked by computed styles, not shots (shots.spec only saves pictures): #about --entry 100svh at 1440 and 412, .loader-title weight 500 — cost if wrong: none.
+- Task 7: note: the dev server served stale CSS after both globals.css edits; restarted each time (bmfa85bw3, b4bkw9mn6).
+- Task 7: full e2e chromium+mobile 249/249 (13.8 min), unit 344, typecheck + lint clean.
+- Task 7: complete (commits e15afa2..1fbffe4, tests: npx vitest run →    Duration  1.95s (import 41%, transform 28%, tests 26%, worker 3%))
+- Final review: opus, "With fixes" — 0 critical, 1 important, 9 minor; 8 declined to judge.
+- Final: fixed case pages had no og:image/twitter:image (their own openGraph replaced the layout's) — seo.spec "a shared case link unfurls with the preview image of its language" RED→GREEN + unit "a page below the preview image’s own carries it", unit 345/345, full e2e: see next line
+- Final: minor (deferred): duplicate id="egg-title" when the hidden Activity copy also renders the showcase (aria-labelledby takes the first) — useId().
+- Final: minor (deferred): an AbortError retries on the next frame with no backoff (wanted.since is kept) — reset since on abort.
+- Final: minor (deferred): /<locale>/opengraph-image goes through the next-intl proxy and gets Set-Cookie NEXT_LOCALE — exclude it in the matcher.
+- Final: minor (deferred): asset(path) makes the OG function trace all of brand/ (the 1.2 MB monogram too) — three literal reads.
+- Final: minor (deferred): the showcase's backdrop blur lacks -webkit-backdrop-filter (no blur on iOS 17) and costs every frame over the live canvas on phones.
+- Final: minor (deferred): tests weaker than their names — Space in "does not scroll" presses the focused close button; the RF1 focus check passes with <body>; the phone fit checks EN only; Shop's repaint untested.
+- Final: minor (deferred): lockScroll is a boolean: egg open + browser Forward to a case, closing one unlocks the page under the other — a counter, or close the egg on navigation.
+- Final: minor (deferred): no hysteresis at INTRO_END for the DPR switch (a canvas resize per crossing); the hero at p 0 is drawn at 1.15 on medium and was not compared before/after.
+- Final: minor (deferred): AboutBackdrop's comment says work is skipped outside About; it skips unchanged store states only.
+- Final: Ruling: the marble's look, the frame colour, the OG frame — Rustam's taste, shown to him at the gate — cost if wrong: a redo.
+- Final: Ruling: the random stickers moved (seeding EGG changes the placer's draws after the first clash) and, with the taper fix, the lower stack stickers now show in About — accepted; Rustam to look at About at the gate — cost if wrong: re-seed.
+- Final: Ruling: perf medians on other hardware — out of this plan (M7 has the cross-device report) — cost if wrong: none now.
+- Final: Ruling: the English OG alt in every locale stands (Task 4 ruling) — cost if wrong: an English alt under a Russian preview.
+- Final: Ruling: the OG URL's ?hash may not change when only brand/ files change — the route answers max-age=0 (checked on next start), so no stale immutable copy — cost if wrong: a stale preview after swapping the frame.
+- Final: Ruling: the RU/UK alt prose stands (captions verbatim from the spec) — cost if wrong: a reword.
+- Final: Ruling: the iOS scroll lock uses CaseOverlay's mechanism, already in use — real-device check is M7 — cost if wrong: the page scrolls under the showcase on iOS.
+- Final: Ruling: site.test expects localhost with no env; CI here sets none — cost if wrong: a red unit test on a CI that sets NEXT_PUBLIC_SITE_URL.
+- Final: fix pass suite — unit 345/345, e2e chromium+mobile 250/250 (18.9 min), lint + typecheck clean. Workspace kept until the merge (as Plans 3–4c), then its rulings go to docs/superpowers/plans/2026-11-18-portfolio-plan-5-rulings.md.
