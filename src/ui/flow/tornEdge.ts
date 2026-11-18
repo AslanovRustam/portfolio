@@ -30,3 +30,12 @@ export function tornEdge(seed: number, teeth: number): string {
   }
   return `polygon(${[...top, ...bottom].join(', ')})`;
 }
+
+/**
+ * A bill's own tilt (degrees, −1.8..1.8), the same on every render. The seeds step by 7 in About, so the
+ * seed is hashed first: a plain `seed mod 7` gave every bill the same tilt.
+ */
+export function billTilt(seed: number): number {
+  const h = Math.imul(seed, 2654435761) >>> 0;
+  return Math.round(((h % 7) - 3) * 6) / 10;
+}

@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { tornEdge } from './tornEdge';
+import { billTilt, tornEdge } from './tornEdge';
 
 /**
  * A paper bill pasted on the pole (About, spec §8): printed paper torn at the top and the bottom, held by
@@ -7,8 +7,7 @@ import { tornEdge } from './tornEdge';
  * pole with it, so it stays pasted on the pole (M4 round 1).
  */
 export default function PaperBill({ children, seed }: { children: ReactNode; seed: number }) {
-  // a small tilt of its own, from −1.8° to 1.8°, the same on every render
-  const tilt = ((((seed * 37) % 7) + 7) % 7 - 3) * 0.6;
+  const tilt = billTilt(seed);
   return (
     <div data-ui className="paper-bill pointer-events-auto" style={{ '--tilt': `${tilt}deg` } as CSSProperties}>
       <div className="paper-bill-sheet" style={{ clipPath: tornEdge(seed, 18) }}>
