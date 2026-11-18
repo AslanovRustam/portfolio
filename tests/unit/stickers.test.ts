@@ -3,7 +3,8 @@ import { SIGNS } from '@/experience/signs';
 import { bandOffset } from '@/scene/pole/geometry';
 import { layoutAtlas, stickerArc } from '@/scene/stickers/atlas';
 import { getIcon } from '@/scene/stickers/icons';
-import { STACK_SLUGS, STICKERS } from '@/scene/stickers/stickers';
+import { EGG, STACK_SLUGS, STICKERS, stickerRadius } from '@/scene/stickers/stickers';
+import { POLE } from '@/experience/signs';
 
 it('every logo sticker resolves to a simple-icons icon', () => {
   for (const s of STICKERS.filter((x) => x.kind === 'logo')) expect(getIcon(s.slug!)).not.toBeNull();
@@ -62,5 +63,23 @@ it('arc length', () => {
 
 it('every text sticker found a place on the pole', () => {
   const keys = new Set(STICKERS.map((s) => s.key));
-  for (const k of ['zustand', 'fabric', 'skia', 'code', 'ship', 'nobugs', 'push', 'ok', 'odesa']) expect(keys.has(k)).toBe(true);
+  for (const k of ['statue', 'zustand', 'fabric', 'skia', 'code', 'ship', 'nobugs', 'push', 'ok', 'odesa']) expect(keys.has(k)).toBe(true);
+});
+
+it('the statue sticker stands above About’s bills on the side About sees', () => {
+  expect(STICKERS[0].key).toBe('statue');
+  expect(STICKERS[0]).toBe(EGG);
+  expect(EGG.angle).toBeCloseTo(SIGNS.find((s) => s.id === 'about')!.facing, 9);
+  // the camera arrives level with the pole at 1.6 m (aboutPole.ts TOP) and sees only ±0.07–0.09 m around it
+  expect(Math.abs(EGG.y - 1.6)).toBeLessThan(0.06);
+  expect(EGG.text).toBe('</>');
+});
+
+it('every sticker lies on the pole’s surface, out of its taper (the pole is 6 % wider at the foot)', () => {
+  // Pole.tsx: a cylinder from r·1.06 at the foot to r at the top
+  const surface = (y: number) => POLE.radius * (1.06 - (0.06 * y) / POLE.height);
+  for (const s of STICKERS) {
+    const h = s.size * s.aspect;
+    expect(stickerRadius(s)).toBeGreaterThan(surface(s.y - h / 2));
+  }
 });

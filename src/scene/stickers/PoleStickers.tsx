@@ -1,24 +1,24 @@
 'use client';
 
-import { use, useEffect, useMemo, useState } from 'react';
-import { CanvasTexture, CylinderGeometry, SRGBColorSpace } from 'three';
+import { useThree } from '@react-three/fiber';
+import { use, useEffect, useMemo, useRef, useState } from 'react';
+import { CanvasTexture, CylinderGeometry, type Mesh, SRGBColorSpace, Vector3 } from 'three';
 import { registerProbe } from '@/dev/sceneProbe';
-import { POLE } from '@/experience/signs';
-import { useExperience } from '@/experience/store';
+import { experienceStore, useExperience } from '@/experience/store';
 import { useNightEnv } from '../env';
 import { revealUniforms } from '../reveal/registry';
 import { revealCompile } from '../reveal/revealMaterial';
 import { overUi } from '../uiPointer';
 import { type AtlasRect, layoutAtlas } from './atlas';
 import { getIcon } from './icons';
-import { type StickerDef, STICKERS } from './stickers';
+import { mulberry32 } from '../street/random';
+import { EGG, type StickerDef, stickerRadius, STICKERS } from './stickers';
 
 const ATLAS = 2048;
 const CELL = 256;
 /** transparent margin inside each cell: a rolled sticker's bounding box must never reach the next cell */
 const PAD = 32;
 const INNER = CELL - 2 * PAD;
-const LIFT = 0.0018;
 
 let fonts: Promise<unknown> | null = null;
 function loadFonts() {
@@ -47,13 +47,40 @@ function drawAtlas(stickers: readonly StickerDef[], rects: AtlasRect[]): CanvasT
     const h = INNER * s.aspect;
     const x = cx + PAD;
     const y = cy + (CELL - h) / 2;
-    ctx.fillStyle = '#f7f5ef';
-    shapePath(ctx, s, x, y, w, h);
-    ctx.fill();
+    const marble = s.key === EGG.key;
     const edge = 7;
-    ctx.fillStyle = s.bg;
-    shapePath(ctx, s, x + edge, y + edge, w - 2 * edge, h - 2 * edge);
-    ctx.fill();
+    if (marble) {
+      // a slab of stone, no vinyl edge: cut to shape, a few grey veins through it
+      ctx.save();
+      shapePath(ctx, s, x, y, w, h);
+      ctx.clip();
+      ctx.fillStyle = s.bg;
+      ctx.fillRect(x, y, w, h);
+      const rand = mulberry32(7);
+      ctx.lineCap = 'round';
+      for (let v = 0; v < 6; v++) {
+        ctx.strokeStyle = `rgba(110, 104, 96, ${0.18 + rand() * 0.22})`;
+        ctx.lineWidth = 0.8 + rand() * 1.6;
+        ctx.beginPath();
+        let px = x + rand() * w;
+        let py = y;
+        ctx.moveTo(px, py);
+        while (py < y + h) {
+          px += (rand() - 0.5) * 18;
+          py += 6 + rand() * 10;
+          ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    } else {
+      ctx.fillStyle = '#f7f5ef';
+      shapePath(ctx, s, x, y, w, h);
+      ctx.fill();
+      ctx.fillStyle = s.bg;
+      shapePath(ctx, s, x + edge, y + edge, w - 2 * edge, h - 2 * edge);
+      ctx.fill();
+    }
     ctx.fillStyle = s.fg;
     if (s.kind === 'logo') {
       const icon = getIcon(s.slug!)!;
@@ -91,7 +118,7 @@ function drawAtlas(stickers: readonly StickerDef[], rects: AtlasRect[]): CanvasT
  * and the alpha test cuts its die-cut outline.
  */
 function stickerGeometry(s: StickerDef, rect: AtlasRect): CylinderGeometry {
-  const r = POLE.radius + LIFT;
+  const r = stickerRadius(s);
   const c = Math.abs(Math.cos(s.roll));
   const sn = Math.abs(Math.sin(s.roll));
   const h = s.size * s.aspect;
@@ -115,7 +142,7 @@ function stickerGeometry(s: StickerDef, rect: AtlasRect): CylinderGeometry {
   return g;
 }
 
-/** Stack logos and a few jokes stuck all over the pole; logos light up under the cursor. */
+/** Stack logos and a few jokes stuck all over the pole; logos (and the marble egg) light up under the cursor. */
 export default function PoleStickers() {
   use(loadFonts());
   const env = useNightEnv();
@@ -131,6 +158,44 @@ export default function PoleStickers() {
 
   useEffect(() => registerProbe('stickerGlow', () => glowing), [glowing]);
 
+  // the marble egg on the page (CSS px): the part of its curved face that looks at the camera
+  const eggMesh = useRef<Mesh>(null);
+  const { camera, size } = useThree();
+  useEffect(
+    () =>
+      registerProbe('egg', () => {
+        const m = eggMesh.current;
+        if (!m) return null;
+        m.updateWorldMatrix(true, false);
+        const r = stickerRadius(EGG);
+        const h = EGG.size * EGG.aspect;
+        const arc = EGG.size / r;
+        const xs: number[] = [];
+        const ys: number[] = [];
+        let front = false;
+        const p = new Vector3();
+        const n = new Vector3();
+        for (let i = 0; i <= 16; i++) {
+          const a = EGG.angle - arc / 2 + (arc * i) / 16;
+          n.set(Math.sin(a), 0, Math.cos(a)).transformDirection(m.matrixWorld);
+          for (const dy of [-h / 2, h / 2]) {
+            p.set(r * Math.sin(a), dy, r * Math.cos(a)).applyMatrix4(m.matrixWorld);
+            const toCam = camera.position.clone().sub(p);
+            if (n.dot(toCam) <= 0) continue;
+            if (i === 8) front = true;
+            p.project(camera);
+            xs.push(((p.x + 1) / 2) * size.width);
+            ys.push(((1 - p.y) / 2) * size.height);
+          }
+        }
+        if (!xs.length) return null;
+        const x = Math.min(...xs);
+        const y = Math.min(...ys);
+        return { rect: { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y }, front };
+      }),
+    [camera, size],
+  );
+
   useEffect(
     () => () => {
       atlas.dispose();
@@ -144,14 +209,35 @@ export default function PoleStickers() {
       {STICKERS.map((s, i) => (
         <mesh
           key={s.key}
+          ref={s === EGG ? eggMesh : undefined}
           geometry={geometries[i]}
           position-y={s.y}
           onPointerOver={(e) => {
-            if (s.kind !== 'logo' || overUi(e)) return;
+            if ((s.kind !== 'logo' && s !== EGG) || overUi(e)) return;
             e.stopPropagation();
             setHovered(s.key);
+            if (s === EGG) document.body.style.cursor = 'pointer';
           }}
-          onPointerOut={() => setHovered((k) => (k === s.key ? null : k))}
+          onPointerMove={(e) => {
+            if (s !== EGG) return;
+            // the pointer can slide from the bare sticker onto HTML lying over it without leaving the mesh
+            const over = !overUi(e);
+            setHovered((k) => (over ? s.key : k === s.key ? null : k));
+            document.body.style.cursor = over ? 'pointer' : '';
+          }}
+          onPointerOut={() => {
+            setHovered((k) => (k === s.key ? null : k));
+            if (s === EGG) document.body.style.cursor = '';
+          }}
+          onClick={
+            s === EGG
+              ? (e) => {
+                  e.stopPropagation();
+                  if (overUi(e)) return;
+                  experienceStore.getState().setEggOpen(true);
+                }
+              : undefined
+          }
         >
           <meshStandardMaterial
             map={atlas}

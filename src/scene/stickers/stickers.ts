@@ -1,5 +1,5 @@
 import { LIGHT_Y } from '../pole/lightMount';
-import { bandOffset } from '../pole/geometry';
+import { bandOffset, poleRadiusAt } from '../pole/geometry';
 import { POLE, SIGNS } from '@/experience/signs';
 import { mulberry32 } from '../street/random';
 import { getIcon } from './icons';
@@ -108,9 +108,9 @@ const Y_MAX = LIGHT_Y - 0.6;
  * Rejection-samples every sticker onto the pole surface (seeded, so the pole looks the same on every
  * load): clear of the plates and their clamp bands, under the traffic light, never overlapping.
  */
-export function placeStickers(specs: readonly Spec[], seed: number): StickerDef[] {
+export function placeStickers(specs: readonly Spec[], seed: number, fixed: readonly StickerDef[] = []): StickerDef[] {
   const rand = mulberry32(seed);
-  const placed: StickerDef[] = [];
+  const placed: StickerDef[] = [...fixed];
   for (const s of specs) {
     const h = s.size * s.aspect;
     for (let attempt = 0; attempt < 2000; attempt++) {
@@ -135,4 +135,30 @@ export function placeStickers(specs: readonly Spec[], seed: number): StickerDef[
   return placed;
 }
 
-export const STICKERS: readonly StickerDef[] = placeStickers(SPECS, 21);
+/** How far a sticker stands off the pole's surface (m). */
+export const STICKER_LIFT = 0.0018;
+
+/** The radius a sticker is curved to: the pole's surface at its foot (the widest part it covers), plus the lift. */
+export function stickerRadius(s: StickerDef): number {
+  return poleRadiusAt(s.y - (s.size * s.aspect) / 2) + STICKER_LIFT;
+}
+
+/** The egg's height on the pole: where the camera arrives level with it as About begins (aboutPole.ts TOP). */
+export const EGG_Y = 1.62;
+
+/**
+ * The secret (M6): a marble sticker with a `</>` cut in it, like the Mentor's tablet. It sits on the side the
+ * pole turns to the camera through About (the ABOUT sign's), at the height the camera arrives at, so it shows
+ * before the bills come up under it. A click opens the Mentor's showcase.
+ */
+export const EGG: StickerDef = {
+  ...textSpec('statue', '</>', '#e6e1d6', '#3a3a3c'),
+  // a logo sticker's width: a text sticker's 0.15 m wraps 140° round the pole and reads as a band up close
+  size: 0.1,
+  aspect: 0.55,
+  y: EGG_Y,
+  angle: SIGNS.find((s) => s.id === 'about')!.facing,
+  roll: 0,
+};
+
+export const STICKERS: readonly StickerDef[] = placeStickers(SPECS, 21, [EGG]);

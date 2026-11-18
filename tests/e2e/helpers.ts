@@ -151,3 +151,50 @@ export async function switchLanguage(page: Page, to: 'EN' | 'RU' | 'UK'): Promis
   await header.getByRole('button', { name: /^(EN|RU|UK), / }).click();
   await header.locator('.lang-drop').getByRole('link', { name: to, exact: true }).click();
 }
+
+export interface EggProbe {
+  /** the marble sticker's box on the page (CSS px) */
+  rect: { x: number; y: number; width: number; height: number };
+  /** its face points at the camera */
+  front: boolean;
+}
+export const egg = (page: Page) => page.evaluate(() => window.__portfolio.probe('egg') as EggProbe | null);
+
+/**
+ * Rides into About (story 0.35 → just past About's start) and returns the centre of the marble sticker the
+ * first time it lies whole on the screen, below the header, with no HTML over it (nine points of it hit
+ * nothing marked data-ui — what a click needs, see uiPointer.ts); null if it never does.
+ */
+export async function eggInSight(page: Page): Promise<{ x: number; y: number } | null> {
+  for (let p = 0.35; p <= HOLD.about[0] + 0.03; p += 0.004) {
+    await scrollTo(page, p);
+    await expect
+      .poll(
+        async () => {
+          const a = await egg(page);
+          await page.waitForTimeout(250);
+          const b = await egg(page);
+          if (!a || !b) return false;
+          return Math.abs(a.rect.x - b.rect.x) + Math.abs(a.rect.y - b.rect.y) + Math.abs(a.rect.height - b.rect.height) < 1;
+        },
+        { timeout: 10_000 },
+      )
+      .toBe(true);
+    const hit = await page.evaluate(() => {
+      const e = window.__portfolio.probe('egg') as EggProbe | null;
+      if (!e || !e.front) return null;
+      const { x, y, width: w, height: h } = e.rect;
+      if (x < 0 || y < 64 || x + w > innerWidth || y + h > innerHeight || w < 4 || h < 4) return null;
+      const xs = [x + 2, x + w / 2, x + w - 2];
+      const ys = [y + 2, y + h / 2, y + h - 2];
+      for (const px of xs)
+        for (const py of ys) {
+          const el = document.elementFromPoint(px, py);
+          if (!el || el.closest('[data-ui]')) return null;
+        }
+      return { x: x + w / 2, y: y + h / 2 };
+    });
+    if (hit) return hit;
+  }
+  return null;
+}

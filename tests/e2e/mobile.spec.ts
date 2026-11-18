@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   billboard,
+  eggInSight,
   gantry,
   gotoScene,
   HOLD,
@@ -538,3 +539,16 @@ test('content growing under the visitor inside the screen leaves the screen wher
   await expect(page.locator('#journey section#contact')).toHaveAttribute('data-stage', 'inside');
   expect(Math.abs((await lead.boundingBox())!.y - y0)).toBeLessThan(3);
 });
+
+// The secret (M6): the marble sticker shows uncovered as the camera reaches the pole, and a tap opens it
+for (const size of [null, { width: 390, height: 844 }] as const)
+  for (const lang of ['en', 'ru', 'uk'] as const)
+    test(`a phone${size ? ` ${size.width}×${size.height}` : ''} sees the statue sticker uncovered and a tap opens it (${lang})`, async ({ page }) => {
+      if (size) await page.setViewportSize(size);
+      await gotoScene(page, `/${lang}`);
+      await waitReady(page);
+      const at = await eggInSight(page);
+      expect(at, 'the sticker whole and uncovered at least once').not.toBeNull();
+      await page.touchscreen.tap(at!.x, at!.y);
+      await expect.poll(() => page.evaluate(() => window.__portfolio.state().eggOpen)).toBe(true);
+    });

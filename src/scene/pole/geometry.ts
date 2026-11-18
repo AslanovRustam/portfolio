@@ -1,5 +1,5 @@
 import { ExtrudeGeometry, Path, Shape, ShapeGeometry } from 'three';
-import type { SignDef } from '@/experience/signs';
+import { POLE, type SignDef } from '@/experience/signs';
 import type { LightState } from '@/experience/store';
 
 export const PLATE = { depth: 0.03, bevel: 0.008 } as const;
@@ -149,4 +149,12 @@ export function lensIntensity(state: LightState): { red: number; yellow: number;
 /** Multiplier on the green lens while a sent message is celebrated: a quick pulse between 1× and 2.2×. */
 export function celebrateBoost(t: number): number {
   return 1.6 + 0.6 * Math.sin(t * 9);
+}
+
+/** The pole is a slight cone: this much wider at the foot than at the top. */
+export const POLE_TAPER = 0.06;
+
+/** The pole's radius at height y (Pole.tsx draws it from r·(1 + taper) at the foot to r at the top). */
+export function poleRadiusAt(y: number): number {
+  return POLE.radius * (1 + POLE_TAPER * (1 - y / POLE.height));
 }

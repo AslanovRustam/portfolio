@@ -13,6 +13,7 @@ import { revealUniforms } from '../reveal/registry';
 import { applyReveal } from '../reveal/revealMaterial';
 import { cameraLambdas, desiredCameraPose, divesIntoScreen } from '../cameraPose';
 import { wallWeight } from '../tvwall/camera';
+import { POLE_TAPER } from './geometry';
 import { LIGHT_Y } from './lightMount';
 import { usePoleMaterials } from './materials';
 import Sign from './Sign';
@@ -50,7 +51,7 @@ export default function Pole({ children }: { children?: ReactNode }) {
   /** low-poly stand-ins for the blueprint lines: a few clean facets read as a technical drawing */
   const proxies = useMemo(
     () => ({
-      pole: new CylinderGeometry(POLE.radius, POLE.radius * 1.06, POLE.height, 8),
+      pole: new CylinderGeometry(POLE.radius, POLE.radius * (1 + POLE_TAPER), POLE.height, 8),
       base: new CylinderGeometry(0.22, 0.23, 0.036, 6),
     }),
     [],
@@ -159,7 +160,7 @@ export default function Pole({ children }: { children?: ReactNode }) {
     <group ref={ride} name="pole-ride">
     <group ref={group} rotation-y={poleYaw(0)} name="pole">
       <mesh material={own.pole} position-y={POLE.height / 2}>
-        <cylinderGeometry args={[r, r * 1.06, POLE.height, 40]} />
+        <cylinderGeometry args={[r, r * (1 + POLE_TAPER), POLE.height, 40]} />
       </mesh>
       <group position-y={POLE.height / 2}>
         <EdgesOverlay geometry={proxies.pole} part="pole" threshold={20} />
