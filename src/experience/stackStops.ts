@@ -46,7 +46,9 @@ export function stackSnapTarget(q: number, from?: number): number | null {
   if (q <= STACK_FROM || q >= STACK_TO) return null;
   const u = along(q);
   let stop = Math.round(u);
-  if (from !== undefined) {
+  // a gesture from outside the signs (About before them, Contact after) settles on the nearest: measured
+  // from where it came in, it would always have "travelled" past the first sign it meets
+  if (from !== undefined && from >= STACK_FROM - 1e-6 && from <= STACK_TO + 1e-6) {
     const moved = u - along(from);
     if (Math.abs(moved) > STEP) stop = moved > 0 ? Math.ceil(u - 1e-9) : Math.floor(u + 1e-9);
   }

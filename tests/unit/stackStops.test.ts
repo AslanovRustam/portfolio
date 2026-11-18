@@ -38,3 +38,21 @@ it('a scroll that comes to rest between two signs settles on one, like the TVs i
   expect(stackSnapTarget(0.5)).toBeNull();
   expect(stackSnapTarget(0.9)).toBeNull();
 });
+
+it('a gesture that starts in About settles on the nearest sign, never skipping the first', () => {
+  const gap = stackStopProgress(1) - stackStopProgress(0);
+  const about = 0.5;
+  const s0 = stackSnapTarget(stackStopProgress(0) + 0.3 * gap, about);
+  expect(s0).toBeCloseTo(stackStopProgress(0), 9);
+  const s1 = stackSnapTarget(stackStopProgress(0) + 0.8 * gap, about);
+  expect(s1).toBeCloseTo(stackStopProgress(1), 9);
+  // and one from past the last sign, coming back
+  const last = stackStopProgress(5);
+  expect(stackSnapTarget(last - 0.3 * gap, 0.84)).toBeCloseTo(last, 9);
+});
+
+it('a gesture from the first or the last sign still goes on to the next one', () => {
+  const gap = stackStopProgress(1) - stackStopProgress(0);
+  expect(stackSnapTarget(stackStopProgress(0) + 0.3 * gap, stackStopProgress(0))).toBeCloseTo(stackStopProgress(1), 9);
+  expect(stackSnapTarget(stackStopProgress(5) - 0.3 * gap, stackStopProgress(5))).toBeCloseTo(stackStopProgress(4), 9);
+});
