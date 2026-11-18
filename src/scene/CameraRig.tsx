@@ -8,6 +8,7 @@ import { frameShift, sectionPresence } from '@/experience/panels';
 import { experienceStore } from '@/experience/store';
 import { registerProbe } from '@/dev/sceneProbe';
 import { END_FROM } from '@/experience/route';
+import { landing, landingArmed, landingPose, planPose } from '@/experience/landing';
 import { cameraLambdas, desiredCameraPose } from './cameraPose';
 
 /** how near (m, position and aim together) the damped camera must be to its pose to count as at rest:
@@ -28,6 +29,8 @@ export default function CameraRig() {
   const size = useThree((s) => s.size);
   const target = useRef(new Vector3(...cameraPose(0).target));
   const shift = useRef({ x: 0, y: 0 });
+  /** the landing's clock (ms): frame time capped at 50 ms, so a stalled frame pauses the move, never skips it */
+  const clock = useRef(0);
 
   useEffect(
     () =>
@@ -39,9 +42,56 @@ export default function CameraRig() {
   );
   useEffect(() => registerProbe('viewOffset', () => ({ ...shift.current })), []);
 
+  // the landing (landing.ts): from the top of a fresh page the camera waits high over the floor while the
+  // loader is up, and cranes down once the scene is ready; a scene that is already shown (a language
+  // switch mounts a new one) never lands
+  useEffect(() => {
+    const store = experienceStore.getState();
+    const armed =
+      !store.ready &&
+      landingArmed({
+        reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
+        hash: location.hash,
+        scrollY: scrollY,
+        webgl: true,
+      });
+    if (armed) landing.arm();
+    // (arm() takes once per page load: a scene mounted by a language switch stays where it is)
+    if (landing.phase === 'armed') {
+      const plan = planPose(innerHeight);
+      camera.position.set(...plan.position);
+      target.current.set(...plan.target);
+      camera.lookAt(target.current);
+    }
+    const unprobe = registerProbe('landing', () => ({ phase: landing.phase }));
+    const go = () => landing.start(clock.current);
+    if (store.ready) go();
+    const off = experienceStore.subscribe((s) => s.ready && go());
+    return () => {
+      off();
+      unprobe();
+    };
+  }, [camera]);
+
   useFrame((_, dt) => {
     const { progress, reducedMotion } = experienceStore.getState();
     const pose = desiredCameraPose(progress, { w: size.width, h: size.height }, reducedMotion);
+    clock.current += Math.min(dt, 0.05) * 1000;
+    const now = clock.current;
+    // the visitor's own scroll hurries the landing to its end, towards the pose that scroll asks for (a
+    // hand-over to the damping from high above would leap); before the scene is ready it just stops it
+    if (progress >= 0.001) {
+      if (landing.phase === 'armed') landing.cancel();
+      else landing.hurry(now);
+    }
+    const lt = landing.progress(now);
+    if (lt !== null) {
+      const l = landingPose(lt, planPose(size.height), pose);
+      camera.position.set(...l.position);
+      target.current.set(...l.target);
+      camera.lookAt(target.current);
+      return;
+    }
     // in About's hold the camera follows the scroll exactly: the bills ride the page, the pole must keep up
     const { xz: k, y: ky } = cameraLambdas(progress, reducedMotion);
     const p = camera.position;

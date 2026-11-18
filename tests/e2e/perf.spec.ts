@@ -193,6 +193,38 @@ test('standing at the end of the intro keeps at least 30 fps', async ({ page }) 
   expect(r.medianMs).toBeLessThanOrEqual(33.4);
 });
 
+// the intro's landing (the loader's sheet becomes the floor): the first 3 s after the scene is ready cost
+// the same with it as without it (a hash skips it). Those seconds run over budget either way (34.7 ms on
+// this machine: the page's own first paint and lazy uploads), which is why the gate is the difference.
+test('the landing after the loader costs no frame time of its own', async ({ page }) => {
+  test.setTimeout(120_000);
+  const sample = async (path: string) => {
+    await gotoScene(page, path);
+    await waitReady(page);
+    const frames = await page.evaluate(
+      () =>
+        new Promise<number[]>((resolve) => {
+          const out: number[] = [];
+          let last = performance.now();
+          const end = last + 3000;
+          const tick = (t: number) => {
+            out.push(t - last);
+            last = t;
+            if (t < end) requestAnimationFrame(tick);
+            else resolve(out.slice(3));
+          };
+          requestAnimationFrame(tick);
+        }),
+    );
+    const sorted = [...frames].sort((a, b) => a - b);
+    return +sorted[Math.floor(sorted.length / 2)].toFixed(2);
+  };
+  const withLanding = await sample('/en');
+  const without = await sample('/en#top');
+  console.log('perf-landing', JSON.stringify({ withLanding, without }));
+  expect(withLanding).toBeLessThanOrEqual(without + 1);
+});
+
 // the phone's dive (M4 round 1): inside the billboard's screen, the form in its frame
 test('standing inside the billboard’s screen on a phone-sized window keeps at least 30 fps', async ({ page }) => {
   test.setTimeout(120_000);

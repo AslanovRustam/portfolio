@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import { type Group, ShaderMaterial } from 'three';
 import { POLE } from '@/experience/signs';
+import { landing } from '@/experience/landing';
 import { globalReveal } from './registry';
 
 const FONT = '/fonts/JetBrainsMono-Regular.woff';
@@ -21,6 +22,7 @@ const gridVertex = /* glsl */ `
 
 const gridFragment = /* glsl */ `
   uniform float uOpacity;
+  uniform float uSections;
   varying vec3 vWorld;
   float gridLine(vec2 p, float size, float width) {
     vec2 g = abs(fract(p / size - 0.5) - 0.5) / fwidth(p / size);
@@ -33,7 +35,7 @@ const gridFragment = /* glsl */ `
     // linear-space colours (converted to sRGB by colorspace_fragment): paper #0b1f38, cell #24486f, section #7fe3ff
     vec3 paper = vec3(0.0033, 0.0137, 0.040);
     vec3 col = mix(paper, vec3(0.018, 0.064, 0.159), cell * 0.7 * fade);
-    col = mix(col, vec3(0.212, 0.768, 1.0), section * 0.45 * fade);
+    col = mix(col, vec3(0.212, 0.768, 1.0), section * 0.45 * fade * uSections);
     gl_FragColor = vec4(col, uOpacity);
     #include <colorspace_fragment>
   }
@@ -49,7 +51,8 @@ export default function Blueprint() {
       new ShaderMaterial({
         vertexShader: gridVertex,
         fragmentShader: gridFragment,
-        uniforms: { uOpacity: { value: 1 } },
+        // the metre lines come in as the camera lands: the loader's sheet has only the fine cells
+        uniforms: { uOpacity: { value: 1 }, uSections: { value: 1 } },
         transparent: true,
         depthWrite: false,
       }),
@@ -64,6 +67,8 @@ export default function Blueprint() {
   useFrame(() => {
     const fade = 1 - globalReveal();
     live.current.uniforms.uOpacity.value = fade;
+    const lt = landing.t;
+    live.current.uniforms.uSections.value = lt === null ? 1 : lt * lt * (3 - 2 * lt);
     if (root.current) root.current.visible = fade > 0.001;
     annotations.current?.traverse((o) => {
       const m = (o as { material?: { opacity: number; transparent: boolean } }).material;
