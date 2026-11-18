@@ -205,5 +205,11 @@
     "result": "Result",
     "stack": "Stack",
     "links": "Links"
+  },
+  "egg": {
+    "title": "The Mentor",
+    "line": "Has been reviewing pull requests since antiquity.",
+    "alt": "A marble statue of a bearded mentor in a toga, holding a tablet carved with </> and code diagrams, an owl and scrolls at his feet",
+    "close": "Close"
   }
 }

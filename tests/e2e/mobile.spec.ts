@@ -552,3 +552,31 @@ for (const size of [null, { width: 390, height: 844 }] as const)
       await page.touchscreen.tap(at!.x, at!.y);
       await expect.poll(() => page.evaluate(() => window.__portfolio.state().eggOpen)).toBe(true);
     });
+
+// The Mentor's showcase fits a phone whole, the picture giving up height, and keeps fitting when it turns
+for (const size of [null, { width: 390, height: 844 }] as const)
+  test(`the showcase fits a phone${size ? ` ${size.width}×${size.height}` : ''} without scrolling inside, turned too`, async ({ page }) => {
+    if (size) await page.setViewportSize(size);
+    await gotoScene(page);
+    await waitReady(page);
+    await page.evaluate(() => window.__portfolio.state().setEggOpen(true));
+    const dialog = page.getByRole('dialog').filter({ visible: true });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('img')).toBeVisible();
+    const fits = async () => {
+      const box = (await dialog.boundingBox())!;
+      const vp = page.viewportSize()!;
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.y).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(vp.width + 0.5);
+      expect(box.y + box.height).toBeLessThanOrEqual(vp.height + 0.5);
+      expect(await innerScrollers(page)).toEqual([]);
+      await expect(dialog.getByRole('button', { name: 'Close' })).toBeInViewport();
+      await expect(dialog.getByText('Has been reviewing pull requests since antiquity.')).toBeInViewport();
+    };
+    await fits();
+    const vp = page.viewportSize()!;
+    await page.setViewportSize({ width: vp.height, height: vp.width });
+    await page.waitForTimeout(400);
+    await fits();
+  });

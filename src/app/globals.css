@@ -1377,3 +1377,70 @@ html[data-in-screen] .top-fade {
       visibility 0s 0.4s;
   }
 }
+
+/*
+ * The Mentor's showcase (M6 egg; src/ui/StatueEgg.tsx): a neon case over the street, the statue and its
+ * plaque under it. It always fits the window: the picture gives up height, never the plaque or the cross.
+ */
+.egg-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(3 5 9 / 0.74);
+  backdrop-filter: blur(4px);
+}
+.egg-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+  max-height: 100%;
+  padding: 14px 14px 16px;
+  outline: none;
+}
+.egg-statue {
+  display: block;
+  /* as big as both the width and the height allow: the plaque (≈ 96 px), the frame's padding and the
+     page's margins come first, and the picture keeps its 2:3 so it never letterboxes */
+  width: min(667px, calc(100vw - 32px - 28px - 4px), calc((100svh - 32px - 30px - 12px - 96px) * 0.667));
+  height: auto;
+  aspect-ratio: 667 / 1000;
+  border-radius: 4px;
+  background: #15171c;
+}
+.egg-plaque {
+  max-width: min(100%, 30rem);
+  text-align: center;
+}
+.egg-title {
+  margin: 0;
+  font-family: var(--font-oswald), 'Arial Narrow', sans-serif;
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  color: #f4f8ff;
+  text-shadow:
+    0 0 2px #fff,
+    0 0 10px var(--c);
+}
+.egg-line {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: rgb(232 247 255 / 0.82);
+}
+.egg-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1;
+  font-size: 1.75rem;
+  border-radius: 50%;
+  background: rgb(4 8 14 / 0.72);
+}

@@ -17,6 +17,7 @@ import ContactSection from '@/ui/sections/ContactSection';
 import ContactBillboard from '@/ui/sections/ContactBillboard';
 import ContactScreen from '@/ui/sections/ContactScreen';
 import AboutBackdrop from '@/ui/sections/AboutBackdrop';
+import StatueEgg from '@/ui/StatueEgg';
 
 /**
  * The persistent experience: scene, scroll, header and sections. It wraps both the home page and the
@@ -75,6 +76,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         prefix={t('nav.next')}
         labels={{ work: t('nav.work'), about: t('nav.about'), stack: t('nav.stack'), contact: t('nav.contact') }}
       />
+      <StatueEgg />
       {children}
     </>
   );
