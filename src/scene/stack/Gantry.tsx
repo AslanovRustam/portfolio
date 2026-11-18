@@ -1,6 +1,7 @@
 'use client';
 
 import { useThree } from '@react-three/fiber';
+import { plateFontReady } from '../plateFont';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -132,12 +133,6 @@ function signFaces(): BufferGeometry {
   return out;
 }
 
-/** The site's plate face (Oswald, with Cyrillic) in the weight the signs use; a face that fails to load falls back. */
-function fontsReady(sample: string): Promise<unknown> {
-  if (!document.fonts) return Promise.resolve();
-  return document.fonts.load('700 40px Oswald', sample).catch(() => undefined);
-}
-
 /** Every category painted onto its own cell of one texture. */
 function paintAtlas(titles: readonly string[]): CanvasTexture {
   const c = document.createElement('canvas');
@@ -172,7 +167,7 @@ export default function Gantry() {
   const [fonts, setFonts] = useState(false);
   useEffect(() => {
     let alive = true;
-    fontsReady(key).then(() => alive && setFonts(true));
+    plateFontReady(700, key).then(() => alive && setFonts(true));
     return () => {
       alive = false;
     };

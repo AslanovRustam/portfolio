@@ -2,6 +2,7 @@
 
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
+import { plateFontReady } from '../plateFont';
 import {
   AdditiveBlending,
   BoxGeometry,
@@ -69,12 +70,11 @@ function glassMaterial(reveal: ReturnType<typeof revealUniforms>): ShaderMateria
   });
 }
 
-/** The neon WORK over the window, drawn once into a texture: a glowing tube on a dark backing board. */
-function signTexture(text: string, color: string): CanvasTexture {
-  const c = document.createElement('canvas');
-  c.width = 1024;
-  c.height = 256;
+/** The neon WORK over the window: a glowing tube on a dark backing board, painted into `c`. */
+function paintSign(c: HTMLCanvasElement, text: string, color: string): void {
   const g = c.getContext('2d')!;
+  g.globalAlpha = 1;
+  g.shadowBlur = 0;
   g.fillStyle = '#07080c';
   g.fillRect(0, 0, c.width, c.height);
   g.font = '600 168px Oswald, "Arial Narrow", sans-serif';
@@ -95,6 +95,14 @@ function signTexture(text: string, color: string): CanvasTexture {
   g.shadowBlur = 0;
   g.fillStyle = '#fff4e6';
   g.fillText(text, c.width / 2, c.height / 2 + 6);
+}
+
+/** The sign's texture, painted at once (with whatever face is in) and again by Shop once Oswald is. */
+function signTexture(text: string, color: string): CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = 1024;
+  c.height = 256;
+  paintSign(c, text, color);
   const t = new CanvasTexture(c);
   t.colorSpace = SRGBColorSpace;
   return t;
@@ -147,6 +155,18 @@ export default function Shop() {
     },
     [parts],
   );
+  // the sign in the site's plate face, as the gantry and the billboard wait for it
+  useEffect(() => {
+    let alive = true;
+    plateFontReady(600, SHOP.sign.text).then(() => {
+      if (!alive) return;
+      paintSign(parts.tex.image as HTMLCanvasElement, SHOP.sign.text, NEON.work);
+      parts.tex.needsUpdate = true;
+    });
+    return () => {
+      alive = false;
+    };
+  }, [parts]);
   // the rain on the glass runs with the clock (written through a ref, as the frame loop must not touch hook values)
   const glass = useRef<ShaderMaterial | null>(null);
   useEffect(() => {
