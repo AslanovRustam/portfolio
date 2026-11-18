@@ -19,17 +19,26 @@ export default function AboutBackdrop() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    let last = '';
     const apply = () => {
       const { progress, webgl } = experienceStore.getState();
+      // outside About (and its turns) nothing changes: skip the work, as this runs on every scroll step
+      const key = `${progress}:${webgl}:${innerWidth}x${innerHeight}`;
+      if (key === last) return;
+      last = key;
       const w = innerWidth;
       const h = innerHeight;
       const presence = webgl ? sectionPresence(progress, 'about') : 0;
       const { distance } = aboutCloseUp({ w, h, aboutPx: pieceSpanPx('about', h), billsPx: billsWidth(w, h) });
       const pole = (2 * POLE.radius * (h / 2)) / (distance * TAN);
       const v = pole < w ? presence : 0;
-      el.style.opacity = String(v);
-      el.style.visibility = v > 0.001 ? 'visible' : 'hidden';
-      if (v > 0.001) el.style.setProperty('--pole', `${pole}px`);
+      // written only when they change
+      const opacity = String(v);
+      const visibility = v > 0.001 ? 'visible' : 'hidden';
+      if (el.style.opacity !== opacity) el.style.opacity = opacity;
+      if (el.style.visibility !== visibility) el.style.visibility = visibility;
+      const polePx = `${pole}px`;
+      if (v > 0.001 && el.style.getPropertyValue('--pole') !== polePx) el.style.setProperty('--pole', polePx);
     };
     apply();
     const off = experienceStore.subscribe(apply);

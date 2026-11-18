@@ -28,6 +28,15 @@ let programmatic = false;
 let heading: number | null = null;
 /** story progress where the visitor's current scroll gesture began (the snap settles in its direction) */
 let gestureFrom: number | null = null;
+/** the section a link (header, menu, Next) is taking the visitor to, until they scroll themselves */
+let arrival: SectionId | null = null;
+
+/** Whether a link brought the visitor to section `id` (asked once: the answer is used up). */
+export function takeArrival(id: SectionId): boolean {
+  if (arrival !== id) return false;
+  arrival = null;
+  return true;
+}
 
 /** Page y of story progress q. */
 function yForStory(q: number): number | null {
@@ -89,6 +98,7 @@ const aboutView = () => ({ h: innerHeight, aboutPx: pieceSpanPx('about', innerHe
 
 /** Scrolls to a section (Work: its first project); glides unless the visitor prefers reduced motion. */
 export function scrollToSection(id: SectionId): void {
+  arrival = id;
   scrollToProgress(sectionTarget(id, diveView(), aboutView()), experienceStore.getState().reducedMotion);
 }
 
@@ -234,6 +244,7 @@ export default function SmoothScroll() {
     };
     const onVisitorInput = () => {
       programmatic = false;
+      arrival = null;
       gestureFrom ??= experienceStore.getState().progress;
     };
     instance.on('scroll', onLenisScroll);

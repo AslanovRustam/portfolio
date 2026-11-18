@@ -580,3 +580,72 @@ for (const size of [null, { width: 390, height: 844 }] as const)
     await page.waitForTimeout(400);
     await fits();
   });
+
+// M6 minor 7: the frame lit while the picture of the form was ~88 % of the content's size
+test('the screen’s frame lights only once the picture of the form has grown to the content’s size', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  const h = await page.evaluate(() => innerHeight);
+  await scrollTo(page, await intoContact(page, 0.1 * h));
+  await expect(screenPicture(page)).toBeVisible({ timeout: 20_000 });
+  // every frame: is the frame lit, and the picture's scale (its transform), while the dive glides in
+  await page.evaluate(() => {
+    const w = window as unknown as { samples: { lit: boolean; s: number }[] };
+    w.samples = [];
+    const tick = () => {
+      const tube = [...document.querySelectorAll<HTMLElement>('[data-screen-frame]')].find((e) => e.checkVisibility());
+      const pic = [...document.querySelectorAll<HTMLElement>('[data-screen-picture]')].find((e) => e.isConnected);
+      const m = pic?.style.transform.match(/scale\(([\d.]+)\)/);
+      w.samples.push({ lit: !!tube && getComputedStyle(tube).visibility === 'visible', s: m ? +m[1] : NaN });
+      if (w.samples.length < 900) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  await page.evaluate((p) => window.__portfolio.scrollToProgress(p), await intoContact(page, 1.2 * h));
+  await insideTheScreen(page);
+  const samples = await page.evaluate(() => (window as unknown as { samples: { lit: boolean; s: number }[] }).samples);
+  const first = samples.findIndex((x) => x.lit);
+  expect(first, 'the frame lit while sampling').toBeGreaterThan(0);
+  const before = samples.slice(0, first).filter((x) => !Number.isNaN(x.s)).pop()!;
+  // the picture's last drawn scale is one update before the one that lights the frame at ≥ 0.99 (was 0.88)
+  expect(before.s).toBeGreaterThanOrEqual(0.985);
+});
+
+// M6 minor 8: a Contact link that lands inside the screen takes focus to Contact's heading
+test('Contact from the menu lands inside the screen with the focus on Contact’s heading', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await contactByMenu(page);
+  await insideTheScreen(page);
+  await expect(page.locator('#journey section#contact #contact-title')).toBeFocused();
+});
+
+// M6 minor 10: outside Contact the dive's page parts are not rewritten every frame, and the scene does not
+// work out the billboard's rect for nobody
+for (const p of [0.05, 0.12, 0.5])
+  test(`at story ${p} a phone rewrites nothing of the dive and the scene publishes no screen rect`, async ({ page }) => {
+    await gotoScene(page);
+    await waitReady(page);
+    await scrollTo(page, p);
+    await page.waitForTimeout(1500);
+    const changed = await page.evaluate(
+      () =>
+        new Promise<string[]>((resolve) => {
+          const seen: string[] = [];
+          const watch = '[data-screen-frame], [data-screen-picture], section#contact[data-dive], [data-about-backdrop]';
+          const mo = new MutationObserver((records) => {
+            for (const r of records) {
+              const el = r.target as Element;
+              if (el.matches?.(watch) || r.attributeName === 'data-in-screen') seen.push(`${el.tagName}.${r.attributeName}`);
+            }
+          });
+          mo.observe(document.documentElement, { attributes: true, subtree: true });
+          setTimeout(() => {
+            mo.disconnect();
+            resolve(seen);
+          }, 1000);
+        }),
+    );
+    expect(changed).toEqual([]);
+    expect(await page.evaluate(() => window.__portfolio.probe('screenRectWanted'))).toBe(false);
+  });

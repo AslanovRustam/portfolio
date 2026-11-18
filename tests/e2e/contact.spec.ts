@@ -412,3 +412,27 @@ test('on a small laptop the billboard’s hints read at 11 px or more', async ({
   // (11 px divided by the scale and multiplied back is 10.99998 in floats)
   for (const px of sizes) expect(px).toBeGreaterThanOrEqual(10.99);
 });
+
+// M6 minor 10, a laptop: standing in About nothing on the page is rewritten, and no one asks for the screen rect
+test('standing in About a laptop rewrites nothing of the backdrop or the dive', async ({ page }) => {
+  await gotoScene(page);
+  await waitReady(page);
+  await scrollTo(page, 0.5);
+  await page.waitForTimeout(1500);
+  const changed = await page.evaluate(
+    () =>
+      new Promise<number>((resolve) => {
+        let n = 0;
+        const mo = new MutationObserver((records) => {
+          n += records.filter((r) => (r.target as Element).matches?.('[data-about-backdrop], [data-screen-frame], [data-screen-picture]')).length;
+        });
+        mo.observe(document.documentElement, { attributes: true, subtree: true });
+        setTimeout(() => {
+          mo.disconnect();
+          resolve(n);
+        }, 1000);
+      }),
+  );
+  expect(changed).toBe(0);
+  expect(await page.evaluate(() => window.__portfolio.probe('screenRectWanted'))).toBe(false);
+});

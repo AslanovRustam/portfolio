@@ -8,6 +8,7 @@ import { DIVE, diveScale, diveStage, pinDiveHeight } from '@/experience/dive';
 import { pieceSpanPx } from '@/experience/journey';
 import { onScreenRect } from '@/experience/liveScreen';
 import { experienceStore } from '@/experience/store';
+import { takeArrival } from '@/scroll/SmoothScroll';
 import { BILLBOARD } from '@/scene/billboard/layout';
 import type { Rect } from '@/scene/tvwall/screenRects';
 import { NEON, neonStyle } from '../neon';
@@ -18,6 +19,10 @@ const TOP = 64;
 const INSET = DIVE.frameInset;
 /** the content sits this far inside the frame's tube (px), in the page and in its picture alike */
 const PAD = 16;
+/** from here on (story progress) the page follows the billboard's rect: the dive's approach starts at 0.86 */
+const WATCH_FROM = 0.79;
+/** the frame lights once the picture of the form is this close to the content's own size */
+const GROWN = 0.99;
 const MAT = '#050508';
 
 /** A switch's glitch on an element: restarted, and cleared once it has played. */
@@ -69,6 +74,20 @@ export default function ContactScreen() {
     let inside: boolean | null = null;
     let picTimer = 0;
     let frameTimer = 0;
+    let offRect: (() => void) | null = null;
+    const watchRect = (on: boolean) => {
+      if (on === !!offRect) return;
+      if (on) {
+        offRect = onScreenRect((r) => {
+          rect = r;
+          update();
+        });
+      } else {
+        offRect?.();
+        offRect = null;
+        rect = null;
+      }
+    };
 
     const show = (el: HTMLElement, v: boolean) => {
       el.style.visibility = v ? 'visible' : 'hidden';
@@ -84,23 +103,32 @@ export default function ContactScreen() {
       pinDiveHeight(layout.h);
       // the first box reaches the frame's top a little past the dive's end (or at once, with no dive)
       const entry = (reducedMotion ? 0 : ((DIVE.arriveSvh + DIVE.diveSvh + DIVE.backSvh) * layout.h) / 100) + TOP + PAD;
-      section.style.setProperty('--entry', `${Math.round(entry)}px`);
+      // (written only when they change: this runs on every scroll step and, near Contact, every frame)
+      const entryPx = `${Math.round(entry)}px`;
+      if (section.style.getPropertyValue('--entry') !== entryPx) section.style.setProperty('--entry', entryPx);
       // Contact is the last piece: the page scrolls only its height less a screen, and that must hold the
       // whole dive, however short the content is
-      section.style.minHeight = `${Math.ceil(entry - TOP - PAD + layout.h + 2)}px`;
+      const minHeight = `${Math.ceil(entry - TOP - PAD + layout.h + 2)}px`;
+      if (section.style.minHeight !== minHeight) section.style.minHeight = minHeight;
+      // the billboard's rect on the page is only worked out (every frame, by the scene) near Contact
+      watchRect(progress >= WATCH_FROM);
 
       const { stage } = diveStage(progress, { w, h, contactPx: pieceSpanPx('contact', h) });
       const lit = screenOn(progress, reducedMotion, cameraAtBillboard);
       // the frame lights once the panel really fills the window (the damped camera may still be driving in)
       const covers = !rect || (rect.x <= 1 && rect.y <= 1 && rect.x + rect.width >= w - 1 && rect.y + rect.height >= h - 1);
-      const nowInside = reducedMotion ? activeSection(progress) === 'contact' : lit && stage === 'inside' && covers;
+      // …and the picture of the form has grown to the content's own size: no jump under the frame's glitch
+      const grown = !rect || rect.width / BILLBOARD.panel.width / diveScale(h, w / h) >= GROWN;
+      const nowInside = reducedMotion ? activeSection(progress) === 'contact' : lit && stage === 'inside' && covers && grown;
       const showPicture = !reducedMotion && lit && !nowInside;
 
       // what the page shows: inside only once the frame is lit (the scroll may be there before the camera)
-      section.dataset.stage = nowInside ? 'inside' : stage === 'inside' ? 'dive' : stage;
+      const shownStage = nowInside ? 'inside' : stage === 'inside' ? 'dive' : stage;
+      if (section.dataset.stage !== shownStage) section.dataset.stage = shownStage;
       // inside the screen its own mat darkens the top: the header's fade would dim the content's first lines
-      document.documentElement.toggleAttribute('data-in-screen', nowInside);
-      section.inert = !nowInside;
+      if (document.documentElement.hasAttribute('data-in-screen') !== nowInside)
+        document.documentElement.toggleAttribute('data-in-screen', nowInside);
+      if (section.inert === nowInside) section.inert = !nowInside;
 
       const wasInside = inside;
       if (nowInside !== inside) {
@@ -110,6 +138,14 @@ export default function ContactScreen() {
         show(fr, nowInside);
         if (nowInside && !first && !reducedMotion) frameTimer = glitch(fr, 'on');
         else delete fr.dataset.glitch;
+        // a Contact link (header, menu, Next) that brought the visitor here hands the focus to Contact
+        if (nowInside && takeArrival('contact')) {
+          const title = section.querySelector<HTMLElement>('#contact-title');
+          if (title) {
+            title.tabIndex = -1;
+            title.focus({ preventScroll: true });
+          }
+        }
       }
       if (showPicture !== on) {
         const first = on === null;
@@ -137,15 +173,11 @@ export default function ContactScreen() {
       }
     };
 
-    const offRect = onScreenRect((r) => {
-      rect = r;
-      update();
-    });
     const offStore = experienceStore.subscribe(update);
     addEventListener('resize', update);
     update();
     return () => {
-      offRect();
+      offRect?.();
       offStore();
       removeEventListener('resize', update);
       clearTimeout(picTimer);

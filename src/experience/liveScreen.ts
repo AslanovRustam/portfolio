@@ -1,3 +1,4 @@
+import { registerProbe } from '@/dev/sceneProbe';
 import type { Rect } from '@/scene/tvwall/screenRects';
 
 /**
@@ -15,6 +16,7 @@ export function onScreenRect(fn: Listener): () => void {
 }
 
 export const screenRectWanted = (): boolean => listeners.size > 0;
+registerProbe('screenRectWanted', screenRectWanted);
 
 export function publishScreenRect(rect: Rect): void {
   for (const fn of listeners) fn(rect);
